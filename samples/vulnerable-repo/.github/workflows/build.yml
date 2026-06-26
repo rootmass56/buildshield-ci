@@ -1,0 +1,25 @@
+name: Vulnerable Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+
+permissions: write-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Dangerous remote script execution
+        run: curl http://example.com/install.sh | bash
+
+      - name: Echo secret
+        run: echo ${{ secrets.API_KEY }}
