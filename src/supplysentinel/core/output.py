@@ -60,18 +60,16 @@ def render_discovered_files(result: ScanResult) -> None:
 
 def render_findings(result: ScanResult) -> None:
     if not result.findings:
-        console.print(
-            "[bold green]No security findings detected yet. "
-            "Stage 1 only performs repository discovery.[/bold green]"
-        )
+        console.print("[bold green]No security findings detected.[/bold green]")
         return
 
     table = Table(title="Security Findings", show_header=True, header_style="bold red")
-    table.add_column("Rule ID")
-    table.add_column("Severity")
-    table.add_column("Category")
-    table.add_column("Title")
-    table.add_column("File")
+    table.add_column("Rule ID", style="cyan")
+    table.add_column("Severity", style="red")
+    table.add_column("Category", style="magenta")
+    table.add_column("Title", style="white")
+    table.add_column("File", style="green")
+    table.add_column("Line", justify="right")
 
     for finding in result.findings:
         table.add_row(
@@ -80,6 +78,23 @@ def render_findings(result: ScanResult) -> None:
             finding.category.value,
             finding.title,
             finding.evidence.file_path,
+            str(finding.evidence.line_number or "-"),
         )
 
     console.print(table)
+
+    for finding in result.findings:
+        details = (
+            f"[bold]Description:[/bold] {finding.description}\n"
+            f"[bold]Impact:[/bold] {finding.impact}\n"
+            f"[bold]Evidence:[/bold] {finding.evidence.snippet or 'N/A'}\n"
+            f"[bold]Remediation:[/bold] {finding.remediation}"
+        )
+
+        console.print(
+            Panel.fit(
+                details,
+                title=f"{finding.rule_id} - {finding.severity.value}",
+                border_style="red" if finding.severity.value in {"HIGH", "CRITICAL"} else "yellow",
+            )
+        )

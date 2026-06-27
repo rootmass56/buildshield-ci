@@ -1,12 +1,15 @@
 from pathlib import Path
 
+from supplysentinel.analyzers.github_actions_analyzer import analyze_github_actions
+from supplysentinel.analyzers.npm_analyzer import analyze_npm
+from supplysentinel.analyzers.python_analyzer import analyze_python_requirements
 from supplysentinel.core.constants import (
     SECURITY_RELEVANT_FILENAMES,
-    RiskLevel,
     Severity,
 )
 from supplysentinel.core.exceptions import InvalidTargetError
 from supplysentinel.core.models import RepositoryFile, ScanResult, ScanSummary, Finding
+from supplysentinel.core.scoring import calculate_security_score, derive_risk_level
 
 
 IGNORED_DIRECTORIES = {
@@ -108,6 +111,16 @@ def discover_repository_files(target_path: Path) -> list[RepositoryFile]:
     return sorted(discovered_files, key=lambda item: item.relative_path)
 
 
+def run_analyzers(repo_path: Path, discovered_files: list[RepositoryFile]) -> list[Finding]:
+    findings: list[Finding] = []
+
+    findings.extend(analyze_npm(repo_path, discovered_files))
+    findings.extend(analyze_python_requirements(discovered_files))
+    findings.extend(analyze_github_actions(discovered_files))
+
+    return findings
+
+
 def calculate_summary(
     target_path: Path,
     discovered_files: list[RepositoryFile],
@@ -119,16 +132,8 @@ def calculate_summary(
     low_count = sum(1 for finding in findings if finding.severity == Severity.LOW)
     info_count = sum(1 for finding in findings if finding.severity == Severity.INFO)
 
-    security_score = 100
-
-    if security_score >= 85:
-        risk_level = RiskLevel.LOW
-    elif security_score >= 70:
-        risk_level = RiskLevel.MEDIUM
-    elif security_score >= 50:
-        risk_level = RiskLevel.HIGH
-    else:
-        risk_level = RiskLevel.CRITICAL
+    security_score = calculate_security_score(findings)
+    risk_level = derive_risk_level(security_score)
 
     return ScanSummary(
         target_path=str(target_path),
@@ -155,8 +160,7 @@ def scan_repository(target: str) -> ScanResult:
         raise InvalidTargetError(f"Target path is not a directory: {target_path}")
 
     discovered_files = discover_repository_files(target_path)
-
-    findings: list[Finding] = []
+    findings = run_analyzers(target_path, discovered_files)
 
     summary = calculate_summary(
         target_path=target_path,
