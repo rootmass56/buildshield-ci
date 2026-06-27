@@ -8,8 +8,14 @@ from supplysentinel.core.constants import (
     Severity,
 )
 from supplysentinel.core.exceptions import InvalidTargetError
-from supplysentinel.core.models import RepositoryFile, ScanResult, ScanSummary, Finding
-from supplysentinel.core.scoring import calculate_security_score, derive_risk_level
+from supplysentinel.core.models import (
+    Finding,
+    RepositoryFile,
+    RiskProfile,
+    ScanResult,
+    ScanSummary,
+)
+from supplysentinel.core.scoring import calculate_risk_profile
 
 
 IGNORED_DIRECTORIES = {
@@ -28,10 +34,16 @@ IGNORED_DIRECTORIES = {
 
 
 def is_ignored_path(path: Path) -> bool:
+    """
+    Check whether a file path belongs to a directory that should be ignored.
+    """
     return any(part in IGNORED_DIRECTORIES for part in path.parts)
 
 
 def detect_file_type(path: Path) -> str:
+    """
+    Classify security-relevant files based on filename and path.
+    """
     name = path.name
 
     if name == "package.json":
@@ -74,6 +86,9 @@ def detect_file_type(path: Path) -> str:
 
 
 def is_security_relevant_file(path: Path) -> bool:
+    """
+    Identify whether a file is relevant for supply-chain or CI/CD security analysis.
+    """
     if path.name in SECURITY_RELEVANT_FILENAMES:
         return True
 
@@ -84,6 +99,9 @@ def is_security_relevant_file(path: Path) -> bool:
 
 
 def discover_repository_files(target_path: Path) -> list[RepositoryFile]:
+    """
+    Discover all security-relevant files inside the target repository.
+    """
     discovered_files: list[RepositoryFile] = []
 
     for path in target_path.rglob("*"):
@@ -111,7 +129,13 @@ def discover_repository_files(target_path: Path) -> list[RepositoryFile]:
     return sorted(discovered_files, key=lambda item: item.relative_path)
 
 
-def run_analyzers(repo_path: Path, discovered_files: list[RepositoryFile]) -> list[Finding]:
+def run_analyzers(
+    repo_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    """
+    Run all security analyzers against discovered files.
+    """
     findings: list[Finding] = []
 
     findings.extend(analyze_npm(repo_path, discovered_files))
@@ -125,15 +149,26 @@ def calculate_summary(
     target_path: Path,
     discovered_files: list[RepositoryFile],
     findings: list[Finding],
+    risk_profile: RiskProfile,
 ) -> ScanSummary:
-    critical_count = sum(1 for finding in findings if finding.severity == Severity.CRITICAL)
-    high_count = sum(1 for finding in findings if finding.severity == Severity.HIGH)
-    medium_count = sum(1 for finding in findings if finding.severity == Severity.MEDIUM)
-    low_count = sum(1 for finding in findings if finding.severity == Severity.LOW)
-    info_count = sum(1 for finding in findings if finding.severity == Severity.INFO)
-
-    security_score = calculate_security_score(findings)
-    risk_level = derive_risk_level(security_score)
+    """
+    Build high-level scan summary from findings and risk profile.
+    """
+    critical_count = sum(
+        1 for finding in findings if finding.severity == Severity.CRITICAL
+    )
+    high_count = sum(
+        1 for finding in findings if finding.severity == Severity.HIGH
+    )
+    medium_count = sum(
+        1 for finding in findings if finding.severity == Severity.MEDIUM
+    )
+    low_count = sum(
+        1 for finding in findings if finding.severity == Severity.LOW
+    )
+    info_count = sum(
+        1 for finding in findings if finding.severity == Severity.INFO
+    )
 
     return ScanSummary(
         target_path=str(target_path),
@@ -145,12 +180,22 @@ def calculate_summary(
         medium_count=medium_count,
         low_count=low_count,
         info_count=info_count,
-        security_score=security_score,
-        risk_level=risk_level,
+        security_score=risk_profile.overall_security_score,
+        risk_level=risk_profile.overall_risk_level,
     )
 
 
 def scan_repository(target: str) -> ScanResult:
+    """
+    Main scanner entry point.
+
+    This function:
+    1. Validates the target repository path.
+    2. Discovers security-relevant files.
+    3. Runs all analyzers.
+    4. Builds advanced risk profile.
+    5. Returns complete scan result.
+    """
     target_path = Path(target).resolve()
 
     if not target_path.exists():
@@ -161,15 +206,18 @@ def scan_repository(target: str) -> ScanResult:
 
     discovered_files = discover_repository_files(target_path)
     findings = run_analyzers(target_path, discovered_files)
+    risk_profile = calculate_risk_profile(findings)
 
     summary = calculate_summary(
         target_path=target_path,
         discovered_files=discovered_files,
         findings=findings,
+        risk_profile=risk_profile,
     )
 
     return ScanResult(
         summary=summary,
+        risk_profile=risk_profile,
         discovered_files=discovered_files,
         findings=findings,
     )

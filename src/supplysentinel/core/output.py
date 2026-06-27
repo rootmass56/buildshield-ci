@@ -9,6 +9,9 @@ console = Console()
 
 
 def render_banner() -> None:
+    """
+    Render SupplySentinel CLI banner.
+    """
     banner = """
 [bold cyan]SupplySentinel[/bold cyan]
 Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Platform
@@ -17,6 +20,9 @@ Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Plat
 
 
 def render_scan_summary(result: ScanResult) -> None:
+    """
+    Render high-level scan summary.
+    """
     summary = result.summary
 
     table = Table(title="Scan Summary", show_header=True, header_style="bold cyan")
@@ -38,7 +44,88 @@ def render_scan_summary(result: ScanResult) -> None:
     console.print(table)
 
 
+def render_risk_profile(result: ScanResult) -> None:
+    """
+    Render advanced risk intelligence:
+    - Overall security score
+    - Build gate decision
+    - Category-wise risk
+    - Top risk drivers
+    """
+    profile = result.risk_profile
+
+    risk_table = Table(
+        title="Advanced Risk Intelligence",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    risk_table.add_column("Metric", style="white")
+    risk_table.add_column("Value", style="green")
+
+    risk_table.add_row("Overall Security Score", f"{profile.overall_security_score}/100")
+    risk_table.add_row("Overall Risk Level", profile.overall_risk_level.value)
+    risk_table.add_row("Build Gate Status", profile.build_gate_status)
+    risk_table.add_row("Build Gate Reason", profile.build_gate_reason)
+
+    console.print(risk_table)
+
+    if profile.category_risks:
+        category_table = Table(
+            title="Category-wise Risk Breakdown",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        category_table.add_column("Category", style="cyan")
+        category_table.add_column("Findings", justify="right")
+        category_table.add_column("Penalty Points", justify="right")
+        category_table.add_column("Risk Score", justify="right")
+        category_table.add_column("Risk Level", style="red")
+
+        for category_risk in profile.category_risks:
+            category_table.add_row(
+                category_risk.category.value,
+                str(category_risk.finding_count),
+                str(category_risk.penalty_points),
+                f"{category_risk.risk_score}/100",
+                category_risk.risk_level.value,
+            )
+
+        console.print(category_table)
+
+    if profile.top_risk_drivers:
+        driver_table = Table(
+            title="Top Risk Drivers",
+            show_header=True,
+            header_style="bold red",
+        )
+        driver_table.add_column("Rank", justify="right")
+        driver_table.add_column("Rule ID", style="cyan")
+        driver_table.add_column("Severity", style="red")
+        driver_table.add_column("Category", style="magenta")
+        driver_table.add_column("Title", style="white")
+        driver_table.add_column("File", style="green")
+        driver_table.add_column("Line", justify="right")
+        driver_table.add_column("Contribution", justify="right")
+
+        for index, driver in enumerate(profile.top_risk_drivers, start=1):
+            driver_table.add_row(
+                str(index),
+                driver.rule_id,
+                driver.severity.value,
+                driver.category.value,
+                driver.title,
+                driver.file_path,
+                str(driver.line_number or "-"),
+                str(driver.contribution_points),
+            )
+
+        console.print(driver_table)
+
+
 def render_discovered_files(result: ScanResult) -> None:
+    """
+    Render discovered security-relevant files.
+    """
     table = Table(
         title="Security-Relevant Files Discovered",
         show_header=True,
@@ -59,6 +146,9 @@ def render_discovered_files(result: ScanResult) -> None:
 
 
 def render_findings(result: ScanResult) -> None:
+    """
+    Render all security findings with detailed explanation.
+    """
     if not result.findings:
         console.print("[bold green]No security findings detected.[/bold green]")
         return
@@ -84,6 +174,12 @@ def render_findings(result: ScanResult) -> None:
     console.print(table)
 
     for finding in result.findings:
+        border_style = (
+            "red"
+            if finding.severity.value in {"HIGH", "CRITICAL"}
+            else "yellow"
+        )
+
         details = (
             f"[bold]Description:[/bold] {finding.description}\n"
             f"[bold]Impact:[/bold] {finding.impact}\n"
@@ -95,6 +191,6 @@ def render_findings(result: ScanResult) -> None:
             Panel.fit(
                 details,
                 title=f"{finding.rule_id} - {finding.severity.value}",
-                border_style="red" if finding.severity.value in {"HIGH", "CRITICAL"} else "yellow",
+                border_style=border_style,
             )
         )

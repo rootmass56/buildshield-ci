@@ -6,6 +6,7 @@ from supplysentinel.core.output import (
     render_banner,
     render_discovered_files,
     render_findings,
+    render_risk_profile,
     render_scan_summary,
 )
 from supplysentinel.core.scanner import scan_repository
@@ -37,6 +38,7 @@ def scan(
         raise typer.Exit(code=1)
 
     render_scan_summary(result)
+    render_risk_profile(result)
 
     if show_files:
         render_discovered_files(result)
