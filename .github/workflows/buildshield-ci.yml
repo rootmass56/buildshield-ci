@@ -1,0 +1,104 @@
+name: BuildShield-CI Security Gate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  buildshield-security-gate:
+    name: BuildShield-CI Policy Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install BuildShield-CI
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Validate CLI installation
+        run: |
+          supplysentinel --help
+          supplysentinel version
+
+      - name: Run secure repository policy gate
+        run: |
+          supplysentinel scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --fail-on-policy \
+            --hide-files \
+            --report-format html \
+            --output reports/secure-policy-report.html
+
+          supplysentinel scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --report-format json \
+            --output reports/secure-policy-report.json
+
+          supplysentinel scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --report-format md \
+            --output reports/secure-policy-report.md
+
+      - name: Demonstrate vulnerable repository policy failure
+        continue-on-error: true
+        run: |
+          supplysentinel scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --fail-on-policy \
+            --hide-files
+
+      - name: Generate vulnerable repository reports
+        if: always()
+        run: |
+          supplysentinel scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --report-format html \
+            --output reports/vulnerable-policy-report.html
+
+          supplysentinel scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --report-format json \
+            --output reports/vulnerable-policy-report.json
+
+          supplysentinel scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --report-format md \
+            --output reports/vulnerable-policy-report.md
+
+      - name: Generate before-after comparison reports
+        if: always()
+        run: |
+          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+            --report-format html \
+            --output reports/comparison-report.html
+
+          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+            --report-format json \
+            --output reports/comparison-report.json
+
+          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+            --report-format md \
+            --output reports/comparison-report.md
+
+      - name: Upload BuildShield-CI reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: buildshield-ci-security-reports
+          path: reports/
+          if-no-files-found: error
