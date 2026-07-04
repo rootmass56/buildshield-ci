@@ -2,6 +2,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from supplysentinel import DESCRIPTION, PRODUCT_NAME
 from supplysentinel.core.models import ComparisonResult, ScanResult
 
 
@@ -9,9 +10,9 @@ console = Console()
 
 
 def render_banner() -> None:
-    banner = """
-[bold cyan]SupplySentinel[/bold cyan]
-Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Platform
+    banner = f"""
+[bold cyan]{PRODUCT_NAME}[/bold cyan]
+{DESCRIPTION}
 """
     console.print(Panel.fit(banner, border_style="cyan"))
 
@@ -237,12 +238,37 @@ def render_comparison(comparison: ComparisonResult) -> None:
     baseline = comparison.baseline.summary
     target = comparison.target.summary
 
-    table.add_row("Security Score", f"{baseline.security_score}/100", f"{target.security_score}/100", f"{comparison.score_delta:+d}")
+    table.add_row(
+        "Security Score",
+        f"{baseline.security_score}/100",
+        f"{target.security_score}/100",
+        f"{comparison.score_delta:+d}",
+    )
     table.add_row("Risk Level", baseline.risk_level.value, target.risk_level.value, "-")
-    table.add_row("Findings", str(baseline.findings_count), str(target.findings_count), str(target.findings_count - baseline.findings_count))
-    table.add_row("Critical Findings", str(baseline.critical_count), str(target.critical_count), str(target.critical_count - baseline.critical_count))
-    table.add_row("High Findings", str(baseline.high_count), str(target.high_count), str(target.high_count - baseline.high_count))
-    table.add_row("Build Gate", comparison.baseline.risk_profile.build_gate_status, comparison.target.risk_profile.build_gate_status, "-")
+    table.add_row(
+        "Findings",
+        str(baseline.findings_count),
+        str(target.findings_count),
+        str(target.findings_count - baseline.findings_count),
+    )
+    table.add_row(
+        "Critical Findings",
+        str(baseline.critical_count),
+        str(target.critical_count),
+        str(target.critical_count - baseline.critical_count),
+    )
+    table.add_row(
+        "High Findings",
+        str(baseline.high_count),
+        str(target.high_count),
+        str(target.high_count - baseline.high_count),
+    )
+    table.add_row(
+        "Build Gate",
+        comparison.baseline.risk_profile.build_gate_status,
+        comparison.target.risk_profile.build_gate_status,
+        "-",
+    )
 
     console.print(table)
 

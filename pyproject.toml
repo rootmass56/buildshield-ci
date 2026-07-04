@@ -1,20 +1,50 @@
+[build-system]
+requires = ["setuptools>=69.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "supplysentinel"
-version = "0.1.0"
-description = "Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Platform"
+name = "buildshield-ci"
+version = "0.10.0"
+description = "Advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
-    { name = "Saketh" }
+    { name = "Saketh", email = "rootmass56@users.noreply.github.com" }
+]
+keywords = [
+    "cybersecurity",
+    "devsecops",
+    "supply-chain-security",
+    "dependency-confusion",
+    "github-actions",
+    "ci-cd",
+    "sarif",
+    "policy-as-code"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
     "typer>=0.12.0",
-    "rich>=13.0.0",
-    "pyyaml>=6.0.0",
-    "pydantic>=2.0.0"
+    "rich>=13.7.0",
+    "pydantic>=2.6.0",
+    "PyYAML>=6.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0"
 ]
 
 [project.scripts]
+buildshield = "supplysentinel.cli:app"
 supplysentinel = "supplysentinel.cli:app"
 
 [tool.setuptools.packages.find]

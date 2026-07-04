@@ -2,6 +2,7 @@ from pathlib import Path
 
 import typer
 
+from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
 from supplysentinel.core.comparison import build_comparison_result
 from supplysentinel.core.exceptions import SupplySentinelError
 from supplysentinel.core.output import (
@@ -25,7 +26,7 @@ from supplysentinel.reporters.sarif_reporter import generate_scan_sarif
 
 
 app = typer.Typer(
-    help="SupplySentinel: Advanced CI/CD Supply Chain Risk Detection Platform"
+    help=f"{PRODUCT_NAME}: {DESCRIPTION}"
 )
 
 
@@ -94,6 +95,9 @@ def scan(
         help="Exit with non-zero code if policy evaluation fails.",
     ),
 ):
+    """
+    Scan a repository for CI/CD supply-chain and dependency confusion risks.
+    """
     render_banner()
 
     try:
@@ -170,6 +174,9 @@ def compare(
         help="Comparison report output file path.",
     ),
 ):
+    """
+    Compare vulnerable and hardened repositories to measure security improvement.
+    """
     render_banner()
 
     try:
@@ -202,9 +209,10 @@ def compare(
 
 @app.command()
 def version():
-    from supplysentinel import __version__
-
-    console.print(f"SupplySentinel version: [bold green]{__version__}[/bold green]")
+    """
+    Show BuildShield-CI version.
+    """
+    console.print(f"{PRODUCT_NAME} version: [bold green]{__version__}[/bold green]")
 
 
 if __name__ == "__main__":

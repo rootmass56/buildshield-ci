@@ -35,7 +35,8 @@ jobs:
 
       - name: Validate CLI installation
         run: |
-          supplysentinel --help
+          buildshield --help
+          buildshield version
           supplysentinel version
 
       - name: Run automated test suite
@@ -44,19 +45,19 @@ jobs:
 
       - name: Run secure repository policy gate
         run: |
-          supplysentinel scan samples/secure-repo \
+          buildshield scan samples/secure-repo \
             --policy buildshield-policy.yml \
             --fail-on-policy \
             --hide-files \
             --report-format html \
             --output reports/secure-policy-report.html
 
-          supplysentinel scan samples/secure-repo \
+          buildshield scan samples/secure-repo \
             --policy buildshield-policy.yml \
             --report-format json \
             --output reports/secure-policy-report.json
 
-          supplysentinel scan samples/secure-repo \
+          buildshield scan samples/secure-repo \
             --policy buildshield-policy.yml \
             --report-format md \
             --output reports/secure-policy-report.md
@@ -64,7 +65,7 @@ jobs:
       - name: Demonstrate vulnerable repository policy failure
         continue-on-error: true
         run: |
-          supplysentinel scan samples/vulnerable-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
             --fail-on-policy \
             --hide-files
@@ -72,17 +73,17 @@ jobs:
       - name: Generate vulnerable repository reports
         if: always()
         run: |
-          supplysentinel scan samples/vulnerable-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
             --report-format html \
             --output reports/vulnerable-policy-report.html
 
-          supplysentinel scan samples/vulnerable-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
             --report-format json \
             --output reports/vulnerable-policy-report.json
 
-          supplysentinel scan samples/vulnerable-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
             --report-format md \
             --output reports/vulnerable-policy-report.md
@@ -90,7 +91,7 @@ jobs:
       - name: Generate SARIF report for GitHub code scanning
         if: always()
         run: |
-          supplysentinel scan samples/vulnerable-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
             --report-format sarif \
             --output reports/buildshield-results.sarif
@@ -105,15 +106,15 @@ jobs:
       - name: Generate before-after comparison reports
         if: always()
         run: |
-          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+          buildshield compare samples/vulnerable-repo samples/secure-repo \
             --report-format html \
             --output reports/comparison-report.html
 
-          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+          buildshield compare samples/vulnerable-repo samples/secure-repo \
             --report-format json \
             --output reports/comparison-report.json
 
-          supplysentinel compare samples/vulnerable-repo samples/secure-repo \
+          buildshield compare samples/vulnerable-repo samples/secure-repo \
             --report-format md \
             --output reports/comparison-report.md
 
