@@ -188,9 +188,6 @@ def generate_scan_sarif(result: ScanResult) -> str:
                         "rules": unique_rules_from_findings(result.findings),
                     }
                 },
-                "runAutomationDetails": {
-                    "id": "buildshield-ci/supply-chain-security-scan",
-                },
                 "invocations": [
                     {
                         "executionSuccessful": True,
