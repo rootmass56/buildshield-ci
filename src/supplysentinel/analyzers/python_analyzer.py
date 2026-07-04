@@ -30,8 +30,45 @@ def looks_private_package(package_name: str) -> bool:
     return any(indicator in normalized for indicator in PRIVATE_PACKAGE_INDICATORS)
 
 
+def has_private_python_index(discovered_files: list[RepositoryFile]) -> bool:
+    """
+    Detect whether the repository has Python private package index configuration.
+
+    This prevents false positives for internal Python packages when a private index
+    is explicitly configured.
+    """
+    registry_files = [
+        repo_file
+        for repo_file in discovered_files
+        if repo_file.file_type == "python_registry_config"
+    ]
+
+    for repo_file in registry_files:
+        content = read_text_file(repo_file.absolute_path).lower()
+
+        has_index_url = "index-url" in content
+
+        references_default_pypi_only = (
+            "pypi.org/simple" in content
+            or "pypi.python.org/simple" in content
+        )
+
+        has_private_indicator = any(
+            indicator in content
+            for indicator in PRIVATE_PACKAGE_INDICATORS
+        )
+
+        has_non_public_index = has_index_url and not references_default_pypi_only
+
+        if has_private_indicator or has_non_public_index:
+            return True
+
+    return False
+
+
 def analyze_python_requirements(discovered_files: list[RepositoryFile]) -> list[Finding]:
     findings: list[Finding] = []
+    private_index_configured = has_private_python_index(discovered_files)
 
     requirement_files = [
         repo_file
@@ -97,7 +134,7 @@ def analyze_python_requirements(discovered_files: list[RepositoryFile]) -> list[
                     )
                 )
 
-            if looks_private_package(package_name):
+            if looks_private_package(package_name) and not private_index_configured:
                 findings.append(
                     Finding(
                         rule_id="DG-PY-003",

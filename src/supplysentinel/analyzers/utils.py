@@ -4,8 +4,13 @@ from pathlib import Path
 def read_text_file(path: Path) -> str:
     """
     Safely read a text file.
+
+    Uses utf-8-sig to handle UTF-8 BOM files created by some Windows editors
+    or PowerShell commands. This prevents valid JSON files from being marked
+    invalid only because of encoding metadata.
     """
-    return path.read_text(encoding="utf-8", errors="ignore")
+    content = path.read_text(encoding="utf-8-sig", errors="ignore")
+    return content.lstrip("\ufeff")
 
 
 def find_line_number(content: str, search_text: str) -> int | None:

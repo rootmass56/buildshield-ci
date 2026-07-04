@@ -77,3 +77,14 @@ class ScanResult(BaseModel):
     risk_profile: RiskProfile
     discovered_files: list[RepositoryFile]
     findings: list[Finding]
+
+
+class ComparisonResult(BaseModel):
+    baseline_label: str
+    target_label: str
+    baseline: ScanResult
+    target: ScanResult
+    score_delta: int
+    findings_reduced: int
+    risk_reduction_percentage: float
+    verdict: str

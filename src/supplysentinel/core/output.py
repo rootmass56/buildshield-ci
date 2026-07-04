@@ -2,7 +2,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from supplysentinel.core.models import ScanResult
+from supplysentinel.core.models import ComparisonResult, ScanResult
 
 
 console = Console()
@@ -46,11 +46,7 @@ def render_scan_summary(result: ScanResult) -> None:
 
 def render_risk_profile(result: ScanResult) -> None:
     """
-    Render advanced risk intelligence:
-    - Overall security score
-    - Build gate decision
-    - Category-wise risk
-    - Top risk drivers
+    Render advanced risk intelligence.
     """
     profile = result.risk_profile
 
@@ -194,3 +190,78 @@ def render_findings(result: ScanResult) -> None:
                 border_style=border_style,
             )
         )
+
+
+def render_comparison(comparison: ComparisonResult) -> None:
+    """
+    Render before/after repository security comparison.
+    """
+    table = Table(
+        title="Before vs After Security Posture Comparison",
+        show_header=True,
+        header_style="bold cyan",
+    )
+
+    table.add_column("Metric", style="white")
+    table.add_column(comparison.baseline_label, style="red")
+    table.add_column(comparison.target_label, style="green")
+    table.add_column("Delta", style="cyan")
+
+    baseline = comparison.baseline.summary
+    target = comparison.target.summary
+
+    table.add_row(
+        "Security Score",
+        f"{baseline.security_score}/100",
+        f"{target.security_score}/100",
+        f"{comparison.score_delta:+d}",
+    )
+    table.add_row(
+        "Risk Level",
+        baseline.risk_level.value,
+        target.risk_level.value,
+        "-",
+    )
+    table.add_row(
+        "Findings",
+        str(baseline.findings_count),
+        str(target.findings_count),
+        str(target.findings_count - baseline.findings_count),
+    )
+    table.add_row(
+        "Critical Findings",
+        str(baseline.critical_count),
+        str(target.critical_count),
+        str(target.critical_count - baseline.critical_count),
+    )
+    table.add_row(
+        "High Findings",
+        str(baseline.high_count),
+        str(target.high_count),
+        str(target.high_count - baseline.high_count),
+    )
+    table.add_row(
+        "Build Gate",
+        comparison.baseline.risk_profile.build_gate_status,
+        comparison.target.risk_profile.build_gate_status,
+        "-",
+    )
+
+    console.print(table)
+
+    summary = (
+        f"[bold]Verdict:[/bold] {comparison.verdict}\n"
+        f"[bold]Score Improvement:[/bold] {comparison.score_delta:+d} points\n"
+        f"[bold]Findings Reduced:[/bold] {comparison.findings_reduced}\n"
+        f"[bold]Risk Reduction:[/bold] {comparison.risk_reduction_percentage}%"
+    )
+
+    border_style = "green" if comparison.score_delta > 0 else "red"
+
+    console.print(
+        Panel.fit(
+            summary,
+            title="Comparison Summary",
+            border_style=border_style,
+        )
+    )
