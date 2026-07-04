@@ -1,0 +1,21 @@
+﻿minimum_score: 80
+
+fail_on:
+  - CRITICAL
+
+max_allowed:
+  critical: 0
+  high: 0
+  medium: 10
+  low: 20
+
+blocked_rules: []
+
+rules:
+  require_lockfiles: true
+  require_pinned_actions: true
+  block_write_all_permissions: true
+  block_secret_echo: true
+  block_curl_pipe_shell: true
+  block_dependency_confusion: true
+  block_pull_request_target: true

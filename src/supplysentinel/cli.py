@@ -10,10 +10,12 @@ from supplysentinel.core.output import (
     render_comparison,
     render_discovered_files,
     render_findings,
+    render_policy_evaluation,
     render_risk_profile,
     render_scan_summary,
 )
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.policies.policy_engine import evaluate_policy
 from supplysentinel.reporters.report_generator import (
     generate_comparison_report,
     generate_scan_report,
@@ -27,9 +29,6 @@ app = typer.Typer(
 
 
 def validate_report_format(report_format: str) -> str:
-    """
-    Validate report format provided by user.
-    """
     normalized_format = report_format.lower().strip()
 
     if normalized_format not in {"json", "md", "html"}:
@@ -39,17 +38,11 @@ def validate_report_format(report_format: str) -> str:
 
 
 def default_scan_report_path(target: str, report_format: str) -> str:
-    """
-    Build default scan report output path.
-    """
     target_name = Path(target).name or "repository"
     return f"reports/{target_name}-scan-report.{report_format}"
 
 
 def default_comparison_report_path(report_format: str) -> str:
-    """
-    Build default comparison report output path.
-    """
     return f"reports/comparison-report.{report_format}"
 
 
@@ -72,20 +65,39 @@ def scan(
         "-o",
         help="Report output file path.",
     ),
+    policy: str | None = typer.Option(
+        None,
+        "--policy",
+        "-p",
+        help="Path to policy-as-code YAML file.",
+    ),
+    fail_on_policy: bool = typer.Option(
+        False,
+        "--fail-on-policy/--no-fail-on-policy",
+        help="Exit with non-zero code if policy evaluation fails.",
+    ),
 ):
-    """
-    Scan a repository for dependency confusion and CI/CD supply-chain risks.
-    """
     render_banner()
 
     try:
         result = scan_repository(target)
-    except SupplySentinelError as error:
+
+        if policy:
+            policy_evaluation = evaluate_policy(
+                result=result,
+                policy_path=policy,
+            )
+            result = result.model_copy(
+                update={"policy_evaluation": policy_evaluation}
+            )
+
+    except (SupplySentinelError, FileNotFoundError, ValueError) as error:
         console.print(f"[bold red]Error:[/bold red] {error}")
         raise typer.Exit(code=1)
 
     render_scan_summary(result)
     render_risk_profile(result)
+    render_policy_evaluation(result)
 
     if show_files:
         render_discovered_files(result)
@@ -103,6 +115,10 @@ def scan(
 
         written_path = write_report(output_path, report_content)
         console.print(f"[bold green]Report written to:[/bold green] {written_path}")
+
+    if policy and fail_on_policy and result.policy_evaluation and not result.policy_evaluation.passed:
+        console.print("[bold red]Policy failed. Exiting with code 2 for CI/CD gate.[/bold red]")
+        raise typer.Exit(code=2)
 
 
 @app.command()
@@ -137,9 +153,6 @@ def compare(
         help="Comparison report output file path.",
     ),
 ):
-    """
-    Compare two repositories and show security posture improvement.
-    """
     render_banner()
 
     try:
@@ -172,9 +185,6 @@ def compare(
 
 @app.command()
 def version():
-    """
-    Show SupplySentinel version.
-    """
     from supplysentinel import __version__
 
     console.print(f"SupplySentinel version: [bold green]{__version__}[/bold green]")

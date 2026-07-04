@@ -58,6 +58,21 @@ class RiskProfile(BaseModel):
     top_risk_drivers: list[TopRiskDriver]
 
 
+class PolicyViolation(BaseModel):
+    policy_id: str
+    severity: str
+    message: str
+
+
+class PolicyEvaluation(BaseModel):
+    policy_file: str
+    passed: bool
+    minimum_score: int
+    actual_score: int
+    fail_on_severities: list[str]
+    violations: list[PolicyViolation]
+
+
 class ScanSummary(BaseModel):
     target_path: str
     files_discovered: int
@@ -77,6 +92,7 @@ class ScanResult(BaseModel):
     risk_profile: RiskProfile
     discovered_files: list[RepositoryFile]
     findings: list[Finding]
+    policy_evaluation: PolicyEvaluation | None = None
 
 
 class ComparisonResult(BaseModel):

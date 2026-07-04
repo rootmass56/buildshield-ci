@@ -9,9 +9,6 @@ console = Console()
 
 
 def render_banner() -> None:
-    """
-    Render SupplySentinel CLI banner.
-    """
     banner = """
 [bold cyan]SupplySentinel[/bold cyan]
 Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Platform
@@ -20,9 +17,6 @@ Advanced CI/CD Supply Chain Risk Detection and Dependency Confusion Defense Plat
 
 
 def render_scan_summary(result: ScanResult) -> None:
-    """
-    Render high-level scan summary.
-    """
     summary = result.summary
 
     table = Table(title="Scan Summary", show_header=True, header_style="bold cyan")
@@ -45,9 +39,6 @@ def render_scan_summary(result: ScanResult) -> None:
 
 
 def render_risk_profile(result: ScanResult) -> None:
-    """
-    Render advanced risk intelligence.
-    """
     profile = result.risk_profile
 
     risk_table = Table(
@@ -118,10 +109,56 @@ def render_risk_profile(result: ScanResult) -> None:
         console.print(driver_table)
 
 
+def render_policy_evaluation(result: ScanResult) -> None:
+    policy = result.policy_evaluation
+
+    if policy is None:
+        return
+
+    status = "PASSED" if policy.passed else "FAILED"
+    status_style = "green" if policy.passed else "red"
+
+    table = Table(
+        title="Policy-as-Code Evaluation",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    table.add_column("Metric", style="white")
+    table.add_column("Value", style=status_style)
+
+    table.add_row("Policy File", policy.policy_file)
+    table.add_row("Policy Status", status)
+    table.add_row("Minimum Score", f"{policy.minimum_score}/100")
+    table.add_row("Actual Score", f"{policy.actual_score}/100")
+    table.add_row("Fail-on Severities", ", ".join(policy.fail_on_severities) or "None")
+    table.add_row("Violations", str(len(policy.violations)))
+
+    console.print(table)
+
+    if not policy.violations:
+        console.print("[bold green]Policy passed. No policy violations detected.[/bold green]")
+        return
+
+    violation_table = Table(
+        title="Policy Violations",
+        show_header=True,
+        header_style="bold red",
+    )
+    violation_table.add_column("Policy ID", style="cyan")
+    violation_table.add_column("Severity", style="red")
+    violation_table.add_column("Message", style="white")
+
+    for violation in policy.violations:
+        violation_table.add_row(
+            violation.policy_id,
+            violation.severity,
+            violation.message,
+        )
+
+    console.print(violation_table)
+
+
 def render_discovered_files(result: ScanResult) -> None:
-    """
-    Render discovered security-relevant files.
-    """
     table = Table(
         title="Security-Relevant Files Discovered",
         show_header=True,
@@ -142,9 +179,6 @@ def render_discovered_files(result: ScanResult) -> None:
 
 
 def render_findings(result: ScanResult) -> None:
-    """
-    Render all security findings with detailed explanation.
-    """
     if not result.findings:
         console.print("[bold green]No security findings detected.[/bold green]")
         return
@@ -170,11 +204,7 @@ def render_findings(result: ScanResult) -> None:
     console.print(table)
 
     for finding in result.findings:
-        border_style = (
-            "red"
-            if finding.severity.value in {"HIGH", "CRITICAL"}
-            else "yellow"
-        )
+        border_style = "red" if finding.severity.value in {"HIGH", "CRITICAL"} else "yellow"
 
         details = (
             f"[bold]Description:[/bold] {finding.description}\n"
@@ -193,9 +223,6 @@ def render_findings(result: ScanResult) -> None:
 
 
 def render_comparison(comparison: ComparisonResult) -> None:
-    """
-    Render before/after repository security comparison.
-    """
     table = Table(
         title="Before vs After Security Posture Comparison",
         show_header=True,
@@ -210,42 +237,12 @@ def render_comparison(comparison: ComparisonResult) -> None:
     baseline = comparison.baseline.summary
     target = comparison.target.summary
 
-    table.add_row(
-        "Security Score",
-        f"{baseline.security_score}/100",
-        f"{target.security_score}/100",
-        f"{comparison.score_delta:+d}",
-    )
-    table.add_row(
-        "Risk Level",
-        baseline.risk_level.value,
-        target.risk_level.value,
-        "-",
-    )
-    table.add_row(
-        "Findings",
-        str(baseline.findings_count),
-        str(target.findings_count),
-        str(target.findings_count - baseline.findings_count),
-    )
-    table.add_row(
-        "Critical Findings",
-        str(baseline.critical_count),
-        str(target.critical_count),
-        str(target.critical_count - baseline.critical_count),
-    )
-    table.add_row(
-        "High Findings",
-        str(baseline.high_count),
-        str(target.high_count),
-        str(target.high_count - baseline.high_count),
-    )
-    table.add_row(
-        "Build Gate",
-        comparison.baseline.risk_profile.build_gate_status,
-        comparison.target.risk_profile.build_gate_status,
-        "-",
-    )
+    table.add_row("Security Score", f"{baseline.security_score}/100", f"{target.security_score}/100", f"{comparison.score_delta:+d}")
+    table.add_row("Risk Level", baseline.risk_level.value, target.risk_level.value, "-")
+    table.add_row("Findings", str(baseline.findings_count), str(target.findings_count), str(target.findings_count - baseline.findings_count))
+    table.add_row("Critical Findings", str(baseline.critical_count), str(target.critical_count), str(target.critical_count - baseline.critical_count))
+    table.add_row("High Findings", str(baseline.high_count), str(target.high_count), str(target.high_count - baseline.high_count))
+    table.add_row("Build Gate", comparison.baseline.risk_profile.build_gate_status, comparison.target.risk_profile.build_gate_status, "-")
 
     console.print(table)
 
