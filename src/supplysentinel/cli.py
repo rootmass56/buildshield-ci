@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import typer
 
 from supplysentinel.core.comparison import build_comparison_result
@@ -12,11 +14,43 @@ from supplysentinel.core.output import (
     render_scan_summary,
 )
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.reporters.report_generator import (
+    generate_comparison_report,
+    generate_scan_report,
+    write_report,
+)
 
 
 app = typer.Typer(
     help="SupplySentinel: Advanced CI/CD Supply Chain Risk Detection Platform"
 )
+
+
+def validate_report_format(report_format: str) -> str:
+    """
+    Validate report format provided by user.
+    """
+    normalized_format = report_format.lower().strip()
+
+    if normalized_format not in {"json", "md", "html"}:
+        raise typer.BadParameter("Report format must be one of: json, md, html")
+
+    return normalized_format
+
+
+def default_scan_report_path(target: str, report_format: str) -> str:
+    """
+    Build default scan report output path.
+    """
+    target_name = Path(target).name or "repository"
+    return f"reports/{target_name}-scan-report.{report_format}"
+
+
+def default_comparison_report_path(report_format: str) -> str:
+    """
+    Build default comparison report output path.
+    """
+    return f"reports/comparison-report.{report_format}"
 
 
 @app.command()
@@ -26,6 +60,17 @@ def scan(
         True,
         "--show-files/--hide-files",
         help="Show security-relevant files discovered during scan.",
+    ),
+    report_format: str | None = typer.Option(
+        None,
+        "--report-format",
+        help="Generate report in selected format: json, md, html.",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Report output file path.",
     ),
 ):
     """
@@ -46,6 +91,18 @@ def scan(
         render_discovered_files(result)
 
     render_findings(result)
+
+    if report_format:
+        normalized_format = validate_report_format(report_format)
+        report_content = generate_scan_report(result, normalized_format)
+
+        output_path = output or default_scan_report_path(
+            target=target,
+            report_format=normalized_format,
+        )
+
+        written_path = write_report(output_path, report_content)
+        console.print(f"[bold green]Report written to:[/bold green] {written_path}")
 
 
 @app.command()
@@ -68,6 +125,17 @@ def compare(
         "--target-label",
         help="Display label for target repository.",
     ),
+    report_format: str | None = typer.Option(
+        None,
+        "--report-format",
+        help="Generate comparison report in selected format: json, md, html.",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Comparison report output file path.",
+    ),
 ):
     """
     Compare two repositories and show security posture improvement.
@@ -89,6 +157,17 @@ def compare(
     )
 
     render_comparison(comparison)
+
+    if report_format:
+        normalized_format = validate_report_format(report_format)
+        report_content = generate_comparison_report(comparison, normalized_format)
+
+        output_path = output or default_comparison_report_path(
+            report_format=normalized_format,
+        )
+
+        written_path = write_report(output_path, report_content)
+        console.print(f"[bold green]Report written to:[/bold green] {written_path}")
 
 
 @app.command()
