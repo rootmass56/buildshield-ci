@@ -1,5 +1,6 @@
 import json
 from hashlib import sha256
+from pathlib import PurePosixPath
 
 from supplysentinel import __version__
 from supplysentinel.core.constants import Severity
@@ -13,17 +14,42 @@ SARIF_VERSION = "2.1.0"
 def normalize_artifact_uri(file_path: str) -> str:
     """
     Convert file paths into SARIF-friendly URI format.
-    SARIF prefers forward slashes.
+    SARIF uses repository-relative paths with forward slashes.
     """
     normalized = file_path.replace("\\", "/").strip()
 
     if normalized.startswith("./"):
         normalized = normalized[2:]
 
-    if not normalized:
+    normalized = str(PurePosixPath(normalized))
+
+    if normalized in {"", "."}:
         return "unknown"
 
     return normalized
+
+
+def build_repository_relative_uri(target_path: str, evidence_file_path: str) -> str:
+    """
+    Convert scanner evidence paths into repository-relative SARIF paths.
+
+    Example:
+    target_path = samples/vulnerable-repo
+    evidence_file_path = .github/workflows/build.yml
+
+    Result:
+    samples/vulnerable-repo/.github/workflows/build.yml
+    """
+    target = normalize_artifact_uri(target_path)
+    evidence = normalize_artifact_uri(evidence_file_path)
+
+    if target in {"", ".", "unknown"}:
+        return evidence
+
+    if evidence.startswith(f"{target}/"):
+        return evidence
+
+    return normalize_artifact_uri(f"{target}/{evidence}")
 
 
 def sarif_level_from_severity(severity: Severity) -> str:
@@ -54,14 +80,17 @@ def security_severity_score(severity: Severity) -> str:
     return mapping.get(severity, "1.0")
 
 
-def fingerprint_for_finding(finding: Finding) -> str:
+def fingerprint_for_finding(
+    finding: Finding,
+    repository_relative_uri: str,
+) -> str:
     """
-    Create deterministic fingerprint to help GitHub track duplicate alerts.
+    Create deterministic fingerprint to help platforms track duplicate alerts.
     """
     source = "|".join(
         [
             finding.rule_id,
-            normalize_artifact_uri(finding.evidence.file_path),
+            repository_relative_uri,
             str(finding.evidence.line_number or 1),
             finding.evidence.snippet or "",
             finding.title,
@@ -111,11 +140,18 @@ def build_sarif_rule(finding: Finding) -> dict:
     }
 
 
-def build_sarif_result(finding: Finding) -> dict:
+def build_sarif_result(
+    finding: Finding,
+    target_path: str,
+) -> dict:
     """
     Convert a BuildShield-CI finding into a SARIF result.
     """
-    artifact_uri = normalize_artifact_uri(finding.evidence.file_path)
+    artifact_uri = build_repository_relative_uri(
+        target_path=target_path,
+        evidence_file_path=finding.evidence.file_path,
+    )
+
     line_number = finding.evidence.line_number or 1
 
     message = (
@@ -144,7 +180,10 @@ def build_sarif_result(finding: Finding) -> dict:
             }
         ],
         "partialFingerprints": {
-            "primaryLocationLineHash": fingerprint_for_finding(finding),
+            "primaryLocationLineHash": fingerprint_for_finding(
+                finding=finding,
+                repository_relative_uri=artifact_uri,
+            ),
         },
         "properties": {
             "severity": finding.severity.value,
@@ -201,7 +240,10 @@ def generate_scan_sarif(result: ScanResult) -> str:
                     }
                 ],
                 "results": [
-                    build_sarif_result(finding)
+                    build_sarif_result(
+                        finding=finding,
+                        target_path=result.summary.target_path,
+                    )
                     for finding in result.findings
                 ],
                 "properties": {
