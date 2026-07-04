@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BuildShield-CI Security Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">🛡️</div>
+                <div>
+                    <h1>BuildShield-CI</h1>
+                    <p>DevSecOps Security Platform</p>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-link active" data-page="overview">Overview</button>
+                <button class="nav-link" data-page="scanner">Scanner</button>
+                <button class="nav-link" data-page="compare">Compare</button>
+                <button class="nav-link" data-page="findings">Findings</button>
+                <button class="nav-link" data-page="policy">Policy</button>
+                <button class="nav-link" data-page="reports">Reports</button>
+                <button class="nav-link" data-page="cicd">CI/CD</button>
+                <button class="nav-link" data-page="about">About</button>
+            </div>
+
+            <div class="engine-card">
+                <div class="pulse"></div>
+                <div>
+                    <strong>Engine Online</strong>
+                    <p id="engineVersion">Checking...</p>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <span>Security Mode</span>
+                <strong>Passive Static Analysis</strong>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">Advanced CI/CD Supply Chain Risk Analyzer</p>
+                    <h2 id="pageTitle">Security Command Center</h2>
+                </div>
+                <div class="topbar-actions">
+                    <button class="ghost" onclick="loadReports()">Refresh Reports</button>
+                    <button onclick="scanVulnerable()">Quick Risk Scan</button>
+                </div>
+            </header>
+
+            <section id="overview" class="page active">
+                <div class="hero-grid">
+                    <div class="hero-card">
+                        <p class="eyebrow">Live Security Posture</p>
+                        <h3>Detect dependency confusion and CI/CD supply-chain risks before deployment.</h3>
+                        <p>
+                            BuildShield-CI combines static analysis, policy-as-code, SARIF, reports,
+                            GitHub Actions automation, and a visual dashboard for DevSecOps teams.
+                        </p>
+                        <div class="hero-buttons">
+                            <button onclick="scanVulnerable()">Scan Vulnerable Repo</button>
+                            <button class="ghost" onclick="scanSecure()">Scan Secure Repo</button>
+                            <button class="ghost" onclick="compareSamples()">Compare Repos</button>
+                        </div>
+                    </div>
+
+                    <div class="risk-orb-card">
+                        <div class="risk-orb" id="riskOrb">
+                            <span id="orbScore">--</span>
+                            <small>Score</small>
+                        </div>
+                        <h4 id="orbStatus">No scan yet</h4>
+                        <p id="orbDescription">Run a repository scan to visualize risk posture.</p>
+                    </div>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <span>Security Score</span>
+                        <strong id="metricScore">--</strong>
+                        <p id="metricRisk">Waiting for scan</p>
+                    </div>
+                    <div class="metric-card">
+                        <span>Policy Status</span>
+                        <strong id="metricPolicy">--</strong>
+                        <p>Policy-as-code gate</p>
+                    </div>
+                    <div class="metric-card">
+                        <span>Total Findings</span>
+                        <strong id="metricFindings">--</strong>
+                        <p>Detected issues</p>
+                    </div>
+                    <div class="metric-card">
+                        <span>Build Gate</span>
+                        <strong id="metricGate">--</strong>
+                        <p>CI/CD readiness</p>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Severity Distribution</p>
+                                <h3>Finding Breakdown</h3>
+                            </div>
+                        </div>
+                        <div id="severityBars" class="severity-bars">
+                            <p class="muted">Run a scan to see severity distribution.</p>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Risk Intelligence</p>
+                                <h3>Top Risk Drivers</h3>
+                            </div>
+                        </div>
+                        <div id="topDrivers" class="driver-list">
+                            <p class="muted">Top risk drivers will appear here after scan.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="scanner" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Repository Scanner</p>
+                            <h3>Run Static Supply-Chain Scan</h3>
+                        </div>
+                        <span class="chip">Local Engine</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <label>
+                            Target Repository Path
+                            <input id="targetPath" value="samples/vulnerable-repo">
+                        </label>
+                        <label>
+                            Policy File
+                            <input id="policyPath" value="buildshield-policy.yml">
+                        </label>
+                    </div>
+
+                    <div class="option-row">
+                        <label class="check-pill">
+                            <input type="checkbox" id="formatJson" checked>
+                            JSON
+                        </label>
+                        <label class="check-pill">
+                            <input type="checkbox" id="formatMd" checked>
+                            Markdown
+                        </label>
+                        <label class="check-pill">
+                            <input type="checkbox" id="formatHtml" checked>
+                            HTML
+                        </label>
+                        <label class="check-pill">
+                            <input type="checkbox" id="formatSarif" checked>
+                            SARIF
+                        </label>
+                    </div>
+
+                    <div class="button-row">
+                        <button onclick="runCustomScan()">Run Scan</button>
+                        <button class="ghost" onclick="scanVulnerable()">Load Vulnerable Demo</button>
+                        <button class="ghost" onclick="scanSecure()">Load Secure Demo</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Scan Summary</p>
+                            <h3>Latest Scan Result</h3>
+                        </div>
+                    </div>
+                    <div id="scanSummaryTable" class="data-table-box">
+                        <p class="muted">No scan executed yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="compare" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Before / After Analysis</p>
+                            <h3>Security Posture Comparison</h3>
+                        </div>
+                        <button onclick="compareSamples()">Compare Vulnerable vs Secure</button>
+                    </div>
+
+                    <div id="comparisonResult" class="comparison-box">
+                        <p class="muted">Run comparison to view measurable risk reduction.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="findings" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Findings Explorer</p>
+                            <h3>Security Findings</h3>
+                        </div>
+                        <span id="findingCountBadge" class="chip">0 findings</span>
+                    </div>
+
+                    <div class="filter-row">
+                        <input id="findingSearch" placeholder="Search by rule, title, file, or severity..." oninput="applyFindingFilters()">
+                        <select id="severityFilter" onchange="applyFindingFilters()">
+                            <option value="ALL">All severities</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                            <option value="INFO">Info</option>
+                        </select>
+                    </div>
+
+                    <div id="findingsList" class="findings-list">
+                        <p class="muted">No scan executed yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="policy" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Policy-as-Code</p>
+                            <h3>Policy Evaluation</h3>
+                        </div>
+                        <span id="policyBadge" class="chip">Not evaluated</span>
+                    </div>
+
+                    <div id="policyPanel" class="policy-panel">
+                        <p class="muted">Run a scan with policy file to view policy violations.</p>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Policy Controls</p>
+                            <h3>Enforced Security Rules</h3>
+                        </div>
+                    </div>
+
+                    <div class="control-grid">
+                        <div class="control-card">Minimum score ≥ 80</div>
+                        <div class="control-card">No critical findings</div>
+                        <div class="control-card">No high findings</div>
+                        <div class="control-card">Require lockfiles</div>
+                        <div class="control-card">Pinned GitHub Actions</div>
+                        <div class="control-card">Block secret echoing</div>
+                        <div class="control-card">Block curl pipe shell</div>
+                        <div class="control-card">Block dependency confusion</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="reports" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Report Center</p>
+                            <h3>Generated Security Artifacts</h3>
+                        </div>
+                        <button class="ghost" onclick="loadReports()">Refresh Reports</button>
+                    </div>
+
+                    <div id="reportsList" class="reports-list">
+                        <p class="muted">No reports generated yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cicd" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Automation</p>
+                            <h3>CI/CD Pipeline Flow</h3>
+                        </div>
+                        <span class="chip success">GitHub Actions Ready</span>
+                    </div>
+
+                    <div class="pipeline">
+                        <div class="pipeline-step">
+                            <strong>1</strong>
+                            <span>Checkout Repository</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <strong>2</strong>
+                            <span>Install BuildShield-CI</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <strong>3</strong>
+                            <span>Run Tests</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <strong>4</strong>
+                            <span>Apply Policy Gate</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <strong>5</strong>
+                            <span>Generate Reports</span>
+                        </div>
+                        <div class="pipeline-step">
+                            <strong>6</strong>
+                            <span>Upload SARIF</span>
+                        </div>
+                    </div>
+
+                    <div class="code-box">
+                        <pre>buildshield scan samples/secure-repo --policy buildshield-policy.yml --fail-on-policy</pre>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Project Summary</p>
+                            <h3>BuildShield-CI Capabilities</h3>
+                        </div>
+                    </div>
+
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h4>Dependency Confusion Defense</h4>
+                            <p>Detects internal package naming risks and missing private registry configuration.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>GitHub Actions Hardening</h4>
+                            <p>Detects unpinned actions, risky permissions, secret echoing, and unsafe triggers.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Policy-as-Code</h4>
+                            <p>Uses YAML policy to decide whether builds should pass or fail.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>SARIF Integration</h4>
+                            <p>Uploads findings to GitHub Code Scanning for security visibility.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Report Downloads</h4>
+                            <p>Generates JSON, Markdown, HTML, and SARIF reports from the dashboard.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Automated Testing</h4>
+                            <p>Includes pytest validation for scanner, policy, reporters, SARIF, and CLI.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="/static/app.js"></script>
+</body>
+</html>
