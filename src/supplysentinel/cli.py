@@ -21,6 +21,7 @@ from supplysentinel.reporters.report_generator import (
     generate_scan_report,
     write_report,
 )
+from supplysentinel.reporters.sarif_reporter import generate_scan_sarif
 
 
 app = typer.Typer(
@@ -28,11 +29,20 @@ app = typer.Typer(
 )
 
 
-def validate_report_format(report_format: str) -> str:
+def validate_scan_report_format(report_format: str) -> str:
+    normalized_format = report_format.lower().strip()
+
+    if normalized_format not in {"json", "md", "html", "sarif"}:
+        raise typer.BadParameter("Report format must be one of: json, md, html, sarif")
+
+    return normalized_format
+
+
+def validate_comparison_report_format(report_format: str) -> str:
     normalized_format = report_format.lower().strip()
 
     if normalized_format not in {"json", "md", "html"}:
-        raise typer.BadParameter("Report format must be one of: json, md, html")
+        raise typer.BadParameter("Comparison report format must be one of: json, md, html")
 
     return normalized_format
 
@@ -46,6 +56,13 @@ def default_comparison_report_path(report_format: str) -> str:
     return f"reports/comparison-report.{report_format}"
 
 
+def generate_scan_report_by_format(result, report_format: str) -> str:
+    if report_format == "sarif":
+        return generate_scan_sarif(result)
+
+    return generate_scan_report(result, report_format)
+
+
 @app.command()
 def scan(
     target: str = typer.Argument(".", help="Path to repository to scan"),
@@ -57,7 +74,7 @@ def scan(
     report_format: str | None = typer.Option(
         None,
         "--report-format",
-        help="Generate report in selected format: json, md, html.",
+        help="Generate report in selected format: json, md, html, sarif.",
     ),
     output: str | None = typer.Option(
         None,
@@ -105,8 +122,8 @@ def scan(
     render_findings(result)
 
     if report_format:
-        normalized_format = validate_report_format(report_format)
-        report_content = generate_scan_report(result, normalized_format)
+        normalized_format = validate_scan_report_format(report_format)
+        report_content = generate_scan_report_by_format(result, normalized_format)
 
         output_path = output or default_scan_report_path(
             target=target,
@@ -172,7 +189,7 @@ def compare(
     render_comparison(comparison)
 
     if report_format:
-        normalized_format = validate_report_format(report_format)
+        normalized_format = validate_comparison_report_format(report_format)
         report_content = generate_comparison_report(comparison, normalized_format)
 
         output_path = output or default_comparison_report_path(

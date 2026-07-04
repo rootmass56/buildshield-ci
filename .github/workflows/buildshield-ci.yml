@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  actions: read
+  security-events: write
 
 jobs:
   buildshield-security-gate:
@@ -79,6 +81,21 @@ jobs:
             --policy buildshield-policy.yml \
             --report-format md \
             --output reports/vulnerable-policy-report.md
+
+      - name: Generate SARIF report for GitHub code scanning
+        if: always()
+        run: |
+          supplysentinel scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --report-format sarif \
+            --output reports/buildshield-results.sarif
+
+      - name: Upload SARIF to GitHub code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: reports/buildshield-results.sarif
+          category: buildshield-ci
 
       - name: Generate before-after comparison reports
         if: always()
