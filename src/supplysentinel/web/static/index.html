@@ -21,6 +21,7 @@
                 <button class="nav-link active" data-page="overview">Overview</button>
                 <button class="nav-link" data-page="scanner">Scanner</button>
                 <button class="nav-link" data-page="inventory">SBOM Inventory</button>
+                <button class="nav-link" data-page="history">History & Trends</button>
                 <button class="nav-link" data-page="compare">Compare</button>
                 <button class="nav-link" data-page="findings">Findings</button>
                 <button class="nav-link" data-page="policy">Policy</button>
@@ -50,6 +51,7 @@
                     <h2 id="pageTitle">Security Command Center</h2>
                 </div>
                 <div class="topbar-actions">
+                    <button class="ghost" onclick="loadHistoryAndTrend()">Refresh History</button>
                     <button class="ghost" onclick="loadReports()">Refresh Reports</button>
                     <button onclick="scanVulnerable()">Quick Risk Scan</button>
                 </div>
@@ -63,8 +65,8 @@
                             <h3>Protect CI/CD pipelines from supply-chain and dependency risks.</h3>
                             <p>
                                 BuildShield-CI combines repository scanning, policy-as-code, SARIF,
-                                dependency inventory, report generation, GitHub Actions automation,
-                                and a premium security dashboard.
+                                dependency inventory, scan history, risk trends, report generation,
+                                GitHub Actions automation, and a premium security dashboard.
                             </p>
 
                             <div class="hero-buttons">
@@ -247,6 +249,66 @@
                 </div>
             </section>
 
+            <section id="history" class="page">
+                <div class="history-hero panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Security Posture Over Time</p>
+                            <h3>Risk Trend Dashboard</h3>
+                        </div>
+                        <button onclick="loadHistoryAndTrend()">Refresh History</button>
+                    </div>
+
+                    <div class="history-summary-grid" id="historySummary">
+                        <div class="mini-card"><span>Total Stored Scans</span><strong>--</strong></div>
+                        <div class="mini-card"><span>Latest Score</span><strong>--</strong></div>
+                        <div class="mini-card"><span>Average Score</span><strong>--</strong></div>
+                        <div class="mini-card"><span>Policy Failures</span><strong>--</strong></div>
+                        <div class="mini-card"><span>Latest Gate</span><strong>--</strong></div>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Score Trend</p>
+                                <h3>Security Score Movement</h3>
+                            </div>
+                        </div>
+                        <div id="scoreTrendChart" class="trend-chart">
+                            <p class="muted">No trend data yet. Run scans from the dashboard.</p>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <p class="eyebrow">Finding Trend</p>
+                                <h3>Findings Over Time</h3>
+                            </div>
+                        </div>
+                        <div id="findingTrendChart" class="trend-chart">
+                            <p class="muted">No trend data yet. Run scans from the dashboard.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Scan Timeline</p>
+                            <h3>Recent Scan History</h3>
+                        </div>
+                        <span id="historyCountBadge" class="chip">0 scans</span>
+                    </div>
+
+                    <div id="historyTable" class="history-table-box">
+                        <p class="muted">No scan history yet.</p>
+                    </div>
+                </div>
+            </section>
+
             <section id="compare" class="page">
                 <div class="panel">
                     <div class="panel-header">
@@ -380,8 +442,8 @@
                     <div class="feature-grid">
                         <div class="feature-card"><h4>Dependency Confusion Defense</h4><p>Detects internal package risks and missing private registry configuration.</p></div>
                         <div class="feature-card"><h4>SBOM-lite Inventory</h4><p>Builds npm and Python dependency inventory with risk indicators.</p></div>
-                        <div class="feature-card"><h4>GitHub Actions Hardening</h4><p>Detects unpinned actions, risky permissions, secret echoing, and unsafe triggers.</p></div>
-                        <div class="feature-card"><h4>Policy-as-Code</h4><p>Uses YAML policy to decide whether builds should pass or fail.</p></div>
+                        <div class="feature-card"><h4>Container Security</h4><p>Detects Dockerfile hardening risks such as latest tags, secrets, root containers, and missing health checks.</p></div>
+                        <div class="feature-card"><h4>Scan History</h4><p>Stores dashboard scans in SQLite and visualizes risk posture over time.</p></div>
                         <div class="feature-card"><h4>SARIF Integration</h4><p>Uploads findings to GitHub Code Scanning for security visibility.</p></div>
                         <div class="feature-card"><h4>Report Downloads</h4><p>Generates JSON, Markdown, HTML, SARIF, and inventory reports.</p></div>
                     </div>

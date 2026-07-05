@@ -4,6 +4,8 @@ const state = {
     latestReports: [],
     latestInventory: null,
     latestDependencies: [],
+    latestHistory: [],
+    latestTrend: [],
 };
 
 const pageTitle = document.getElementById("pageTitle");
@@ -37,10 +39,17 @@ const inventorySummary = document.getElementById("inventorySummary");
 const inventoryList = document.getElementById("inventoryList");
 const inventoryCountBadge = document.getElementById("inventoryCountBadge");
 
+const historySummary = document.getElementById("historySummary");
+const historyTable = document.getElementById("historyTable");
+const historyCountBadge = document.getElementById("historyCountBadge");
+const scoreTrendChart = document.getElementById("scoreTrendChart");
+const findingTrendChart = document.getElementById("findingTrendChart");
+
 const pageNames = {
     overview: "Security Command Center",
     scanner: "Repository Scanner",
     inventory: "SBOM-lite Dependency Inventory",
+    history: "Risk Trend Dashboard",
     compare: "Before / After Comparison",
     findings: "Findings Explorer",
     policy: "Policy-as-Code",
@@ -65,6 +74,10 @@ function showPage(page) {
     });
 
     pageTitle.textContent = pageNames[page] || "BuildShield-CI";
+
+    if (page === "history") {
+        loadHistoryAndTrend();
+    }
 }
 
 function showToast(message) {
@@ -281,7 +294,7 @@ function renderPolicy(policy) {
     }
 
     policyBadge.textContent = policy.passed ? "PASSED" : "FAILED";
-    policyBadge.className = policy.passed ? "chip success" : "chip";
+    policyBadge.className = policy.passed ? "chip success" : "chip failed";
 
     if (policy.passed) {
         policyPanel.innerHTML = `
@@ -442,6 +455,130 @@ function applyInventoryFilters() {
     renderInventoryDependencies(filtered);
 }
 
+function formatDateTime(value) {
+    if (!value) return "-";
+
+    try {
+        const date = new Date(value);
+        return date.toLocaleString();
+    } catch {
+        return value;
+    }
+}
+
+function renderHistorySummary(history) {
+    if (!history.length) {
+        historySummary.innerHTML = `
+            <div class="mini-card"><span>Total Stored Scans</span><strong>0</strong></div>
+            <div class="mini-card"><span>Latest Score</span><strong>--</strong></div>
+            <div class="mini-card"><span>Average Score</span><strong>--</strong></div>
+            <div class="mini-card"><span>Policy Failures</span><strong>--</strong></div>
+            <div class="mini-card"><span>Latest Gate</span><strong>--</strong></div>
+        `;
+        return;
+    }
+
+    const latest = history[0];
+    const total = history.length;
+    const averageScore = Math.round(
+        history.reduce((sum, item) => sum + Number(item.security_score || 0), 0) / total
+    );
+    const policyFailures = history.filter((item) => item.policy_status === "FAILED").length;
+
+    historySummary.innerHTML = `
+        <div class="mini-card"><span>Total Stored Scans</span><strong>${total}</strong></div>
+        <div class="mini-card"><span>Latest Score</span><strong>${latest.security_score}/100</strong></div>
+        <div class="mini-card"><span>Average Score</span><strong>${averageScore}/100</strong></div>
+        <div class="mini-card"><span>Policy Failures</span><strong>${policyFailures}</strong></div>
+        <div class="mini-card"><span>Latest Gate</span><strong>${latest.build_gate_status}</strong></div>
+    `;
+}
+
+function renderTrendBars(container, trend, valueKey, labelSuffix, className = "") {
+    if (!trend.length) {
+        container.innerHTML = `<p class="muted">No trend data yet. Run scans from the dashboard.</p>`;
+        return;
+    }
+
+    const maxValue = Math.max(...trend.map((item) => Number(item[valueKey] || 0)), 1);
+
+    container.innerHTML = `
+        <div class="trend-bars">
+            ${trend.map((item, index) => {
+                const value = Number(item[valueKey] || 0);
+                const height = Math.max(6, (value / maxValue) * 200);
+
+                return `
+                    <div class="trend-bar-wrap" title="${item.target_path} | ${formatDateTime(item.created_at)}">
+                        <span class="trend-value">${value}${labelSuffix}</span>
+                        <div class="trend-bar ${className}" style="height:${height}px"></div>
+                        <span class="trend-label">#${index + 1}</span>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+function renderHistoryTable(history) {
+    historyCountBadge.textContent = `${history.length} scans`;
+
+    if (!history.length) {
+        historyTable.innerHTML = `<p class="muted">No scan history yet.</p>`;
+        return;
+    }
+
+    historyTable.innerHTML = `
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Target</th>
+                    <th>Score</th>
+                    <th>Risk</th>
+                    <th>Findings</th>
+                    <th>Critical</th>
+                    <th>High</th>
+                    <th>Policy</th>
+                    <th>Gate</th>
+                    <th>Reports</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${history.map((item) => {
+                    const statusClass = item.policy_status === "PASSED"
+                        ? "passed"
+                        : item.policy_status === "FAILED"
+                            ? "failed"
+                            : "unknown";
+
+                    return `
+                        <tr>
+                            <td>${formatDateTime(item.created_at)}</td>
+                            <td><strong>${item.target_path}</strong></td>
+                            <td>${item.security_score}/100</td>
+                            <td>${item.risk_level}</td>
+                            <td>${item.findings_count}</td>
+                            <td>${item.critical_count}</td>
+                            <td>${item.high_count}</td>
+                            <td><span class="history-status ${statusClass}">${item.policy_status}</span></td>
+                            <td>${item.build_gate_status}</td>
+                            <td>${item.report_count}</td>
+                        </tr>
+                    `;
+                }).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+function renderHistoryAndTrend(history, trend) {
+    renderHistorySummary(history);
+    renderTrendBars(scoreTrendChart, trend, "security_score", "");
+    renderTrendBars(findingTrendChart, trend, "findings_count", "", "findings");
+    renderHistoryTable(history);
+}
+
 async function runScan(targetPath, policyPath = "buildshield-policy.yml") {
     showToast("Running scan...");
 
@@ -462,7 +599,9 @@ async function runScan(targetPath, policyPath = "buildshield-policy.yml") {
     renderPolicy(data.policy_evaluation);
     renderReports(data.reports);
 
-    showToast("Scan completed.");
+    await loadHistoryAndTrend(false);
+
+    showToast("Scan completed and stored in history.");
     return data;
 }
 
@@ -582,11 +721,30 @@ async function loadReports() {
     }
 }
 
+async function loadHistoryAndTrend(showMessage = true) {
+    try {
+        const historyResponse = await apiGet("/api/history?limit=20");
+        const trendResponse = await apiGet("/api/history/trend?limit=20");
+
+        state.latestHistory = historyResponse.history || [];
+        state.latestTrend = trendResponse.trend || [];
+
+        renderHistoryAndTrend(state.latestHistory, state.latestTrend);
+
+        if (showMessage) {
+            showToast("History refreshed.");
+        }
+    } catch (error) {
+        showToast(error.message);
+    }
+}
+
 async function initializeDashboard() {
     try {
         const health = await apiGet("/health");
         engineVersion.textContent = `${health.product} v${health.version}`;
         await loadReports();
+        await loadHistoryAndTrend(false);
     } catch (error) {
         engineVersion.textContent = "Backend unavailable";
     }
