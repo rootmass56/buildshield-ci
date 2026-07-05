@@ -17,6 +17,11 @@ from supplysentinel.core.output import (
     render_scan_summary,
 )
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.intelligence.osv_client import (
+    OsvVulnerabilityReport,
+    build_osv_vulnerability_report,
+    write_osv_report_json,
+)
 from supplysentinel.inventory.dependency_inventory import (
     DependencyInventory,
     build_dependency_inventory,
@@ -66,6 +71,11 @@ def default_comparison_report_path(report_format: str) -> str:
 def default_inventory_report_path(target: str) -> str:
     target_name = Path(target).name or "repository"
     return f"reports/{target_name}-dependency-inventory.json"
+
+
+def default_osv_report_path(target: str) -> str:
+    target_name = Path(target).name or "repository"
+    return f"reports/{target_name}-osv-vulnerability-intelligence.json"
 
 
 def generate_scan_report_by_format(result, report_format: str) -> str:
@@ -149,6 +159,72 @@ def render_dependency_inventory(
         )
 
     console.print(package_table)
+
+
+def render_osv_vulnerability_report(report: OsvVulnerabilityReport) -> None:
+    summary = report.summary
+
+    summary_table = Table(
+        title="OSV Vulnerability Intelligence Summary",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    summary_table.add_column("Metric", style="white")
+    summary_table.add_column("Value", style="green")
+
+    summary_table.add_row("Target Path", summary.target_path)
+    summary_table.add_row("Lookup Status", summary.online_lookup_status)
+    summary_table.add_row("Dependencies Seen", str(summary.total_dependencies_seen))
+    summary_table.add_row("Queryable Dependencies", str(summary.queryable_dependencies))
+    summary_table.add_row("Skipped Dependencies", str(summary.skipped_dependencies))
+    summary_table.add_row("Vulnerable Dependencies", str(summary.vulnerable_dependencies))
+    summary_table.add_row("Total Vulnerabilities", str(summary.total_vulnerabilities))
+
+    if summary.error_message:
+        summary_table.add_row("Lookup Message", summary.error_message)
+
+    console.print(summary_table)
+
+    vulnerable_results = [
+        result
+        for result in report.package_results
+        if result.vulnerability_count > 0
+    ]
+
+    if not vulnerable_results:
+        console.print(
+            "[bold green]No vulnerabilities returned for queryable dependencies.[/bold green]"
+        )
+        return
+
+    vuln_table = Table(
+        title="Known Vulnerable Dependencies",
+        show_header=True,
+        header_style="bold red",
+    )
+    vuln_table.add_column("Ecosystem", style="cyan")
+    vuln_table.add_column("Package", style="white")
+    vuln_table.add_column("Version", style="green")
+    vuln_table.add_column("Vuln Count", style="red")
+    vuln_table.add_column("Vulnerability IDs", style="yellow")
+    vuln_table.add_column("File", style="blue")
+
+    for result in vulnerable_results:
+        vuln_ids = ", ".join(
+            vulnerability.vulnerability_id
+            for vulnerability in result.vulnerabilities
+        )
+
+        vuln_table.add_row(
+            result.osv_ecosystem or result.ecosystem,
+            result.package_name,
+            result.version or "-",
+            str(result.vulnerability_count),
+            vuln_ids,
+            f"{result.file_path}:{result.line_number or '-'}",
+        )
+
+    console.print(vuln_table)
 
 
 @app.command()
@@ -263,10 +339,7 @@ def inventory(
         show_packages=show_packages,
     )
 
-    if output:
-        output_path = output
-    else:
-        output_path = default_inventory_report_path(target)
+    output_path = output or default_inventory_report_path(target)
 
     written_path = write_inventory_json(
         inventory=dependency_inventory,
@@ -275,6 +348,58 @@ def inventory(
 
     console.print(
         f"[bold green]Dependency inventory written to:[/bold green] {written_path}"
+    )
+
+
+@app.command()
+def vulncheck(
+    target: str = typer.Argument(
+        ".",
+        help="Path to repository for OSV vulnerability intelligence lookup.",
+    ),
+    online: bool = typer.Option(
+        True,
+        "--online/--offline-plan",
+        help="Perform live OSV lookup or only build the query plan.",
+    ),
+    timeout: int = typer.Option(
+        10,
+        "--timeout",
+        help="OSV API timeout in seconds.",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Write OSV vulnerability intelligence JSON report to this path.",
+    ),
+):
+    """
+    Check pinned npm and Python dependencies against OSV vulnerability intelligence.
+    """
+    render_banner()
+
+    try:
+        report = build_osv_vulnerability_report(
+            target=target,
+            online_lookup=online,
+            timeout_seconds=timeout,
+        )
+    except (FileNotFoundError, NotADirectoryError, ValueError) as error:
+        console.print(f"[bold red]Error:[/bold red] {error}")
+        raise typer.Exit(code=1)
+
+    render_osv_vulnerability_report(report)
+
+    output_path = output or default_osv_report_path(target)
+
+    written_path = write_osv_report_json(
+        report=report,
+        output_path=output_path,
+    )
+
+    console.print(
+        f"[bold green]OSV vulnerability report written to:[/bold green] {written_path}"
     )
 
 

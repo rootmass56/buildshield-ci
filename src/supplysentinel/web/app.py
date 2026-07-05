@@ -11,6 +11,10 @@ from pydantic import BaseModel, Field
 from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
 from supplysentinel.core.comparison import build_comparison_result
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.intelligence.osv_client import (
+    build_osv_vulnerability_report,
+    generate_osv_report_json,
+)
 from supplysentinel.inventory.dependency_inventory import (
     build_dependency_inventory,
     generate_inventory_json,
@@ -54,6 +58,12 @@ class CompareRequest(BaseModel):
 
 class InventoryRequest(BaseModel):
     target_path: str = Field(default="samples/vulnerable-repo")
+
+
+class VulnerabilityIntelligenceRequest(BaseModel):
+    target_path: str = Field(default="samples/secure-repo")
+    online_lookup: bool = Field(default=False)
+    timeout_seconds: int = Field(default=10)
 
 
 app = FastAPI(
@@ -196,6 +206,16 @@ def save_inventory_report(run_id: str, inventory) -> list[dict[str, str]]:
     return [build_report_link(run_id, written_path)]
 
 
+def save_vulnerability_intelligence_report(run_id: str, report) -> list[dict[str, str]]:
+    run_dir = REPORTS_ROOT / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    output_path = run_dir / "osv-vulnerability-intelligence.json"
+    written_path = write_report(str(output_path), generate_osv_report_json(report))
+
+    return [build_report_link(run_id, written_path)]
+
+
 @app.get("/")
 def dashboard() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
@@ -306,6 +326,36 @@ def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
         "kind": "inventory",
         "target_path": request.target_path,
         "inventory": model_to_json_safe(inventory),
+        "reports": reports,
+    }
+
+
+@app.post("/api/vulnerability-intelligence")
+def vulnerability_intelligence_api(
+    request: VulnerabilityIntelligenceRequest,
+) -> dict[str, Any]:
+    resolve_project_path(request.target_path)
+
+    try:
+        report = build_osv_vulnerability_report(
+            target=request.target_path,
+            online_lookup=request.online_lookup,
+            timeout_seconds=request.timeout_seconds,
+        )
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+    run_id = timestamp_id("osv")
+    reports = save_vulnerability_intelligence_report(
+        run_id=run_id,
+        report=report,
+    )
+
+    return {
+        "run_id": run_id,
+        "kind": "vulnerability_intelligence",
+        "target_path": request.target_path,
+        "vulnerability_report": model_to_json_safe(report),
         "reports": reports,
     }
 
