@@ -2,6 +2,8 @@ const state = {
     latestScan: null,
     latestFindings: [],
     latestReports: [],
+    latestInventory: null,
+    latestDependencies: [],
 };
 
 const pageTitle = document.getElementById("pageTitle");
@@ -22,16 +24,23 @@ const riskOrb = document.getElementById("riskOrb");
 const severityBars = document.getElementById("severityBars");
 const topDrivers = document.getElementById("topDrivers");
 const scanSummaryTable = document.getElementById("scanSummaryTable");
+
 const findingsList = document.getElementById("findingsList");
 const findingCountBadge = document.getElementById("findingCountBadge");
+
 const reportsList = document.getElementById("reportsList");
 const policyPanel = document.getElementById("policyPanel");
 const policyBadge = document.getElementById("policyBadge");
 const comparisonResult = document.getElementById("comparisonResult");
 
+const inventorySummary = document.getElementById("inventorySummary");
+const inventoryList = document.getElementById("inventoryList");
+const inventoryCountBadge = document.getElementById("inventoryCountBadge");
+
 const pageNames = {
     overview: "Security Command Center",
     scanner: "Repository Scanner",
+    inventory: "SBOM-lite Dependency Inventory",
     compare: "Before / After Comparison",
     findings: "Findings Explorer",
     policy: "Policy-as-Code",
@@ -42,8 +51,7 @@ const pageNames = {
 
 document.querySelectorAll(".nav-link").forEach((button) => {
     button.addEventListener("click", () => {
-        const page = button.dataset.page;
-        showPage(page);
+        showPage(button.dataset.page);
     });
 });
 
@@ -108,10 +116,7 @@ function selectedReportFormats() {
 }
 
 function policyStatusText(policyEvaluation) {
-    if (!policyEvaluation) {
-        return "N/A";
-    }
-
+    if (!policyEvaluation) return "N/A";
     return policyEvaluation.passed ? "PASSED" : "FAILED";
 }
 
@@ -139,7 +144,7 @@ function updateMetrics(data) {
 
     riskOrb.style.background = `
         radial-gradient(circle, #0f172a 44%, transparent 45%),
-        conic-gradient(${color} ${degrees}deg, rgba(36, 52, 77, 0.75) ${degrees}deg)
+        conic-gradient(${color} ${degrees}deg, rgba(38, 56, 83, 0.75) ${degrees}deg)
     `;
 }
 
@@ -354,6 +359,89 @@ function renderComparison(data) {
     `;
 }
 
+function renderInventorySummary(summary) {
+    inventorySummary.innerHTML = `
+        <div class="mini-card"><span>Total Dependencies</span><strong>${summary.total_dependencies}</strong></div>
+        <div class="mini-card"><span>Pinned</span><strong>${summary.pinned_dependencies}</strong></div>
+        <div class="mini-card"><span>Loose</span><strong>${summary.loose_dependencies}</strong></div>
+        <div class="mini-card"><span>Internal Candidates</span><strong>${summary.internal_candidate_dependencies}</strong></div>
+        <div class="mini-card"><span>Missing Private Registry</span><strong>${summary.dependencies_missing_private_registry}</strong></div>
+    `;
+}
+
+function renderInventoryDependencies(dependencies) {
+    inventoryCountBadge.textContent = `${dependencies.length} packages`;
+
+    if (!dependencies.length) {
+        inventoryList.innerHTML = `<p class="muted">No dependencies discovered.</p>`;
+        return;
+    }
+
+    inventoryList.innerHTML = `
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Ecosystem</th>
+                    <th>Package</th>
+                    <th>Version</th>
+                    <th>Group</th>
+                    <th>Pinned</th>
+                    <th>Internal</th>
+                    <th>File</th>
+                    <th>Risk Indicators</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${dependencies.map((dependency) => {
+                    const indicators = dependency.risk_indicators || [];
+                    const indicatorHtml = indicators.map((indicator) => {
+                        const isDanger = indicator !== "LOW_RISK_DECLARATION";
+                        return `<span class="risk-tag ${isDanger ? "danger" : ""}">${indicator}</span>`;
+                    }).join("");
+
+                    return `
+                        <tr>
+                            <td>${dependency.ecosystem}</td>
+                            <td><strong>${dependency.name}</strong></td>
+                            <td>${dependency.declared_version || "-"}</td>
+                            <td>${dependency.dependency_group}</td>
+                            <td>${dependency.is_pinned ? "YES" : "NO"}</td>
+                            <td>${dependency.is_internal_candidate ? "YES" : "NO"}</td>
+                            <td>${dependency.file_path}:${dependency.line_number || "-"}</td>
+                            <td>${indicatorHtml}</td>
+                        </tr>
+                    `;
+                }).join("")}
+            </tbody>
+        </table>
+    `;
+}
+
+function applyInventoryFilters() {
+    const query = document.getElementById("inventorySearch").value.toLowerCase();
+    const riskFilter = document.getElementById("inventoryRiskFilter").value;
+
+    const filtered = state.latestDependencies.filter((dependency) => {
+        const indicators = dependency.risk_indicators || [];
+
+        const searchable = [
+            dependency.ecosystem,
+            dependency.name,
+            dependency.declared_version,
+            dependency.dependency_group,
+            dependency.file_path,
+            indicators.join(" "),
+        ].join(" ").toLowerCase();
+
+        const matchesQuery = searchable.includes(query);
+        const matchesRisk = riskFilter === "ALL" || indicators.includes(riskFilter);
+
+        return matchesQuery && matchesRisk;
+    });
+
+    renderInventoryDependencies(filtered);
+}
+
 async function runScan(targetPath, policyPath = "buildshield-policy.yml") {
     showToast("Running scan...");
 
@@ -407,6 +495,57 @@ async function scanSecure() {
     try {
         await runScan("samples/secure-repo");
         showPage("overview");
+    } catch (error) {
+        showToast(error.message);
+    }
+}
+
+async function runInventory(targetPath) {
+    showToast("Generating dependency inventory...");
+
+    const data = await apiPost("/api/inventory", {
+        target_path: targetPath,
+    });
+
+    const inventory = data.inventory;
+    state.latestInventory = inventory;
+    state.latestDependencies = inventory.dependencies || [];
+
+    renderInventorySummary(inventory.summary);
+    renderInventoryDependencies(state.latestDependencies);
+    renderReports(data.reports);
+
+    showToast("SBOM-lite inventory generated.");
+    showPage("inventory");
+
+    return data;
+}
+
+async function runInventoryCustom() {
+    const targetPath = document.getElementById("inventoryTarget").value;
+
+    try {
+        await runInventory(targetPath);
+    } catch (error) {
+        showToast(error.message);
+    }
+}
+
+async function runInventoryVulnerable() {
+    document.getElementById("inventoryTarget").value = "samples/vulnerable-repo";
+
+    try {
+        await runInventory("samples/vulnerable-repo");
+    } catch (error) {
+        showToast(error.message);
+    }
+}
+
+async function runInventorySecure() {
+    document.getElementById("inventoryTarget").value = "samples/secure-repo";
+
+    try {
+        await runInventory("samples/secure-repo");
     } catch (error) {
         showToast(error.message);
     }

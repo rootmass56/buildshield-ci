@@ -20,6 +20,7 @@
             <div class="nav-group">
                 <button class="nav-link active" data-page="overview">Overview</button>
                 <button class="nav-link" data-page="scanner">Scanner</button>
+                <button class="nav-link" data-page="inventory">SBOM Inventory</button>
                 <button class="nav-link" data-page="compare">Compare</button>
                 <button class="nav-link" data-page="findings">Findings</button>
                 <button class="nav-link" data-page="policy">Policy</button>
@@ -37,8 +38,8 @@
             </div>
 
             <div class="sidebar-footer">
-                <span>Security Mode</span>
-                <strong>Passive Static Analysis</strong>
+                <span>Analysis Mode</span>
+                <strong>Passive Static Security Analysis</strong>
             </div>
         </aside>
 
@@ -57,16 +58,21 @@
             <section id="overview" class="page active">
                 <div class="hero-grid">
                     <div class="hero-card">
-                        <p class="eyebrow">Live Security Posture</p>
-                        <h3>Detect dependency confusion and CI/CD supply-chain risks before deployment.</h3>
-                        <p>
-                            BuildShield-CI combines static analysis, policy-as-code, SARIF, reports,
-                            GitHub Actions automation, and a visual dashboard for DevSecOps teams.
-                        </p>
-                        <div class="hero-buttons">
-                            <button onclick="scanVulnerable()">Scan Vulnerable Repo</button>
-                            <button class="ghost" onclick="scanSecure()">Scan Secure Repo</button>
-                            <button class="ghost" onclick="compareSamples()">Compare Repos</button>
+                        <div class="hero-content">
+                            <p class="eyebrow">Live Security Posture</p>
+                            <h3>Protect CI/CD pipelines from supply-chain and dependency risks.</h3>
+                            <p>
+                                BuildShield-CI combines repository scanning, policy-as-code, SARIF,
+                                dependency inventory, report generation, GitHub Actions automation,
+                                and a premium security dashboard.
+                            </p>
+
+                            <div class="hero-buttons">
+                                <button onclick="scanVulnerable()">Scan Vulnerable Repo</button>
+                                <button class="ghost" onclick="scanSecure()">Scan Secure Repo</button>
+                                <button class="ghost" onclick="runInventoryVulnerable()">Generate SBOM-lite</button>
+                                <button class="ghost" onclick="compareSamples()">Compare Repos</button>
+                            </div>
                         </div>
                     </div>
 
@@ -135,7 +141,7 @@
                     <div class="panel-header">
                         <div>
                             <p class="eyebrow">Repository Scanner</p>
-                            <h3>Run Static Supply-Chain Scan</h3>
+                            <h3>Run Supply-Chain Security Scan</h3>
                         </div>
                         <span class="chip">Local Engine</span>
                     </div>
@@ -152,40 +158,91 @@
                     </div>
 
                     <div class="option-row">
-                        <label class="check-pill">
-                            <input type="checkbox" id="formatJson" checked>
-                            JSON
-                        </label>
-                        <label class="check-pill">
-                            <input type="checkbox" id="formatMd" checked>
-                            Markdown
-                        </label>
-                        <label class="check-pill">
-                            <input type="checkbox" id="formatHtml" checked>
-                            HTML
-                        </label>
-                        <label class="check-pill">
-                            <input type="checkbox" id="formatSarif" checked>
-                            SARIF
-                        </label>
+                        <label class="check-pill"><input type="checkbox" id="formatJson" checked> JSON</label>
+                        <label class="check-pill"><input type="checkbox" id="formatMd" checked> Markdown</label>
+                        <label class="check-pill"><input type="checkbox" id="formatHtml" checked> HTML</label>
+                        <label class="check-pill"><input type="checkbox" id="formatSarif" checked> SARIF</label>
                     </div>
 
                     <div class="button-row">
                         <button onclick="runCustomScan()">Run Scan</button>
-                        <button class="ghost" onclick="scanVulnerable()">Load Vulnerable Demo</button>
-                        <button class="ghost" onclick="scanSecure()">Load Secure Demo</button>
+                        <button class="ghost" onclick="scanVulnerable()">Vulnerable Sample</button>
+                        <button class="ghost" onclick="scanSecure()">Secure Sample</button>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
                         <div>
-                            <p class="eyebrow">Scan Summary</p>
-                            <h3>Latest Scan Result</h3>
+                            <p class="eyebrow">Latest Scan</p>
+                            <h3>Scan Summary</h3>
                         </div>
                     </div>
                     <div id="scanSummaryTable" class="data-table-box">
                         <p class="muted">No scan executed yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inventory" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">SBOM-lite</p>
+                            <h3>Dependency Inventory</h3>
+                        </div>
+                        <span id="inventoryCountBadge" class="chip">0 packages</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <label>
+                            Repository Path
+                            <input id="inventoryTarget" value="samples/vulnerable-repo">
+                        </label>
+                        <label>
+                            Inventory Mode
+                            <input value="npm + Python dependency inventory" disabled>
+                        </label>
+                    </div>
+
+                    <div class="button-row">
+                        <button onclick="runInventoryCustom()">Generate Inventory</button>
+                        <button class="ghost" onclick="runInventoryVulnerable()">Vulnerable Inventory</button>
+                        <button class="ghost" onclick="runInventorySecure()">Secure Inventory</button>
+                    </div>
+                </div>
+
+                <div class="inventory-summary-grid" id="inventorySummary">
+                    <div class="mini-card"><span>Total Dependencies</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Pinned</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Loose</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Internal Candidates</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Missing Private Registry</span><strong>--</strong></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Package Explorer</p>
+                            <h3>Dependency Records</h3>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <input id="inventorySearch" placeholder="Search package, ecosystem, file, or risk..." oninput="applyInventoryFilters()">
+                        <select id="inventoryRiskFilter" onchange="applyInventoryFilters()">
+                            <option value="ALL">All dependency risks</option>
+                            <option value="VERSION_NOT_PINNED">Version not pinned</option>
+                            <option value="LOOSE_VERSION_SPECIFIER">Loose version</option>
+                            <option value="INTERNAL_PACKAGE_CANDIDATE">Internal candidate</option>
+                            <option value="PRIVATE_REGISTRY_MISSING_FOR_INTERNAL_PACKAGE">Missing private registry</option>
+                            <option value="LOCKFILE_MISSING">Missing lockfile</option>
+                            <option value="LOW_RISK_DECLARATION">Low risk</option>
+                        </select>
+                    </div>
+
+                    <div id="inventoryList" class="inventory-table-box">
+                        <p class="muted">No inventory generated yet.</p>
                     </div>
                 </div>
             </section>
@@ -297,30 +354,12 @@
                     </div>
 
                     <div class="pipeline">
-                        <div class="pipeline-step">
-                            <strong>1</strong>
-                            <span>Checkout Repository</span>
-                        </div>
-                        <div class="pipeline-step">
-                            <strong>2</strong>
-                            <span>Install BuildShield-CI</span>
-                        </div>
-                        <div class="pipeline-step">
-                            <strong>3</strong>
-                            <span>Run Tests</span>
-                        </div>
-                        <div class="pipeline-step">
-                            <strong>4</strong>
-                            <span>Apply Policy Gate</span>
-                        </div>
-                        <div class="pipeline-step">
-                            <strong>5</strong>
-                            <span>Generate Reports</span>
-                        </div>
-                        <div class="pipeline-step">
-                            <strong>6</strong>
-                            <span>Upload SARIF</span>
-                        </div>
+                        <div class="pipeline-step"><strong>1</strong><span>Checkout Repository</span></div>
+                        <div class="pipeline-step"><strong>2</strong><span>Install BuildShield-CI</span></div>
+                        <div class="pipeline-step"><strong>3</strong><span>Run Tests</span></div>
+                        <div class="pipeline-step"><strong>4</strong><span>Apply Policy Gate</span></div>
+                        <div class="pipeline-step"><strong>5</strong><span>Generate Reports</span></div>
+                        <div class="pipeline-step"><strong>6</strong><span>Upload SARIF</span></div>
                     </div>
 
                     <div class="code-box">
@@ -339,30 +378,12 @@
                     </div>
 
                     <div class="feature-grid">
-                        <div class="feature-card">
-                            <h4>Dependency Confusion Defense</h4>
-                            <p>Detects internal package naming risks and missing private registry configuration.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h4>GitHub Actions Hardening</h4>
-                            <p>Detects unpinned actions, risky permissions, secret echoing, and unsafe triggers.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h4>Policy-as-Code</h4>
-                            <p>Uses YAML policy to decide whether builds should pass or fail.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h4>SARIF Integration</h4>
-                            <p>Uploads findings to GitHub Code Scanning for security visibility.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h4>Report Downloads</h4>
-                            <p>Generates JSON, Markdown, HTML, and SARIF reports from the dashboard.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h4>Automated Testing</h4>
-                            <p>Includes pytest validation for scanner, policy, reporters, SARIF, and CLI.</p>
-                        </div>
+                        <div class="feature-card"><h4>Dependency Confusion Defense</h4><p>Detects internal package risks and missing private registry configuration.</p></div>
+                        <div class="feature-card"><h4>SBOM-lite Inventory</h4><p>Builds npm and Python dependency inventory with risk indicators.</p></div>
+                        <div class="feature-card"><h4>GitHub Actions Hardening</h4><p>Detects unpinned actions, risky permissions, secret echoing, and unsafe triggers.</p></div>
+                        <div class="feature-card"><h4>Policy-as-Code</h4><p>Uses YAML policy to decide whether builds should pass or fail.</p></div>
+                        <div class="feature-card"><h4>SARIF Integration</h4><p>Uploads findings to GitHub Code Scanning for security visibility.</p></div>
+                        <div class="feature-card"><h4>Report Downloads</h4><p>Generates JSON, Markdown, HTML, SARIF, and inventory reports.</p></div>
                     </div>
                 </div>
             </section>
