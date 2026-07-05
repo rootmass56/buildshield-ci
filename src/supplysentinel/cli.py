@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import typer
+from rich.table import Table
 
 from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
 from supplysentinel.core.comparison import build_comparison_result
@@ -16,6 +17,11 @@ from supplysentinel.core.output import (
     render_scan_summary,
 )
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.inventory.dependency_inventory import (
+    DependencyInventory,
+    build_dependency_inventory,
+    write_inventory_json,
+)
 from supplysentinel.policies.policy_engine import evaluate_policy
 from supplysentinel.reporters.report_generator import (
     generate_comparison_report,
@@ -57,11 +63,92 @@ def default_comparison_report_path(report_format: str) -> str:
     return f"reports/comparison-report.{report_format}"
 
 
+def default_inventory_report_path(target: str) -> str:
+    target_name = Path(target).name or "repository"
+    return f"reports/{target_name}-dependency-inventory.json"
+
+
 def generate_scan_report_by_format(result, report_format: str) -> str:
     if report_format == "sarif":
         return generate_scan_sarif(result)
 
     return generate_scan_report(result, report_format)
+
+
+def render_dependency_inventory(
+    inventory: DependencyInventory,
+    show_packages: bool,
+) -> None:
+    summary = inventory.summary
+
+    summary_table = Table(
+        title="SBOM-lite Dependency Inventory Summary",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    summary_table.add_column("Metric", style="white")
+    summary_table.add_column("Value", style="green")
+
+    summary_table.add_row("Target Path", inventory.target_path)
+    summary_table.add_row("Total Dependencies", str(summary.total_dependencies))
+    summary_table.add_row("npm Dependencies", str(summary.npm_dependencies))
+    summary_table.add_row("Python Dependencies", str(summary.python_dependencies))
+    summary_table.add_row("Pinned Dependencies", str(summary.pinned_dependencies))
+    summary_table.add_row("Loose Dependencies", str(summary.loose_dependencies))
+    summary_table.add_row("Unpinned Dependencies", str(summary.unpinned_dependencies))
+    summary_table.add_row(
+        "Internal Candidates",
+        str(summary.internal_candidate_dependencies),
+    )
+    summary_table.add_row(
+        "Missing Private Registry",
+        str(summary.dependencies_missing_private_registry),
+    )
+    summary_table.add_row(
+        "npm Dependencies Without Lockfile",
+        str(summary.npm_dependencies_without_lockfile),
+    )
+    summary_table.add_row(
+        "Ecosystems",
+        ", ".join(summary.ecosystems_detected) or "None",
+    )
+
+    console.print(summary_table)
+
+    if not show_packages:
+        return
+
+    if not inventory.dependencies:
+        console.print("[bold green]No dependencies discovered.[/bold green]")
+        return
+
+    package_table = Table(
+        title="Dependency Inventory",
+        show_header=True,
+        header_style="bold magenta",
+    )
+    package_table.add_column("Ecosystem", style="cyan")
+    package_table.add_column("Package", style="white")
+    package_table.add_column("Version", style="green")
+    package_table.add_column("Group", style="magenta")
+    package_table.add_column("Pinned", style="yellow")
+    package_table.add_column("Internal", style="red")
+    package_table.add_column("File", style="blue")
+    package_table.add_column("Risk Indicators", style="red")
+
+    for dependency in inventory.dependencies:
+        package_table.add_row(
+            dependency.ecosystem,
+            dependency.name,
+            dependency.declared_version or "-",
+            dependency.dependency_group,
+            "YES" if dependency.is_pinned else "NO",
+            "YES" if dependency.is_internal_candidate else "NO",
+            dependency.file_path,
+            ", ".join(dependency.risk_indicators),
+        )
+
+    console.print(package_table)
 
 
 @app.command()
@@ -143,6 +230,55 @@ def scan(
 
 
 @app.command()
+def inventory(
+    target: str = typer.Argument(
+        ".",
+        help="Path to repository for SBOM-lite dependency inventory.",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Write inventory JSON report to this path.",
+    ),
+    show_packages: bool = typer.Option(
+        True,
+        "--show-packages/--hide-packages",
+        help="Show individual dependency records.",
+    ),
+):
+    """
+    Generate SBOM-lite dependency inventory for npm and Python projects.
+    """
+    render_banner()
+
+    try:
+        dependency_inventory = build_dependency_inventory(target)
+    except (FileNotFoundError, NotADirectoryError, ValueError) as error:
+        console.print(f"[bold red]Error:[/bold red] {error}")
+        raise typer.Exit(code=1)
+
+    render_dependency_inventory(
+        inventory=dependency_inventory,
+        show_packages=show_packages,
+    )
+
+    if output:
+        output_path = output
+    else:
+        output_path = default_inventory_report_path(target)
+
+    written_path = write_inventory_json(
+        inventory=dependency_inventory,
+        output_path=output_path,
+    )
+
+    console.print(
+        f"[bold green]Dependency inventory written to:[/bold green] {written_path}"
+    )
+
+
+@app.command()
 def compare(
     baseline: str = typer.Argument(
         ...,
@@ -205,6 +341,34 @@ def compare(
 
         written_path = write_report(output_path, report_content)
         console.print(f"[bold green]Report written to:[/bold green] {written_path}")
+
+
+@app.command()
+def dashboard(
+    host: str = typer.Option("127.0.0.1", "--host", help="Dashboard host."),
+    port: int = typer.Option(8080, "--port", help="Dashboard port."),
+    reload: bool = typer.Option(
+        False,
+        "--reload/--no-reload",
+        help="Enable auto-reload during development.",
+    ),
+):
+    """
+    Launch the BuildShield-CI web dashboard.
+    """
+    import uvicorn
+
+    console.print(
+        f"[bold cyan]Starting {PRODUCT_NAME} dashboard[/bold cyan] "
+        f"at [bold green]http://{host}:{port}[/bold green]"
+    )
+
+    uvicorn.run(
+        "supplysentinel.web.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
 
 
 @app.command()

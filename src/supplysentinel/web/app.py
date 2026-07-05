@@ -11,6 +11,10 @@ from pydantic import BaseModel, Field
 from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
 from supplysentinel.core.comparison import build_comparison_result
 from supplysentinel.core.scanner import scan_repository
+from supplysentinel.inventory.dependency_inventory import (
+    build_dependency_inventory,
+    generate_inventory_json,
+)
 from supplysentinel.policies.policy_engine import evaluate_policy
 from supplysentinel.reporters.report_generator import (
     generate_comparison_report,
@@ -41,6 +45,10 @@ class CompareRequest(BaseModel):
     baseline_label: str = Field(default="Vulnerable Repo")
     target_label: str = Field(default="Secure Repo")
     report_formats: list[str] = Field(default_factory=lambda: ["json", "md", "html"])
+
+
+class InventoryRequest(BaseModel):
+    target_path: str = Field(default="samples/vulnerable-repo")
 
 
 app = FastAPI(
@@ -173,6 +181,16 @@ def save_comparison_reports(
     return generated_reports
 
 
+def save_inventory_report(run_id: str, inventory) -> list[dict[str, str]]:
+    run_dir = REPORTS_ROOT / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    output_path = run_dir / "dependency-inventory.json"
+    written_path = write_report(str(output_path), generate_inventory_json(inventory))
+
+    return [build_report_link(run_id, written_path)]
+
+
 @app.get("/")
 def dashboard() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
@@ -251,6 +269,27 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
         "risk_profile": model_to_json_safe(result.risk_profile),
         "policy_evaluation": model_to_json_safe(result.policy_evaluation),
         "findings": [model_to_json_safe(finding) for finding in result.findings],
+        "reports": reports,
+    }
+
+
+@app.post("/api/inventory")
+def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
+    resolve_project_path(request.target_path)
+
+    try:
+        inventory = build_dependency_inventory(request.target_path)
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+    run_id = timestamp_id("inventory")
+    reports = save_inventory_report(run_id=run_id, inventory=inventory)
+
+    return {
+        "run_id": run_id,
+        "kind": "inventory",
+        "target_path": request.target_path,
+        "inventory": model_to_json_safe(inventory),
         "reports": reports,
     }
 
