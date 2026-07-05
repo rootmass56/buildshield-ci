@@ -33,3 +33,5 @@ reports/*.md
 *.pem
 *.key
 *.crt
+# Generated reports
+reports/
