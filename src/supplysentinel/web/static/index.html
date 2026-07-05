@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>BuildShield-CI Security Platform</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css?v=0.12.5">
 </head>
 <body>
     <div class="app-layout">
@@ -21,6 +21,7 @@
                 <button class="nav-link active" data-page="overview">Overview</button>
                 <button class="nav-link" data-page="scanner">Scanner</button>
                 <button class="nav-link" data-page="inventory">SBOM Inventory</button>
+                <button class="nav-link" data-page="vulnintel">Vulnerability Intel</button>
                 <button class="nav-link" data-page="history">History & Trends</button>
                 <button class="nav-link" data-page="compare">Compare</button>
                 <button class="nav-link" data-page="findings">Findings</button>
@@ -65,14 +66,16 @@
                             <h3>Protect CI/CD pipelines from supply-chain and dependency risks.</h3>
                             <p>
                                 BuildShield-CI combines repository scanning, policy-as-code, SARIF,
-                                dependency inventory, scan history, risk trends, report generation,
-                                GitHub Actions automation, and a premium security dashboard.
+                                dependency inventory, OSV vulnerability intelligence, scan history,
+                                risk trends, report generation, GitHub Actions automation, and a
+                                premium security dashboard.
                             </p>
 
                             <div class="hero-buttons">
                                 <button onclick="scanVulnerable()">Scan Vulnerable Repo</button>
                                 <button class="ghost" onclick="scanSecure()">Scan Secure Repo</button>
                                 <button class="ghost" onclick="runInventoryVulnerable()">Generate SBOM-lite</button>
+                                <button class="ghost" onclick="runVulnIntelSecure()">Vulnerability Intel</button>
                                 <button class="ghost" onclick="compareSamples()">Compare Repos</button>
                             </div>
                         </div>
@@ -245,6 +248,70 @@
 
                     <div id="inventoryList" class="inventory-table-box">
                         <p class="muted">No inventory generated yet.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="vulnintel" class="page">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">OSV Vulnerability Intelligence</p>
+                            <h3>Known Vulnerability Lookup</h3>
+                        </div>
+                        <span id="vulnIntelStatusBadge" class="chip">Not checked</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <label>
+                            Repository Path
+                            <input id="vulnIntelTarget" value="samples/secure-repo">
+                        </label>
+                        <label>
+                            Lookup Mode
+                            <select id="vulnIntelMode">
+                                <option value="offline">Offline query plan</option>
+                                <option value="online">Online OSV lookup</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="button-row">
+                        <button onclick="runVulnIntelCustom()">Run Vulnerability Intelligence</button>
+                        <button class="ghost" onclick="runVulnIntelSecure()">Secure Repo</button>
+                        <button class="ghost" onclick="runVulnIntelVulnerable()">Vulnerable Repo</button>
+                    </div>
+                </div>
+
+                <div class="vuln-intel-summary-grid" id="vulnIntelSummary">
+                    <div class="mini-card"><span>Dependencies Seen</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Queryable</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Skipped</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Vulnerable Packages</span><strong>--</strong></div>
+                    <div class="mini-card"><span>Total Vulnerabilities</span><strong>--</strong></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">Package Intelligence</p>
+                            <h3>Dependency Vulnerability Results</h3>
+                        </div>
+                        <span id="vulnIntelCountBadge" class="chip">0 packages</span>
+                    </div>
+
+                    <div class="filter-row">
+                        <input id="vulnIntelSearch" placeholder="Search package, ecosystem, file, vulnerability ID..." oninput="applyVulnIntelFilters()">
+                        <select id="vulnIntelFilter" onchange="applyVulnIntelFilters()">
+                            <option value="ALL">All packages</option>
+                            <option value="VULNERABLE">Only vulnerable</option>
+                            <option value="QUERYABLE">Queryable packages</option>
+                            <option value="SKIPPED">Skipped packages</option>
+                        </select>
+                    </div>
+
+                    <div id="vulnIntelResults" class="vuln-table-box">
+                        <p class="muted">No vulnerability intelligence check executed yet.</p>
                     </div>
                 </div>
             </section>
@@ -442,10 +509,13 @@
                     <div class="feature-grid">
                         <div class="feature-card"><h4>Dependency Confusion Defense</h4><p>Detects internal package risks and missing private registry configuration.</p></div>
                         <div class="feature-card"><h4>SBOM-lite Inventory</h4><p>Builds npm and Python dependency inventory with risk indicators.</p></div>
+                        <div class="feature-card"><h4>OSV Vulnerability Intelligence</h4><p>Checks pinned npm and Python dependencies against OSV vulnerability data.</p></div>
                         <div class="feature-card"><h4>Container Security</h4><p>Detects Dockerfile hardening risks such as latest tags, secrets, root containers, and missing health checks.</p></div>
                         <div class="feature-card"><h4>Scan History</h4><p>Stores dashboard scans in SQLite and visualizes risk posture over time.</p></div>
                         <div class="feature-card"><h4>SARIF Integration</h4><p>Uploads findings to GitHub Code Scanning for security visibility.</p></div>
-                        <div class="feature-card"><h4>Report Downloads</h4><p>Generates JSON, Markdown, HTML, SARIF, and inventory reports.</p></div>
+                        <div class="feature-card"><h4>Report Downloads</h4><p>Generates JSON, Markdown, HTML, SARIF, inventory, and OSV intelligence reports.</p></div>
+                        <div class="feature-card"><h4>Policy-as-Code</h4><p>Uses YAML policy rules to pass or fail CI/CD builds based on risk thresholds.</p></div>
+                        <div class="feature-card"><h4>GitHub Actions Security</h4><p>Detects unsafe workflow permissions, unpinned actions, secret echoing, and risky triggers.</p></div>
                     </div>
                 </div>
             </section>
@@ -453,6 +523,7 @@
     </div>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=0.12.5"></script>
+    <script src="/static/vulnerability-intelligence.js?v=0.12.5"></script>
 </body>
 </html>

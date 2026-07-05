@@ -309,7 +309,8 @@ button.ghost {
 
 .metric-grid,
 .inventory-summary-grid,
-.history-summary-grid {
+.history-summary-grid,
+.vuln-intel-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 19px;
@@ -317,7 +318,8 @@ button.ghost {
 }
 
 .inventory-summary-grid,
-.history-summary-grid {
+.history-summary-grid,
+.vuln-intel-summary-grid {
     grid-template-columns: repeat(5, 1fr);
 }
 
@@ -560,7 +562,8 @@ input:disabled {
 
 .data-table,
 .inventory-table,
-.history-table {
+.history-table,
+.vuln-table {
     width: 100%;
     border-collapse: collapse;
 }
@@ -570,7 +573,9 @@ input:disabled {
 .inventory-table th,
 .inventory-table td,
 .history-table th,
-.history-table td {
+.history-table td,
+.vuln-table th,
+.vuln-table td {
     border-bottom: 1px solid var(--border);
     padding: 13px;
     text-align: left;
@@ -579,7 +584,8 @@ input:disabled {
 
 .data-table th,
 .inventory-table th,
-.history-table th {
+.history-table th,
+.vuln-table th {
     color: var(--blue);
     font-size: 13px;
     text-transform: uppercase;
@@ -587,7 +593,8 @@ input:disabled {
 }
 
 .inventory-table-box,
-.history-table-box {
+.history-table-box,
+.vuln-table-box {
     overflow-x: auto;
     margin-top: 18px;
 }
@@ -608,6 +615,51 @@ input:disabled {
     background: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.38);
     color: #fecaca;
+}
+
+.vuln-id-chip {
+    display: inline-block;
+    margin: 3px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.38);
+    color: #fecaca;
+    font-size: 12px;
+    font-weight: 850;
+    text-decoration: none;
+}
+
+.vuln-id-chip:hover {
+    filter: brightness(1.15);
+}
+
+.vuln-id-chip.safe {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.38);
+    color: #bbf7d0;
+}
+
+.vuln-id-chip.skipped {
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.30);
+    color: #cbd5e1;
+}
+
+.vuln-status-text {
+    font-weight: 900;
+}
+
+.vuln-status-text.vulnerable {
+    color: var(--red);
+}
+
+.vuln-status-text.safe {
+    color: var(--green);
+}
+
+.vuln-status-text.skipped {
+    color: var(--muted);
 }
 
 .comparison-grid,
@@ -794,6 +846,7 @@ input:disabled {
     .metric-grid,
     .inventory-summary-grid,
     .history-summary-grid,
+    .vuln-intel-summary-grid,
     .form-grid,
     .filter-row,
     .comparison-grid,
