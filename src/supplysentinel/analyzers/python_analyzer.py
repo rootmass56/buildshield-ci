@@ -1,157 +1,331 @@
 import re
+from pathlib import Path
 
 from supplysentinel.analyzers.utils import read_text_file
 from supplysentinel.core.constants import FindingCategory, Severity
 from supplysentinel.core.models import Evidence, Finding, RepositoryFile
 
 
-PRIVATE_PACKAGE_INDICATORS = [
+PYTHON_REQUIREMENT_OPERATORS = [
+    "==",
+    ">=",
+    "<=",
+    "~=",
+    "!=",
+    ">",
+    "<",
+]
+
+
+INTERNAL_PACKAGE_KEYWORDS = [
     "internal",
     "private",
     "company",
     "corp",
     "enterprise",
-    "proprietary",
+    "auth-sdk",
+    "payment-sdk",
+    "platform-sdk",
+    "internal-payment",
+    "internal-auth",
 ]
 
-VERSION_OPERATOR_PATTERN = re.compile(r"(==|===|>=|<=|~=|>|<)")
 
-
-def extract_package_name(requirement_line: str) -> str:
-    clean_line = requirement_line.split("#")[0].strip()
-    clean_line = clean_line.split(";")[0].strip()
-
-    match = re.split(r"==|===|>=|<=|~=|>|<", clean_line, maxsplit=1)
-    return match[0].strip()
-
-
-def looks_private_package(package_name: str) -> bool:
-    normalized = package_name.lower()
-    return any(indicator in normalized for indicator in PRIVATE_PACKAGE_INDICATORS)
-
-
-def has_private_python_index(discovered_files: list[RepositoryFile]) -> bool:
-    """
-    Detect whether the repository has Python private package index configuration.
-
-    This prevents false positives for internal Python packages when a private index
-    is explicitly configured.
-    """
-    registry_files = [
-        repo_file
-        for repo_file in discovered_files
-        if repo_file.file_type == "python_registry_config"
-    ]
-
-    for repo_file in registry_files:
-        content = read_text_file(repo_file.absolute_path).lower()
-
-        has_index_url = "index-url" in content
-
-        references_default_pypi_only = (
-            "pypi.org/simple" in content
-            or "pypi.python.org/simple" in content
-        )
-
-        has_private_indicator = any(
-            indicator in content
-            for indicator in PRIVATE_PACKAGE_INDICATORS
-        )
-
-        has_non_public_index = has_index_url and not references_default_pypi_only
-
-        if has_private_indicator or has_non_public_index:
-            return True
-
-    return False
-
-
-def analyze_python_requirements(discovered_files: list[RepositoryFile]) -> list[Finding]:
-    findings: list[Finding] = []
-    private_index_configured = has_private_python_index(discovered_files)
-
-    requirement_files = [
+def python_requirements_files(discovered_files: list[RepositoryFile]) -> list[RepositoryFile]:
+    return [
         repo_file
         for repo_file in discovered_files
         if repo_file.file_type == "python_requirements"
     ]
 
-    for repo_file in requirement_files:
-        content = read_text_file(repo_file.absolute_path)
-        lines = content.splitlines()
 
-        for line_number, raw_line in enumerate(lines, start=1):
-            line = raw_line.strip()
+def python_config_files(discovered_files: list[RepositoryFile]) -> list[RepositoryFile]:
+    return [
+        repo_file
+        for repo_file in discovered_files
+        if repo_file.file_type == "python_package_config"
+    ]
 
-            if not line or line.startswith("#"):
+
+def create_python_finding(
+    rule_id: str,
+    title: str,
+    severity: Severity,
+    category: FindingCategory,
+    description: str,
+    impact: str,
+    remediation: str,
+    file_path: str,
+    line_number: int | None,
+    snippet: str | None,
+) -> Finding:
+    return Finding(
+        rule_id=rule_id,
+        title=title,
+        severity=severity,
+        category=category,
+        confidence="HIGH",
+        description=description,
+        impact=impact,
+        evidence=Evidence(
+            file_path=file_path,
+            line_number=line_number,
+            snippet=snippet,
+        ),
+        remediation=remediation,
+        reference="https://packaging.python.org/en/latest/specifications/dependency-specifiers/",
+    )
+
+
+def extract_python_requirement(line: str) -> tuple[str, str | None] | None:
+    cleaned = line.strip()
+
+    if not cleaned:
+        return None
+
+    if cleaned.startswith("#"):
+        return None
+
+    if cleaned.startswith(
+        (
+            "-r ",
+            "--requirement",
+            "--index-url",
+            "--extra-index-url",
+            "-i ",
+            "--find-links",
+            "-f ",
+            "--trusted-host",
+        )
+    ):
+        return None
+
+    if " #" in cleaned:
+        cleaned = cleaned.split(" #", maxsplit=1)[0].strip()
+
+    match = re.match(
+        r"^([A-Za-z0-9_.-]+)(?:\[.*?\])?\s*(.*)$",
+        cleaned,
+    )
+
+    if not match:
+        return None
+
+    package_name = match.group(1).strip()
+    version_specifier = match.group(2).strip() or None
+
+    if not package_name:
+        return None
+
+    return package_name, version_specifier
+
+
+def is_python_version_pinned(version_specifier: str | None) -> bool:
+    if not version_specifier:
+        return False
+
+    version = version_specifier.strip()
+
+    if not version.startswith("=="):
+        return False
+
+    if "*" in version:
+        return False
+
+    return bool(
+        re.match(
+            r"^==\s*[0-9]+(\.[0-9]+)*([a-zA-Z0-9.\-_+]+)?$",
+            version,
+        )
+    )
+
+
+def is_python_version_loose(version_specifier: str | None) -> bool:
+    if not version_specifier:
+        return False
+
+    version = version_specifier.strip()
+
+    if is_python_version_pinned(version):
+        return False
+
+    return any(operator in version for operator in PYTHON_REQUIREMENT_OPERATORS)
+
+
+def is_internal_python_candidate(package_name: str) -> bool:
+    normalized_name = package_name.lower()
+
+    return any(keyword in normalized_name for keyword in INTERNAL_PACKAGE_KEYWORDS)
+
+
+def requirement_has_private_registry(content: str) -> bool:
+    lower_content = content.lower()
+
+    if "--index-url" in lower_content or "--extra-index-url" in lower_content:
+        if "pypi.org/simple" not in lower_content and "files.pythonhosted.org" not in lower_content:
+            return True
+
+    return False
+
+
+def config_file_has_private_registry(config_file: RepositoryFile) -> bool:
+    content = read_text_file(Path(config_file.absolute_path)).lower()
+
+    if "index-url" in content and "pypi.org/simple" not in content:
+        return True
+
+    if "repository" in content and "pypi.org" not in content:
+        return True
+
+    if "extra-index-url" in content and "pypi.org/simple" not in content:
+        return True
+
+    return False
+
+
+def has_python_private_registry(
+    requirements_file: RepositoryFile,
+    discovered_files: list[RepositoryFile],
+    requirements_content: str,
+) -> bool:
+    if requirement_has_private_registry(requirements_content):
+        return True
+
+    requirement_dir = str(Path(requirements_file.relative_path).parent).replace("\\", "/")
+
+    for config_file in python_config_files(discovered_files):
+        config_dir = str(Path(config_file.relative_path).parent).replace("\\", "/")
+
+        if config_dir not in {requirement_dir, "."}:
+            continue
+
+        if config_file_has_private_registry(config_file):
+            return True
+
+    return False
+
+
+def analyze_python_security(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    findings: list[Finding] = []
+
+    for requirements_file in python_requirements_files(discovered_files):
+        path = Path(requirements_file.absolute_path)
+        content = read_text_file(path)
+
+        private_registry_configured = has_python_private_registry(
+            requirements_file=requirements_file,
+            discovered_files=discovered_files,
+            requirements_content=content,
+        )
+
+        for line_number, line in enumerate(content.splitlines(), start=1):
+            parsed = extract_python_requirement(line)
+
+            if parsed is None:
                 continue
 
-            if line.startswith("-"):
-                continue
+            package_name, version_specifier = parsed
+            snippet = line.strip()
 
-            package_name = extract_package_name(line)
-
-            if not package_name:
-                continue
-
-            if not VERSION_OPERATOR_PATTERN.search(line):
+            if not version_specifier:
                 findings.append(
-                    Finding(
+                    create_python_finding(
                         rule_id="DG-PY-001",
                         title="Unpinned Python dependency",
                         severity=Severity.MEDIUM,
                         category=FindingCategory.DEPENDENCY,
-                        confidence="HIGH",
-                        description=f"The Python dependency '{package_name}' does not specify a version.",
-                        impact="Unpinned dependencies may resolve to unexpected versions during installation.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
-                            line_number=line_number,
-                            snippet=line,
+                        description="The Python dependency does not specify an exact version.",
+                        impact=(
+                            "Unpinned Python dependencies can resolve to different versions "
+                            "over time, reducing build reproducibility."
                         ),
-                        remediation=f"Pin '{package_name}' to an exact reviewed version using ==.",
-                        reference="https://pip.pypa.io/en/stable/reference/requirements-file-format/",
+                        remediation="Pin Python dependencies using exact versions such as package==1.2.3.",
+                        file_path=requirements_file.relative_path,
+                        line_number=line_number,
+                        snippet=snippet,
                     )
                 )
 
-            elif "==" not in line and "===" not in line:
+            if is_python_version_loose(version_specifier):
                 findings.append(
-                    Finding(
+                    create_python_finding(
                         rule_id="DG-PY-002",
                         title="Loose Python dependency version",
                         severity=Severity.MEDIUM,
                         category=FindingCategory.DEPENDENCY,
-                        confidence="HIGH",
-                        description=f"The Python dependency '{package_name}' uses a loose version constraint.",
-                        impact="Loose version constraints can introduce unexpected dependency updates.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
-                            line_number=line_number,
-                            snippet=line,
+                        description="The Python dependency uses a loose version specifier.",
+                        impact=(
+                            "Loose Python version specifiers can allow unexpected package "
+                            "versions to be installed during CI/CD builds."
                         ),
-                        remediation=f"Use an exact pinned version for '{package_name}' where reproducible builds are required.",
-                        reference="https://pip.pypa.io/en/stable/reference/requirements-file-format/",
+                        remediation="Use exact pinned versions such as package==1.2.3.",
+                        file_path=requirements_file.relative_path,
+                        line_number=line_number,
+                        snippet=snippet,
                     )
                 )
 
-            if looks_private_package(package_name) and not private_index_configured:
+            if is_internal_python_candidate(package_name) and not private_registry_configured:
                 findings.append(
-                    Finding(
+                    create_python_finding(
                         rule_id="DG-PY-003",
                         title="Potential Python dependency confusion risk",
                         severity=Severity.HIGH,
                         category=FindingCategory.REGISTRY,
-                        confidence="MEDIUM",
-                        description=f"The Python dependency '{package_name}' appears to be internal or private.",
-                        impact="Private package names may be vulnerable to dependency confusion if package indexes are not isolated.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
-                            line_number=line_number,
-                            snippet=line,
+                        description=(
+                            "An internal-looking Python package is declared without private "
+                            "package index configuration."
                         ),
-                        remediation="Use a private package index, configure index priority carefully, and avoid unsafe public registry fallback.",
-                        reference="https://owasp.org/www-project-top-10-ci-cd-security-risks/CICD-SEC-03-Dependency-Chain-Abuse/",
+                        impact=(
+                            "Attackers may publish a public package with a similar internal "
+                            "name and cause dependency confusion."
+                        ),
+                        remediation=(
+                            "Configure a trusted private Python package index using pip.conf, "
+                            ".pypirc, --index-url, or --extra-index-url."
+                        ),
+                        file_path=requirements_file.relative_path,
+                        line_number=line_number,
+                        snippet=snippet,
                     )
                 )
 
     return findings
+
+
+def analyze_python_repository(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    return analyze_python_security(target_path, discovered_files)
+
+
+def analyze_python_files(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    return analyze_python_security(target_path, discovered_files)
+
+
+def analyze_requirements_files(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    return analyze_python_security(target_path, discovered_files)
+
+
+def analyze_repository(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    return analyze_python_security(target_path, discovered_files)
+
+
+def analyze(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    return analyze_python_security(target_path, discovered_files)
