@@ -1,247 +1,247 @@
-# BuildShield-CI Demo Script
+﻿# BuildShield-CI Final Demo Script
 
 ## Demo Goal
 
-Show that BuildShield-CI can detect CI/CD supply-chain risks, enforce security policy, generate reports, upload SARIF to GitHub Code Scanning, and run automatically in GitHub Actions.
+The goal of this demo is to show how BuildShield-CI detects CI/CD supply-chain risks, enforces security policy, generates reports, integrates with GitHub security tooling, and provides dashboard-based visibility.
 
----
+## Demo Preparation
 
-## 1. Introduce the Project
+Before demo, run:
 
-Say:
-
-> BuildShield-CI is an advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform. It scans npm, Python, and GitHub Actions configurations to detect dependency confusion risks, insecure dependency declarations, risky CI/CD patterns, and policy violations.
-
----
-
-## 2. Show Repository Structure
-
-Command:
-
-```powershell
-dir
-```
-
-Explain:
-
-> The project contains scanner source code, sample vulnerable and secure repositories, policy-as-code configuration, tests, GitHub Actions workflow, and documentation.
-
-Important folders:
-
-```text
-src/supplysentinel/
-samples/vulnerable-repo/
-samples/secure-repo/
-tests/
-docs/
-.github/workflows/
-```
-
----
-
-## 3. Show CLI Help
-
-Command:
-
-```powershell
-buildshield --help
-```
-
-Explain:
-
-> The tool provides commands to scan repositories, compare security posture, and check version information.
-
----
-
-## 4. Scan Vulnerable Repository
-
-Command:
-
-```powershell
-buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
-```
-
-Expected result:
-
-```text
-Security Score: 5/100
-Risk Level: CRITICAL
-Policy Status: FAILED
-Violations: 12
-```
-
-Explain:
-
-> The vulnerable repository intentionally contains insecure dependency and CI/CD patterns. BuildShield-CI detects them and explains impact, evidence, and remediation.
-
----
-
-## 5. Demonstrate CI/CD Exit Code Failure
-
-Command:
-
-```powershell
-buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --fail-on-policy --hide-files
-echo $LASTEXITCODE
-```
+    pytest -q
 
 Expected:
 
-```text
-2
-```
+    41 passed
 
-Explain:
+Check version:
 
-> Exit code 2 means the security policy failed. In CI/CD, this can stop an insecure build.
-
----
-
-## 6. Scan Secure Repository
-
-Command:
-
-```powershell
-buildshield scan samples/secure-repo --policy buildshield-policy.yml --fail-on-policy --hide-files
-echo $LASTEXITCODE
-```
+    buildshield version
 
 Expected:
 
-```text
-Policy Status: PASSED
-Security Score: 100/100
-Exit code: 0
-```
+    BuildShield-CI version: 0.12.6
 
-Explain:
+## Demo Flow
 
-> The secure repository uses pinned dependencies, private registry configuration, safe workflow permissions, and pinned GitHub Actions.
+### 1. Explain the Problem
 
----
+Modern CI/CD pipelines depend on:
 
-## 7. Compare Vulnerable and Secure Repositories
+- npm packages
+- Python packages
+- private package registries
+- GitHub Actions workflows
+- Dockerfiles
+- build scripts
+- secrets
+- dependency versions
 
-Command:
+Attackers can abuse weak configurations using dependency confusion, malicious packages, unpinned actions, leaked secrets, and vulnerable dependencies.
 
-```powershell
-buildshield compare samples/vulnerable-repo samples/secure-repo
-```
+BuildShield-CI detects these risks before deployment.
 
-Expected:
-
-```text
-Score Improvement: +95 points
-Findings Reduced: 15
-Risk Reduction: 100.0%
-```
-
-Explain:
-
-> This demonstrates measurable security improvement after applying hardening controls.
-
----
-
-## 8. Generate Reports
-
-Commands:
-
-```powershell
-buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --report-format html --output reports/vulnerable-policy-report.html
-buildshield compare samples/vulnerable-repo samples/secure-repo --report-format html --output reports/comparison-report.html
-```
-
-Open reports:
-
-```powershell
-start .\reports\vulnerable-policy-report.html
-start .\reports\comparison-report.html
-```
-
-Explain:
-
-> HTML reports are useful for project demonstration, audit evidence, and assignment submission.
-
----
-
-## 9. Generate SARIF
+### 2. Show Vulnerable Repository Scan
 
 Command:
 
-```powershell
-buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --report-format sarif --output reports/buildshield-results.sarif
-```
+    buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
 
 Explain:
 
-> SARIF allows findings from BuildShield-CI to be uploaded into GitHub Code Scanning.
+- This repository intentionally contains insecure examples.
+- The scanner detects dependency, registry, CI/CD, secret, build script, and Dockerfile risks.
+- Policy-as-code fails the build because risk is too high.
 
----
+Expected points to show:
 
-## 10. Run Tests
+- Low security score
+- Critical/high findings
+- Policy failed
+- Build gate failed
+- Dependency confusion findings
+- GitHub Actions findings
+- Dockerfile findings
+
+### 3. Show Secure Repository Scan
 
 Command:
 
-```powershell
-pytest -q
-```
-
-Expected:
-
-```text
-12 passed
-```
+    buildshield scan samples/secure-repo --policy buildshield-policy.yml --hide-files
 
 Explain:
 
-> Automated tests validate the scanner, policy engine, comparison engine, reporters, SARIF generation, and CLI exit codes.
+- This repository has improved configuration.
+- Dependencies are pinned.
+- Private registry configuration exists.
+- GitHub Actions permissions are limited.
+- Dockerfile is hardened.
 
----
+Expected points to show:
 
-## 11. Show GitHub Actions
+- High security score
+- Policy passed
+- Build gate passed
+- No major configuration risk
+
+### 4. Show Before/After Comparison
+
+Command:
+
+    buildshield compare samples/vulnerable-repo samples/secure-repo
+
+Explain:
+
+- This compares vulnerable and secure repositories.
+- It proves measurable security improvement.
+
+Expected points to show:
+
+- Score improvement
+- Findings reduced
+- Risk reduction percentage
+- Improved build gate posture
+
+### 5. Show SBOM-lite Inventory
+
+Command:
+
+    buildshield inventory samples/vulnerable-repo --hide-packages
+
+Explain:
+
+- SBOM-lite inventory extracts dependencies.
+- It identifies pinned, loose, internal candidate, and registry-risk packages.
+- This helps understand software supply-chain exposure.
+
+### 6. Show OSV Vulnerability Intelligence
+
+Offline mode:
+
+    buildshield vulncheck samples/secure-repo --offline-plan
+
+Explain:
+
+- Offline mode prepares the query plan without contacting OSV.
+- It proves dependencies are queryable.
+
+Online mode:
+
+    buildshield vulncheck samples/secure-repo --online --timeout 15
+
+Explain:
+
+- Online mode checks OSV vulnerability data.
+- It can return GHSA or OSV vulnerability IDs.
+
+### 7. Show Dashboard
+
+Start:
+
+    buildshield dashboard --port 8080
 
 Open:
 
-```text
-GitHub → Actions → BuildShield-CI Security Gate
-```
+    http://127.0.0.1:8080
+
+Show pages:
+
+1. Overview
+2. Scanner
+3. SBOM Inventory
+4. Vulnerability Intel
+5. History & Trends
+6. Compare
+7. Findings
+8. Policy
+9. Reports
+10. CI/CD
+11. About
 
 Explain:
 
-> The workflow runs automatically on push and pull request. It installs the tool, runs tests, applies policy, generates reports, uploads SARIF, and stores reports as artifacts.
+- The dashboard gives a central security command center.
+- Scans can be run from UI.
+- Reports can be downloaded.
+- History and risk trends are stored in SQLite.
 
----
+### 8. Show GitHub Actions
 
-## 12. Show GitHub Code Scanning
-
-Open:
-
-```text
-GitHub → Security and quality → Code scanning
-```
+Open GitHub repository Actions tab.
 
 Explain:
 
-> BuildShield-CI findings appear as GitHub Code Scanning alerts. These alerts come from the SARIF report generated by the tool.
+- GitHub Actions runs BuildShield-CI automatically.
+- Tests are executed.
+- Policy gate is applied.
+- SARIF is generated.
+- Reports are uploaded as artifacts.
 
----
+### 9. Show GitHub Code Scanning
 
-## 13. Show Artifacts
-
-Open latest GitHub Actions run and download:
-
-```text
-buildshield-ci-security-reports
-```
+Open Security and quality -> Code scanning.
 
 Explain:
 
-> The artifact contains JSON, Markdown, HTML, and SARIF reports generated during the CI/CD pipeline.
+- SARIF results are uploaded to GitHub Code Scanning.
+- Findings become visible in GitHub security interface.
 
----
+### 10. Show Docker Deployment
 
-## 14. Closing Explanation
+Run:
 
-Say:
+    docker build -t buildshield-ci:latest .
 
-> BuildShield-CI demonstrates shift-left security by detecting supply-chain and CI/CD risks before deployment. It combines static analysis, policy-as-code, scoring, reporting, SARIF integration, GitHub Actions automation, and automated tests.
+Run:
+
+    docker run -d --name buildshield-ci-test -p 8080:8080 buildshield-ci:latest
+
+Health check:
+
+    Invoke-RestMethod http://127.0.0.1:8080/health
+
+Explain:
+
+- BuildShield-CI is containerized.
+- It runs with a non-root user.
+- It includes health check.
+- It is cloud deployment ready.
+
+Stop:
+
+    docker stop buildshield-ci-test
+    docker rm buildshield-ci-test
+
+### 11. Show Docker Compose
+
+Run:
+
+    docker compose up --build -d
+
+Health check:
+
+    Invoke-RestMethod http://127.0.0.1:8080/health
+
+Stop:
+
+    docker compose down
+
+Explain:
+
+- Docker Compose creates persistent volumes for reports and SQLite history.
+- This simulates production-style local deployment.
+
+## Closing Explanation
+
+BuildShield-CI is not just a scanner. It is a complete DevSecOps security platform with:
+
+- Static security analysis
+- Policy-as-code enforcement
+- CI/CD integration
+- SARIF GitHub Code Scanning
+- Vulnerability intelligence
+- Dashboard visualization
+- Scan history and risk trends
+- Docker deployment readiness
+
+This project demonstrates practical cybersecurity engineering across application security, supply-chain security, DevSecOps, and secure software delivery.
