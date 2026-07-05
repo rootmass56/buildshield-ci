@@ -22,6 +22,11 @@ from supplysentinel.reporters.report_generator import (
     write_report,
 )
 from supplysentinel.reporters.sarif_reporter import generate_scan_sarif
+from supplysentinel.web.history import (
+    get_recent_scan_history,
+    get_risk_trend,
+    save_scan_history,
+)
 
 
 PROJECT_ROOT = Path.cwd()
@@ -261,6 +266,16 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
         report_formats=report_formats,
     )
 
+    history_record = save_scan_history(
+        run_id=run_id,
+        kind="scan",
+        target_path=request.target_path,
+        summary=result.summary,
+        risk_profile=result.risk_profile,
+        policy_evaluation=result.policy_evaluation,
+        reports=reports,
+    )
+
     return {
         "run_id": run_id,
         "kind": "scan",
@@ -270,6 +285,7 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
         "policy_evaluation": model_to_json_safe(result.policy_evaluation),
         "findings": [model_to_json_safe(finding) for finding in result.findings],
         "reports": reports,
+        "history_record": history_record,
     }
 
 
@@ -331,6 +347,20 @@ def compare_repositories_api(request: CompareRequest) -> dict[str, Any]:
         "kind": "comparison",
         "comparison": model_to_json_safe(comparison),
         "reports": reports,
+    }
+
+
+@app.get("/api/history")
+def scan_history(limit: int = 20) -> dict[str, Any]:
+    return {
+        "history": get_recent_scan_history(limit=limit),
+    }
+
+
+@app.get("/api/history/trend")
+def risk_trend(limit: int = 20) -> dict[str, Any]:
+    return {
+        "trend": get_risk_trend(limit=limit),
     }
 
 

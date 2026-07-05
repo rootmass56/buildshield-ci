@@ -35,3 +35,6 @@ reports/*.md
 *.crt
 # Generated reports
 reports/
+
+# Local SQLite database
+data/
