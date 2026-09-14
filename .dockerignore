@@ -1,12 +1,20 @@
 .git
 .github
+.gitattributes
+.gitignore
+
 .venv
 venv
+env
 __pycache__
 *.pyc
 .pytest_cache
 .mypy_cache
 .ruff_cache
+.coverage
+htmlcov
+
+tests
 
 reports
 data
@@ -16,10 +24,14 @@ dist
 build
 
 .env
-.env.local
+.env.*
+!.env.example
 
 .vscode
 .idea
 
 *.log
 *.tmp
+*.bak
+.DS_Store
+Thumbs.db

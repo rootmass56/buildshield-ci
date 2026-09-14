@@ -1,0 +1,25 @@
+# Normalize repository text files for consistent cross-platform behavior.
+* text=auto
+
+# Root dotfiles / extensionless configuration files.
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.dockerignore text eol=lf
+.env.example text eol=lf
+Dockerfile text eol=lf
+
+# Source, configuration, documentation, and CI files.
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.txt text eol=lf
+*.ini text eol=lf
+
+# Windows-native PowerShell scripts use CRLF when added in the future.
+*.ps1 text eol=crlf
