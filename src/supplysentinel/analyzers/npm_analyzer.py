@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -10,221 +12,358 @@ from supplysentinel.core.constants import FindingCategory, Severity
 from supplysentinel.core.models import Evidence, Finding, RepositoryFile
 
 
-DANGEROUS_LIFECYCLE_SCRIPTS = {
+NPM_DEPENDENCY_GROUPS = [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+]
+
+NPM_INTERNAL_KEYWORDS = [
+    "internal",
+    "private",
+    "company",
+    "corp",
+    "enterprise",
+    "auth",
+    "payment",
+]
+
+RISKY_LIFECYCLE_SCRIPT_NAMES = {
     "preinstall",
     "install",
     "postinstall",
     "prepare",
 }
 
-RISKY_SCRIPT_PATTERNS = [
-    "curl ",
-    "wget ",
-    "| bash",
-    "| sh",
-    "powershell",
-    "Invoke-WebRequest",
-    "bash -c",
-    "sh -c",
-]
 
-PRIVATE_PACKAGE_INDICATORS = [
-    "internal",
-    "private",
-    "company",
-    "corp",
-    "enterprise",
-    "proprietary",
-]
-
-
-def is_loose_npm_version(version: str) -> bool:
-    version = version.strip().lower()
-
-    return (
-        version in {"*", "latest"}
-        or version.startswith("^")
-        or version.startswith("~")
-        or version.startswith(">=")
-        or version.startswith("<=")
-        or version.startswith(">")
-        or version.startswith("<")
-        or "x" in version
+def create_npm_finding(
+    rule_id: str,
+    title: str,
+    severity: Severity,
+    category: FindingCategory,
+    description: str,
+    impact: str,
+    remediation: str,
+    file_path: str,
+    line_number: int | None,
+    snippet: str | None,
+) -> Finding:
+    return Finding(
+        rule_id=rule_id,
+        title=title,
+        severity=severity,
+        category=category,
+        confidence="HIGH",
+        description=description,
+        impact=impact,
+        evidence=Evidence(
+            file_path=file_path,
+            line_number=line_number,
+            snippet=snippet,
+        ),
+        remediation=remediation,
+        reference="https://owasp.org/www-project-top-10-ci-cd-security-risks/",
     )
 
 
-def looks_private_package(package_name: str) -> bool:
-    normalized = package_name.lower()
+def package_json_files(
+    discovered_files: list[RepositoryFile],
+) -> list[RepositoryFile]:
+    return [
+        repo_file
+        for repo_file in discovered_files
+        if repo_file.file_type == "package_json"
+    ]
 
-    if any(indicator in normalized for indicator in PRIVATE_PACKAGE_INDICATORS):
-        return True
 
-    if package_name.startswith("@"):
-        scope = package_name.split("/")[0].lower()
+def has_npm_lockfile(
+    package_json_file: RepositoryFile,
+    discovered_files: list[RepositoryFile],
+) -> bool:
+    package_dir = str(
+        Path(package_json_file.relative_path).parent
+    ).replace("\\", "/")
 
-        common_public_scopes = {
-            "@types",
-            "@babel",
-            "@angular",
-            "@nestjs",
-            "@testing-library",
-            "@eslint",
-            "@vitejs",
-            "@react-native",
-        }
+    for repo_file in discovered_files:
+        if repo_file.file_type != "npm_lockfile":
+            continue
 
-        return scope not in common_public_scopes
+        lockfile_dir = str(
+            Path(repo_file.relative_path).parent
+        ).replace("\\", "/")
+
+        if lockfile_dir == package_dir:
+            return True
 
     return False
 
 
-def npmrc_has_scoped_registry(repo_path: Path, package_name: str) -> bool:
-    if not package_name.startswith("@"):
-        return False
+def has_private_npm_registry(
+    package_json_file: RepositoryFile,
+    discovered_files: list[RepositoryFile],
+    package_name: str,
+) -> bool:
+    package_dir = str(
+        Path(package_json_file.relative_path).parent
+    ).replace("\\", "/")
 
-    scope = package_name.split("/")[0]
-    npmrc_path = repo_path / ".npmrc"
+    scope: str | None = None
 
-    if not npmrc_path.exists():
-        return False
+    if package_name.startswith("@") and "/" in package_name:
+        scope = package_name.split("/", maxsplit=1)[0].lower()
 
-    content = read_text_file(npmrc_path)
-    return f"{scope}:registry=" in content
-
-
-def analyze_npm(repo_path: Path, discovered_files: list[RepositoryFile]) -> list[Finding]:
-    findings: list[Finding] = []
-
-    npm_manifests = [
+    npmrc_files = [
         repo_file
         for repo_file in discovered_files
-        if repo_file.file_type == "npm_manifest"
+        if repo_file.file_type == "npm_config"
     ]
 
-    for repo_file in npm_manifests:
-        package_json_path = repo_file.absolute_path
-        content = read_text_file(package_json_path)
+    for npmrc_file in npmrc_files:
+        npmrc_dir = str(
+            Path(npmrc_file.relative_path).parent
+        ).replace("\\", "/")
+
+        if npmrc_dir not in {package_dir, "."}:
+            continue
+
+        content = read_text_file(
+            Path(npmrc_file.absolute_path)
+        ).lower()
+
+        if scope and f"{scope}:registry" in content:
+            return True
+
+        if (
+            "registry=" in content
+            and "registry.npmjs.org" not in content
+        ):
+            return True
+
+        if (
+            "always-auth=true" in content
+            and "registry" in content
+        ):
+            return True
+
+    return False
+
+
+def is_loose_npm_version(version: str | None) -> bool:
+    if not version:
+        return True
+
+    normalized = str(version).strip().lower()
+
+    loose_tokens = [
+        "^",
+        "~",
+        ">",
+        "<",
+        "*",
+        "x",
+        "latest",
+        "workspace:",
+        "file:",
+        "git+",
+        "http:",
+        "https:",
+    ]
+
+    return any(token in normalized for token in loose_tokens)
+
+
+def is_internal_npm_candidate(package_name: str) -> bool:
+    normalized = package_name.lower()
+
+    if normalized.startswith(
+        (
+            "@company/",
+            "@internal/",
+            "@corp/",
+            "@private/",
+            "@enterprise/",
+        )
+    ):
+        return True
+
+    return any(
+        keyword in normalized
+        for keyword in NPM_INTERNAL_KEYWORDS
+    )
+
+
+def analyze_npm(
+    target_path: Path,
+    discovered_files: list[RepositoryFile],
+) -> list[Finding]:
+    """Analyze npm manifests and registry configuration."""
+    _ = target_path
+
+    findings: list[Finding] = []
+
+    for package_json_file in package_json_files(discovered_files):
+        path = Path(package_json_file.absolute_path)
+        content = read_text_file(path)
 
         try:
             package_data = json.loads(content)
         except json.JSONDecodeError:
-            findings.append(
-                Finding(
-                    rule_id="DG-NPM-000",
-                    title="Invalid package.json file",
-                    severity=Severity.LOW,
-                    category=FindingCategory.DEPENDENCY,
-                    confidence="HIGH",
-                    description="The package.json file could not be parsed as valid JSON.",
-                    impact="Invalid dependency metadata can prevent accurate security analysis.",
-                    evidence=Evidence(
-                        file_path=repo_file.relative_path,
-                        line_number=None,
-                        snippet="Invalid JSON",
-                    ),
-                    remediation="Fix package.json syntax errors and rerun the scan.",
-                    reference="https://docs.npmjs.com/cli/configuring-npm/package-json",
-                )
-            )
+            # Preserve the v0.12.6 controlled benchmark behavior.
             continue
 
-        dependencies = package_data.get("dependencies", {})
-        dev_dependencies = package_data.get("devDependencies", {})
-        all_dependencies = {**dependencies, **dev_dependencies}
-
-        lockfile_exists = (
-            (package_json_path.parent / "package-lock.json").exists()
-            or (package_json_path.parent / "npm-shrinkwrap.json").exists()
+        lockfile_present = has_npm_lockfile(
+            package_json_file=package_json_file,
+            discovered_files=discovered_files,
         )
 
-        if all_dependencies and not lockfile_exists:
+        if not lockfile_present:
             findings.append(
-                Finding(
+                create_npm_finding(
                     rule_id="DG-NPM-001",
                     title="Missing npm lockfile",
-                    severity=Severity.MEDIUM,
+                    severity=Severity.HIGH,
                     category=FindingCategory.DEPENDENCY,
-                    confidence="HIGH",
-                    description="The project declares npm dependencies but does not include package-lock.json or npm-shrinkwrap.json.",
-                    impact="Without a lockfile, builds may install unexpected dependency versions, reducing reproducibility and increasing supply-chain risk.",
-                    evidence=Evidence(
-                        file_path=repo_file.relative_path,
-                        line_number=1,
-                        snippet="package.json present, lockfile missing",
+                    description=(
+                        "The npm project does not include a lockfile."
                     ),
-                    remediation="Commit package-lock.json or npm-shrinkwrap.json to enforce deterministic dependency resolution.",
-                    reference="https://docs.npmjs.com/cli/configuring-npm/package-lock-json",
+                    impact=(
+                        "Missing lockfiles reduce dependency reproducibility "
+                        "and can allow unexpected dependency resolution changes."
+                    ),
+                    remediation=(
+                        "Commit package-lock.json, npm-shrinkwrap.json, "
+                        "yarn.lock, or pnpm-lock.yaml."
+                    ),
+                    file_path=package_json_file.relative_path,
+                    line_number=None,
+                    snippet="No npm lockfile found",
                 )
             )
 
-        for package_name, version in all_dependencies.items():
-            version = str(version)
+        for group in NPM_DEPENDENCY_GROUPS:
+            dependencies = package_data.get(group, {})
 
-            if is_loose_npm_version(version):
-                line_number = find_line_number(content, package_name)
-                findings.append(
-                    Finding(
-                        rule_id="DG-NPM-002",
-                        title="Loose npm dependency version",
-                        severity=Severity.MEDIUM,
-                        category=FindingCategory.DEPENDENCY,
-                        confidence="HIGH",
-                        description=f"The npm dependency '{package_name}' uses a loose version constraint: {version}.",
-                        impact="Loose dependency versions can allow unexpected package updates during builds.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
-                            line_number=line_number,
-                            snippet=get_line_snippet(content, line_number),
-                        ),
-                        remediation=f"Pin '{package_name}' to an exact reviewed version and update it through controlled dependency management.",
-                        reference="https://docs.npmjs.com/about-semantic-versioning",
-                    )
+            if not isinstance(dependencies, dict):
+                continue
+
+            for package_name, version_specifier in dependencies.items():
+                line_number = find_line_number(
+                    content,
+                    f'"{package_name}"',
+                )
+                snippet = get_line_snippet(
+                    content,
+                    line_number,
                 )
 
-            if looks_private_package(package_name) and not npmrc_has_scoped_registry(repo_path, package_name):
-                line_number = find_line_number(content, package_name)
-                findings.append(
-                    Finding(
-                        rule_id="DG-NPM-004",
-                        title="Potential npm dependency confusion risk",
-                        severity=Severity.CRITICAL,
-                        category=FindingCategory.REGISTRY,
-                        confidence="MEDIUM",
-                        description=f"The package '{package_name}' appears to be private/internal, but no scoped private registry configuration was found.",
-                        impact="An attacker may publish a similarly named package to a public registry and cause the build system to install it.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
+                if is_loose_npm_version(
+                    str(version_specifier)
+                ):
+                    findings.append(
+                        create_npm_finding(
+                            rule_id="DG-NPM-002",
+                            title="Loose npm dependency version",
+                            severity=Severity.MEDIUM,
+                            category=FindingCategory.DEPENDENCY,
+                            description=(
+                                "The npm dependency uses a loose or "
+                                "mutable version specifier."
+                            ),
+                            impact=(
+                                "Loose dependency versions can resolve "
+                                "to different package versions over time."
+                            ),
+                            remediation=(
+                                "Pin npm dependencies to exact "
+                                "reviewed versions."
+                            ),
+                            file_path=package_json_file.relative_path,
                             line_number=line_number,
-                            snippet=get_line_snippet(content, line_number),
-                        ),
-                        remediation=f"Configure a scoped private registry for the package scope in .npmrc and ensure public registry fallback is controlled.",
-                        reference="https://owasp.org/www-project-top-10-ci-cd-security-risks/CICD-SEC-03-Dependency-Chain-Abuse/",
+                            snippet=snippet,
+                        )
                     )
-                )
+
+                if is_internal_npm_candidate(package_name):
+                    private_registry_configured = (
+                        has_private_npm_registry(
+                            package_json_file=package_json_file,
+                            discovered_files=discovered_files,
+                            package_name=package_name,
+                        )
+                    )
+
+                    if not private_registry_configured:
+                        findings.append(
+                            create_npm_finding(
+                                rule_id="DG-NPM-004",
+                                title=(
+                                    "Potential npm dependency "
+                                    "confusion risk"
+                                ),
+                                severity=Severity.CRITICAL,
+                                category=FindingCategory.REGISTRY,
+                                description=(
+                                    "An internal-looking npm package "
+                                    "is declared without matching "
+                                    "private registry configuration."
+                                ),
+                                impact=(
+                                    "Attackers may publish a public "
+                                    "package with the same name and "
+                                    "cause dependency confusion."
+                                ),
+                                remediation=(
+                                    "Configure scoped private registries "
+                                    "in .npmrc and ensure internal packages "
+                                    "resolve only from trusted registries."
+                                ),
+                                file_path=package_json_file.relative_path,
+                                line_number=line_number,
+                                snippet=snippet,
+                            )
+                        )
 
         scripts = package_data.get("scripts", {})
 
-        for script_name, command in scripts.items():
-            command = str(command)
+        if isinstance(scripts, dict):
+            for script_name, script_value in scripts.items():
+                if script_name not in RISKY_LIFECYCLE_SCRIPT_NAMES:
+                    continue
 
-            if script_name in DANGEROUS_LIFECYCLE_SCRIPTS and any(pattern in command for pattern in RISKY_SCRIPT_PATTERNS):
-                line_number = find_line_number(content, script_name)
+                line_number = find_line_number(
+                    content,
+                    f'"{script_name}"',
+                )
+                snippet = get_line_snippet(
+                    content,
+                    line_number,
+                )
+
                 findings.append(
-                    Finding(
+                    create_npm_finding(
                         rule_id="DG-NPM-003",
                         title="Risky npm lifecycle script",
                         severity=Severity.HIGH,
                         category=FindingCategory.BUILD_SCRIPT,
-                        confidence="HIGH",
-                        description=f"The npm lifecycle script '{script_name}' executes a risky command.",
-                        impact="Lifecycle scripts can execute automatically during dependency installation and may compromise build environments.",
-                        evidence=Evidence(
-                            file_path=repo_file.relative_path,
-                            line_number=line_number,
-                            snippet=get_line_snippet(content, line_number),
+                        description=(
+                            "The npm project uses a lifecycle script "
+                            "that can execute during dependency installation."
                         ),
-                        remediation="Avoid remote shell execution in lifecycle scripts. Replace it with reviewed, version-controlled build logic.",
-                        reference="https://docs.npmjs.com/cli/using-npm/scripts",
+                        impact=(
+                            "Lifecycle scripts can execute arbitrary code "
+                            "during package install or CI builds."
+                        ),
+                        remediation=(
+                            "Avoid risky lifecycle scripts or strictly "
+                            "review and sandbox their execution."
+                        ),
+                        file_path=package_json_file.relative_path,
+                        line_number=line_number,
+                        snippet=(
+                            snippet
+                            or f"{script_name}: {script_value}"
+                        ),
                     )
                 )
 

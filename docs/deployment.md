@@ -1,133 +1,115 @@
-﻿# BuildShield-CI Deployment Guide
+# BuildShield-CI Deployment Guide
 
-BuildShield-CI can run locally as a Python CLI/dashboard application or as a containerized DevSecOps dashboard using Docker.
+BuildShield-CI supports local execution and controlled container deployment using Docker and Docker Compose.
 
 ## Deployment Modes
 
-BuildShield-CI supports:
-
-1. Local development mode
-2. Docker container mode
-3. Docker Compose mode
-4. Cloud-ready container deployment
+1. Local Python CLI/dashboard
+2. Docker container
+3. Docker Compose with persistent volumes
+4. Container-platform deployment after environment-specific hardening
 
 ## Local Dashboard
 
-Run locally:
-
-    pip install -e .
-    buildshield dashboard --host 127.0.0.1 --port 8080
-
-Open:
-
-    http://127.0.0.1:8080
-
-## Docker Build
-
-Build the image using docker build:
-
-    docker build -t buildshield-ci:latest .
-
-Run the container:
-
-    docker run --rm -p 8080:8080 buildshield-ci:latest
+```powershell
+pip install -e ".[dev]"
+buildshield dashboard --host 127.0.0.1 --port 8080
+```
 
 Open:
 
-    http://127.0.0.1:8080
+```text
+http://127.0.0.1:8080
+```
+
+## Docker
+
+Build:
+
+```powershell
+docker build -t buildshield-ci:latest .
+```
+
+Run:
+
+```powershell
+docker run --rm -p 8080:8080 buildshield-ci:latest
+```
+
+Health:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/health
+```
 
 ## Docker Compose
 
-Start the platform using docker compose up:
+```powershell
+docker compose up --build -d
+docker compose ps
+Invoke-RestMethod http://127.0.0.1:8080/health
+docker compose down
+```
 
-    docker compose up --build
+Remove persistent volumes only when intentionally discarding local state:
 
-Run in background:
-
-    docker compose up --build -d
-
-Check running services:
-
-    docker compose ps
-
-Stop:
-
-    docker compose down
-
-Stop and remove persistent volumes:
-
-    docker compose down -v
+```powershell
+docker compose down -v
+```
 
 ## Persistent Data
 
-Docker Compose creates two named volumes:
+Compose defines:
 
-- buildshield_reports
-- buildshield_data
+- `buildshield_reports`
+- `buildshield_data`
 
-These store:
+They are used for generated reports and application data such as SQLite history.
 
-- Generated reports
-- Dashboard scan history
-- SQLite database
-- OSV intelligence reports
-- SBOM-lite reports
+## Container Security Controls
 
-## Health Check
+The current Docker setup includes:
 
-The container exposes a health endpoint:
+- Dedicated non-root `buildshield` user
+- Port 8080
+- Health check
+- Reduced Docker build context through `.dockerignore`
+- Persistent volumes through Compose
 
-    /health
+## Health Endpoint
 
-Expected response:
+Expected shape:
 
-    {
-      "status": "ok",
-      "product": "BuildShield-CI",
-      "version": "0.12.6"
-    }
+```json
+{
+  "status": "ok",
+  "product": "BuildShield-CI",
+  "version": "0.12.7"
+}
+```
 
-## Security Notes
-
-The container runs as a non-root user named:
-
-    buildshield
-
-The dashboard binds to:
-
-    0.0.0.0:8080
-
-The Dockerfile includes a health check and avoids running the application as root.
+The health endpoint version is sourced from the BuildShield-CI package metadata.
 
 ## Cloud Deployment Readiness
 
-This image can be deployed to platforms that support container workloads, such as:
+The image is suitable for controlled demonstrations, local lab deployment, and further platform integration.
 
-- Render
-- Railway
-- Fly.io
-- AWS ECS
-- Azure Container Apps
-- Google Cloud Run
-- Kubernetes
+It should not be described as fully enterprise production-hardened without additional controls. A real internet-facing or multi-user deployment should add, as appropriate:
 
-For cloud deployment, expose port:
+- Authentication
+- Authorization / RBAC
+- TLS termination
+- Secret management
+- Network policy / firewalling
+- Rate limiting
+- Request-size/time limits
+- Audit logging
+- Centralized observability
+- Backup and recovery
+- Dependency/image lifecycle management
+- Tenant/repository isolation
+- Security monitoring and incident response procedures
 
-    8080
+With the required environment-specific hardening, the image can be adapted to container platforms such as AWS ECS, Azure Container Apps, Google Cloud Run, Kubernetes, and other OCI-compatible services.
 
-Use command:
-
-    buildshield dashboard --host 0.0.0.0 --port 8080
-
-## Recommended Demo Flow
-
-1. Start dashboard using Docker Compose.
-2. Open the dashboard.
-3. Run vulnerable repository scan.
-4. Run secure repository scan.
-5. View findings.
-6. View policy evaluation.
-7. View SBOM inventory.
-8. Run OSV vulnerability intelligence.
-9. View scan history and risk trends.
-10. Download generated reports.
+No specific cloud platform is claimed as production-validated until tested in that environment.

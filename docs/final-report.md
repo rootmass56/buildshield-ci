@@ -2,63 +2,53 @@
 
 ## 1. Executive Overview
 
-BuildShield-CI is an advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform. The project focuses on detecting security weaknesses that commonly appear in modern software delivery pipelines, especially around dependency management, private package usage, GitHub Actions workflow security, and policy enforcement.
+BuildShield-CI is an advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform. It performs passive static analysis of repository configuration and automation files, converts results into structured security findings, calculates risk, enforces policy-as-code, generates multiple report formats, integrates with GitHub Code Scanning, and provides dashboard/API visibility.
 
-The project was designed as a DevSecOps security tool that can run locally and inside GitHub Actions. It generates machine-readable and human-readable security reports, enforces policy-as-code, uploads SARIF results to GitHub Code Scanning, and demonstrates measurable improvement between a vulnerable repository and a hardened repository.
-
----
+The project covers npm, Python dependencies, GitHub Actions, Dockerfiles, private registry controls, SBOM-lite dependency inventory, OSV vulnerability intelligence, SQLite history, Docker deployment, and automated regression testing.
 
 ## 2. Problem Statement
 
-Modern development teams rely on external packages, private registries, automation workflows, and CI/CD pipelines. These systems introduce supply-chain risks such as:
+Modern software delivery depends on package registries, third-party actions, build scripts, containers, secrets, and automated pipelines. Misconfiguration can create risks such as dependency confusion, mutable dependency resolution, excessive workflow privileges, secret leakage, unsafe remote script execution, and insecure container builds.
 
-- Dependency confusion
-- Unpinned dependencies
-- Missing lockfiles
-- Risky package lifecycle scripts
-- Over-permissive CI/CD tokens
-- Remote script execution in workflows
-- Secret exposure in workflow logs
-- Unsafe `pull_request_target` usage
-- Lack of automated policy enforcement
-
-BuildShield-CI addresses these risks by statically analyzing repository configuration files and enforcing security rules before code reaches production.
-
----
+BuildShield-CI addresses these risks before deployment through static analysis and policy enforcement.
 
 ## 3. Objectives
 
-The main objectives of BuildShield-CI are:
+The project objectives are to:
 
-1. Detect dependency confusion indicators in npm and Python projects.
-2. Detect insecure dependency declarations.
-3. Detect risky CI/CD workflow patterns.
-4. Generate evidence-backed findings with severity and remediation.
-5. Calculate an advanced risk score.
-6. Enforce policy-as-code security gates.
-7. Integrate with GitHub Actions.
-8. Upload SARIF findings to GitHub Code Scanning.
-9. Generate JSON, Markdown, and HTML reports.
-10. Provide a secure vs vulnerable comparison demonstration.
-11. Validate the system using automated tests.
-
----
+1. Detect dependency confusion indicators.
+2. Detect insecure npm and Python dependency configuration.
+3. Detect GitHub Actions workflow risks.
+4. Detect Dockerfile hardening issues.
+5. Produce evidence-backed findings with remediation.
+6. Calculate security score, risk level, and top drivers.
+7. Enforce YAML policy-as-code.
+8. Generate JSON, Markdown, HTML, and SARIF reports.
+9. Integrate with GitHub Actions and Code Scanning.
+10. Build SBOM-lite dependency inventory.
+11. Add OSV vulnerability intelligence.
+12. Provide FastAPI/dashboard visibility.
+13. Persist history and risk trends with SQLite.
+14. Support Docker and Docker Compose deployment.
+15. Validate behavior through automated tests and controlled vulnerable/hardened samples.
 
 ## 4. Technology Stack
 
 | Component | Technology |
 |---|---|
-| Programming Language | Python 3.13 |
-| CLI Framework | Typer |
-| Terminal Output | Rich |
-| Data Validation | Pydantic |
-| Policy Format | YAML |
+| Language | Python 3.13 |
+| CLI | Typer |
+| Terminal UI | Rich |
+| Models | Pydantic |
+| Backend | FastAPI |
+| Storage | SQLite |
+| Frontend | HTML, CSS, JavaScript |
+| Policy | YAML |
 | CI/CD | GitHub Actions |
 | Reports | JSON, Markdown, HTML, SARIF |
-| Testing | pytest |
-| Hosting | GitHub |
-
----
+| Vulnerability Intelligence | OSV |
+| Deployment | Docker, Docker Compose |
+| Testing | Pytest |
 
 ## 5. System Architecture
 
@@ -66,289 +56,276 @@ The main objectives of BuildShield-CI are:
 Repository
    |
    v
-File Discovery Engine
+File Discovery
    |
    v
-Static Analyzers
-   |-- npm Analyzer
-   |-- Python Analyzer
-   |-- GitHub Actions Analyzer
+Explicit Analyzer Layer
+   |-- npm
+   |-- Python
+   |-- GitHub Actions
+   `-- Dockerfile
    |
    v
-Finding Normalization
+Normalized Findings
    |
-   v
-Risk Scoring Engine
-   |
-   v
-Policy-as-Code Engine
-   |
-   v
-Report Generation
-   |-- Terminal
-   |-- JSON
-   |-- Markdown
-   |-- HTML
-   |-- SARIF
-   |
-   v
-GitHub Actions CI/CD
-   |
-   v
-Artifacts + GitHub Code Scanning
+   +--> Risk Scoring
+   +--> Policy-as-Code
+   +--> Reports / SARIF
+   +--> SBOM-lite / OSV
+   +--> FastAPI / Dashboard
+   `--> SQLite History
 ```
 
----
+A maintenance refactor removed dynamic analyzer-name guessing and hidden fallback analyzers. Canonical analyzer functions are now invoked explicitly and protected by regression tests.
 
-## 6. Implemented Features
+## 6. Implemented Security Analysis
 
-### 6.1 npm Analyzer
+### npm
 
-The npm analyzer detects:
+- Missing lockfile
+- Loose/mutable versions
+- Risky lifecycle scripts
+- Potential dependency confusion
+- Missing trusted private registry handling
 
-- Missing `package-lock.json`
-- Loose dependency versions such as `^` or `~`
-- Risky lifecycle scripts such as `preinstall` and `postinstall`
-- Potential dependency confusion risk for scoped/internal packages without private registry configuration
+### Python
 
-### 6.2 Python Analyzer
+- Unpinned dependencies
+- Loose version ranges
+- Potential dependency confusion
+- Missing trusted package index handling
 
-The Python analyzer detects:
+### GitHub Actions
 
-- Unpinned Python dependencies
-- Loose Python dependency version specifiers
-- Potential internal package confusion risk when private package handling is not configured
+- Mutable action refs
+- Excessive token permissions
+- Pipe-to-shell
+- Secret echo
+- Risky `pull_request_target`
 
-### 6.3 GitHub Actions Analyzer
+### Dockerfile
 
-The GitHub Actions analyzer detects:
+- Unpinned/latest base image
+- Missing non-root user
+- Potential secret in `ENV`/`ARG`
+- Remote script execution
+- `apt-get upgrade`
+- Missing health check
 
-- Actions not pinned to full commit SHA
-- Over-permissive `permissions: write-all`
-- Remote script piping such as `curl | bash`
-- Secret echoing in workflow logs
-- Risky `pull_request_target` triggers
-
-### 6.4 Risk Scoring Engine
+## 7. Risk and Policy
 
 The scoring engine produces:
 
 - Overall security score
 - Risk level
-- Build gate status
-- Build gate reason
-- Category-wise risk breakdown
+- Category risk breakdown
 - Top risk drivers
+- Build gate status/reason
 
-### 6.5 Policy-as-Code Engine
+The policy engine enforces:
 
-The policy engine reads `buildshield-policy.yml` and checks:
-
-- Minimum security score
-- Maximum allowed findings by severity
-- Blocked security controls
+- Minimum score
+- Maximum severity counts
 - Required lockfiles
 - Pinned GitHub Actions
-- Secret echo prevention
-- Dependency confusion prevention
+- Secret handling
+- Pipe-to-shell restrictions
+- Dependency confusion controls
+- `pull_request_target` restrictions
 
-### 6.6 Report Generation
+## 8. Controlled Demonstration Results
 
-Supported report formats:
+### Vulnerable sample
+
+| Metric | Result |
+|---|---:|
+| Files discovered/scanned | 5 / 5 |
+| Findings | 22 |
+| Critical | 4 |
+| High | 10 |
+| Medium | 7 |
+| Low | 1 |
+| Security Score | 5/100 |
+| Risk Level | CRITICAL |
+| Build Gate | FAILED |
+| Policy | FAILED |
+
+### Hardened sample
+
+| Metric | Result |
+|---|---:|
+| Files discovered/scanned | 7 / 7 |
+| Findings | 0 |
+| Critical | 0 |
+| High | 0 |
+| Medium | 0 |
+| Low | 0 |
+| Security Score | 100/100 |
+| Risk Level | LOW |
+| Build Gate | PASSED |
+| Policy | PASSED |
+
+### Comparison
+
+| Metric | Result |
+|---|---:|
+| Score improvement | +95 |
+| Findings reduced | 22 |
+| Risk reduction | 100% |
+| Verdict | `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED` |
+
+These figures are from controlled repository fixtures and should not be interpreted as a universal security measurement for arbitrary production systems.
+
+## 9. Reporting and GitHub Integration
+
+BuildShield-CI generates:
 
 - JSON
 - Markdown
 - HTML
+- SARIF 2.1.0
+- Comparison reports
+- Inventory output
+- OSV intelligence output
+
+SARIF is uploaded by GitHub Actions to GitHub Code Scanning. Alerts produced from `samples/vulnerable-repo` are intentionally generated demonstration alerts.
+
+The workflow also uploads generated reports as artifacts.
+
+## 10. SBOM-lite and OSV Intelligence
+
+The dependency inventory extracts package metadata from supported npm and Python inputs. The OSV integration can create an offline query plan or perform online lookups for pinned dependencies.
+
+OSV results are dynamic; documentation does not hard-code a CVE/vulnerability count.
+
+## 11. API, Dashboard, and History
+
+The FastAPI backend and web dashboard provide:
+
+- Scan execution
+- Comparison
+- Findings exploration
+- Policy result visibility
+- Reports
+- SBOM-lite inventory
+- OSV intelligence
+- Scan history
+- Risk trend data
+
+SQLite stores local scan-history/trend information.
+
+## 12. CI/CD Self-Hardening
+
+BuildShield-CI's own workflow uses immutable full commit SHAs for third-party GitHub Actions.
+
+A regression test prevents accidental reintroduction of mutable refs such as `@main`, `@v6`, or `@v7`.
+
+The project also self-scans `.github` and currently reports:
+
+```text
+0 findings
+100/100
+LOW
+PASSED
+```
+
+## 13. Deployment
+
+BuildShield-CI supports local execution, Docker, and Docker Compose.
+
+Container controls include:
+
+- Non-root execution
+- Health check
+- Port 8080
+- Persistent report/data volumes in Compose
+
+The project is deployment-ready for controlled environments and demonstrates a production-style architecture. Enterprise production deployment would require additional identity, authorization, isolation, secret-management, rate-limiting, network, logging, monitoring, backup, and governance controls.
+
+## 14. Testing and Reliability
+
+Current verified test result:
+
+```text
+57 passed
+```
+
+Coverage includes:
+
+- Scanner engine
+- Analyzer routing
+- npm analyzer
+- Python analyzer
+- GitHub Actions analyzer
+- Dockerfile analyzer
+- Policy engine
+- Comparison engine
+- Report generation
 - SARIF
+- CLI behavior
+- Dashboard APIs
+- Scan history
+- SBOM-lite inventory
+- OSV intelligence
+- Deployment files
+- Workflow SHA pinning
+- Repository hygiene
 
-### 6.7 GitHub Actions Integration
+## 15. Repository Hygiene
 
-BuildShield-CI is integrated with GitHub Actions to run automatically on:
+The maintenance baseline includes:
 
-- Push
-- Pull request
-- Manual workflow dispatch
+- Deterministic line-ending rules with `.gitattributes`
+- Clean `.gitignore`
+- Reduced Docker build context via `.dockerignore`
+- No blanket pytest warning suppression
+- Explicit dev dependencies
+- GitHub project metadata URLs
+- Generated reports and SQLite runtime data excluded from source control
 
-The workflow:
+## 16. Ethical and Safety Scope
 
-- Installs the tool
-- Runs tests
-- Applies policy
-- Generates reports
-- Uploads SARIF to GitHub Code Scanning
-- Uploads reports as artifacts
+BuildShield-CI is defensive and passive.
 
-### 6.8 Automated Testing
+It does not:
 
-The test suite validates:
-
-- Scanner behavior
-- Policy pass/fail behavior
-- Comparison logic
-- Report generation
-- SARIF generation
-- CLI exit codes
-
-Current result:
-
-```text
-12 passed
-```
-
----
-
-## 7. Demonstration Results
-
-### Vulnerable Repository
-
-| Metric | Result |
-|---|---:|
-| Security Score | 5/100 |
-| Risk Level | Critical |
-| Findings | 15 |
-| Policy Status | Failed |
-| CI/CD Exit Code | 2 |
-
-### Secure Repository
-
-| Metric | Result |
-|---|---:|
-| Security Score | 100/100 |
-| Risk Level | Low |
-| Findings | 0 |
-| Policy Status | Passed |
-| CI/CD Exit Code | 0 |
-
-### Before vs After
-
-| Metric | Vulnerable Repo | Secure Repo | Improvement |
-|---|---:|---:|---:|
-| Security Score | 5/100 | 100/100 | +95 |
-| Findings | 15 | 0 | -15 |
-| Critical Findings | 2 | 0 | -2 |
-| High Findings | 6 | 0 | -6 |
-| Policy Status | Failed | Passed | Improved |
-
----
-
-## 8. Screenshots to Include
-
-The final submission should include screenshots of:
-
-1. Local vulnerable repository scan
-2. Local secure repository scan
-3. Policy failed output with exit code 2
-4. Policy passed output with exit code 0
-5. HTML report opened in browser
-6. GitHub Actions successful workflow
-7. GitHub Code Scanning alerts
-8. Uploaded workflow artifacts
-9. pytest result showing 12 passed
-10. GitHub repository home page
-
----
-
-## 9. Ethical and Safety Considerations
-
-BuildShield-CI is designed for safe defensive use.
-
-The project does not:
-
-- Perform exploitation
-- Generate malware
-- Upload malicious packages
-- Exfiltrate secrets
+- Exploit systems
+- Publish malicious packages
+- Execute malware
+- Exfiltrate credentials
 - Attack package registries
-- Access unauthorized repositories
-- Execute untrusted packages
+- Scan unauthorized systems
+- Perform destructive actions
 
-All vulnerable examples are local sample files created for controlled demonstration.
+All intentionally vulnerable content is confined to controlled sample files.
 
----
+## 17. Current Limitations
 
-## 10. Challenges Faced
+- Static-analysis focus
+- Limited ecosystem coverage
+- Heuristic dependency-confusion detection
+- No enterprise authentication/RBAC
+- No multi-tenant isolation
+- No distributed scan-job architecture
+- No Kubernetes or GitLab CI analyzer yet
 
-### 10.1 SARIF Validation
+## 18. Future Roadmap
 
-GitHub Code Scanning rejected an invalid SARIF property named `runAutomationDetails`. The issue was fixed by removing the invalid field and regenerating standards-compliant SARIF.
+Potential next-stage improvements include:
 
-### 10.2 Repository-Relative SARIF Paths
+1. Authentication and RBAC
+2. Repository/webhook-triggered scans
+3. More package ecosystems
+4. Kubernetes manifest analysis
+5. GitLab CI analysis
+6. Advanced vulnerability prioritization
+7. AI-assisted remediation with grounding
+8. Enterprise policy profiles
+9. Operational observability and rate limiting
+10. Hardened cloud deployment patterns
 
-SARIF paths needed to map properly to files inside the GitHub repository. This was handled by generating repository-relative artifact URIs.
+## 19. Conclusion
 
-### 10.3 Encoding Issues
+BuildShield-CI demonstrates end-to-end cybersecurity engineering across supply-chain security, static analysis, DevSecOps policy enforcement, CI/CD hardening, vulnerability intelligence, reporting, dashboard development, persistence, testing, and containerization.
 
-PowerShell-created files sometimes included UTF-8 BOM. The file reader was updated to handle `utf-8-sig`.
-
-### 10.4 Avoiding False Positives
-
-The secure sample repository required realistic private registry configuration to avoid false dependency confusion findings.
-
----
-
-## 11. Performance and Reliability
-
-The scanner runs quickly on the sample repositories. Current automated tests complete successfully with:
-
-```text
-12 passed
-```
-
-The GitHub Actions workflow validates:
-
-- Installation
-- CLI availability
-- Test suite
-- Policy gate
-- Report generation
-- SARIF upload
-- Artifact upload
-
----
-
-## 12. Limitations
-
-Current limitations:
-
-- Static analysis only
-- Limited language ecosystem coverage
-- No live package registry lookups
-- No CVE database integration
-- No SBOM output yet
-- No web dashboard yet
-- No enterprise authentication or multi-user management
-
----
-
-## 13. Future Roadmap
-
-Planned future enhancements:
-
-1. FastAPI backend
-2. React dashboard
-3. Download reports from web UI
-4. SBOM generation
-5. OSV vulnerability database integration
-6. Dockerfile scanner
-7. Kubernetes YAML scanner
-8. GitLab CI scanner
-9. PDF report generation
-10. Enterprise policy templates
-11. Historical scan tracking
-12. Risk trend dashboard
-
----
-
-## 14. Conclusion
-
-BuildShield-CI successfully demonstrates an advanced DevSecOps security platform for CI/CD supply-chain risk detection. It combines static analysis, policy enforcement, risk scoring, report generation, CI/CD automation, SARIF integration, GitHub Code Scanning, and automated tests.
-
-The project is suitable for cybersecurity career preparation, especially for roles in:
-
-- DevSecOps
-- Application Security
-- Product Security
-- Cloud Security
-- Security Engineering
-- Secure SDLC
-- CI/CD Pipeline Security
+It is suitable as a placement, internship, and portfolio project while remaining explicit about the difference between a controlled deployment-ready demonstration and a fully hardened enterprise production service.

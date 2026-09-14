@@ -1,71 +1,89 @@
 # BuildShield-CI Screenshots Checklist
 
-Use this checklist while preparing the final submission/demo.
+Use this checklist for the final portfolio/submission/demo capture.
 
-## Required Screenshots
-
-### Local Tool Screenshots
+## CLI and Tests
 
 - [ ] `buildshield --help`
 - [ ] `buildshield version`
-- [ ] Vulnerable repository scan output
-- [ ] Secure repository scan output
-- [ ] Vulnerable repository policy failure
-- [ ] `echo $LASTEXITCODE` showing `2`
-- [ ] Secure repository policy pass
-- [ ] `echo $LASTEXITCODE` showing `0`
-- [ ] Before vs after comparison output
-- [ ] `pytest -q` showing `12 passed`
+- [ ] `pytest -q` showing `57 passed`
+- [ ] Vulnerable scan showing `22 findings`
+- [ ] Vulnerable scan showing `5/100`, `CRITICAL`, `FAILED`
+- [ ] Vulnerable severity counts: `4 Critical / 10 High / 7 Medium / 1 Low`
+- [ ] Hardened scan showing `0 findings`
+- [ ] Hardened scan showing `100/100`, `LOW`, `PASSED`
+- [ ] Comparison showing `+95`
+- [ ] Comparison showing `22 findings reduced`
+- [ ] Comparison showing `100%` risk reduction
 
-### Report Screenshots
+## Supply-Chain Intelligence
 
-- [ ] `reports/vulnerable-policy-report.html`
-- [ ] `reports/secure-policy-report.html`
-- [ ] `reports/comparison-report.html`
-- [ ] SARIF file preview showing `"version": "2.1.0"`
+- [ ] SBOM-lite inventory
+- [ ] OSV offline query plan
+- [ ] OSV online result (do not rely on a fixed vulnerability count)
 
-### GitHub Screenshots
+## Dashboard
 
-- [ ] GitHub repository home page
-- [ ] `.github/workflows/buildshield-ci.yml`
-- [ ] Successful GitHub Actions workflow
-- [ ] Run automated test suite step
-- [ ] Upload SARIF to GitHub code scanning step
-- [ ] Upload BuildShield-CI reports artifact step
-- [ ] Downloaded artifact contents
-- [ ] GitHub Code Scanning alerts page
-- [ ] Example code scanning alert details
+- [ ] Overview
+- [ ] Scanner
+- [ ] Findings
+- [ ] Policy
+- [ ] Compare
+- [ ] SBOM Inventory
+- [ ] Vulnerability Intelligence
+- [ ] History & Trends
+- [ ] Reports
+- [ ] CI/CD
+- [ ] About
+
+## Reports
+
+- [ ] Vulnerable HTML report
+- [ ] Hardened HTML report
+- [ ] Comparison HTML report
+- [ ] JSON report
+- [ ] Markdown report
+- [ ] SARIF preview showing version `2.1.0`
+
+## GitHub
+
+- [ ] Repository home
+- [ ] SHA-pinned `.github/workflows/buildshield-ci.yml`
+- [ ] Successful Actions workflow
+- [ ] Pytest workflow step
+- [ ] SARIF upload step
+- [ ] Artifact upload step
+- [ ] Workflow artifacts
+- [ ] Code Scanning page
+- [ ] Example controlled sample alert
+- [ ] Self-scan of `.github` showing `0 findings`
+
+Add a caption when showing Code Scanning: **alerts originating from `samples/vulnerable-repo` are intentionally generated demo findings.**
+
+## Docker
+
+- [ ] Successful image build
+- [ ] Running container
+- [ ] `/health` response
+- [ ] Docker Compose service status
+- [ ] Dashboard running from container
 
 ## Recommended Naming
-
-Save screenshots using names like:
 
 ```text
 01-repository-home.png
 02-cli-help.png
-03-vulnerable-scan.png
-04-secure-scan.png
-05-policy-failed-exit-code.png
-06-policy-passed-exit-code.png
-07-comparison-output.png
-08-html-report.png
-09-pytest-passed.png
-10-github-actions-success.png
-11-code-scanning-alerts.png
-12-artifacts.png
+03-pytest-53-passed.png
+04-vulnerable-scan.png
+05-hardened-scan.png
+06-comparison.png
+07-inventory.png
+08-osv.png
+09-dashboard-overview.png
+10-dashboard-findings.png
+11-html-report.png
+12-actions-success.png
+13-code-scanning.png
+14-workflow-sha-pinning.png
+15-docker-health.png
 ```
-
-## Demo Tip
-
-During presentation, show screenshots in this order:
-
-1. Problem
-2. Vulnerable scan
-3. Secure scan
-4. Policy gate
-5. CI/CD workflow
-6. Code scanning
-7. Reports
-8. Tests
-9. Architecture
-10. Future roadmap
