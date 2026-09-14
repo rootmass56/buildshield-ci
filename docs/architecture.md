@@ -284,7 +284,7 @@ The maintenance baseline includes:
 Current verified result:
 
 ```text
-53 passed
+57 passed
 ```
 
 Coverage includes analyzer routing, analyzer behavior, benchmark preservation, policy, reports, comparison, CLI, dashboard APIs, scan history, OSV, inventory, deployment files, workflow SHA pinning, and repository hygiene.

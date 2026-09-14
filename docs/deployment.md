@@ -84,11 +84,11 @@ Expected shape:
 {
   "status": "ok",
   "product": "BuildShield-CI",
-  "version": "0.12.6"
+  "version": "0.12.7"
 }
 ```
 
-The version will change when the maintenance release is finalized.
+The health endpoint version is sourced from the BuildShield-CI package metadata.
 
 ## Cloud Deployment Readiness
 

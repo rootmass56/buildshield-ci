@@ -88,7 +88,7 @@ Do not claim that the current project is already an enterprise multi-tenant secu
 ## Current Automated Validation
 
 ```text
-53 passing tests
+57 passing tests
 ```
 
 The tests cover scanner behavior, analyzers, routing, policy, reports, comparison, APIs, history, inventory, OSV, deployment files, workflow SHA pinning, and repository hygiene.

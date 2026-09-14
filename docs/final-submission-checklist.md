@@ -6,7 +6,7 @@ This checklist distinguishes **already implemented/verified capabilities** from 
 
 Verified before final v0.12.7 release:
 
-- [x] 53 automated tests pass
+- [x] 57 automated tests pass
 - [x] Vulnerable sample: 22 findings
 - [x] Vulnerable sample: 4 Critical / 10 High / 7 Medium / 1 Low
 - [x] Vulnerable sample: 5/100, CRITICAL, build gate FAILED
@@ -20,6 +20,9 @@ Verified before final v0.12.7 release:
 - [x] GitHub Actions are pinned to immutable SHAs
 - [x] `.github` self-scan reports 0 findings
 - [x] Repository hygiene and line-ending policy added
+- [x] Security policy and disclosure guidance added
+- [x] Live OSV lookup completed successfully during freeze validation
+- [x] Docker and Docker Compose freeze validation passed
 
 ## Implemented Capabilities
 
@@ -81,18 +84,18 @@ Also verify online OSV separately because network results are dynamic.
 
 ## Docker Verification
 
-- [ ] `docker build` succeeds
-- [ ] Container starts
-- [ ] Non-root execution confirmed
-- [ ] `/health` works
-- [ ] Docker Compose starts
-- [ ] Persistent report volume works
-- [ ] Persistent data volume works
-- [ ] Compose shutdown succeeds cleanly
+- [x] `docker build` succeeds
+- [x] Container starts
+- [x] Non-root execution confirmed
+- [x] `/health` works
+- [x] Docker Compose starts
+- [x] Persistent report volume works
+- [x] Persistent data volume works
+- [x] Compose shutdown succeeds cleanly
 
 ## GitHub Verification
 
-- [ ] Maintenance branch pushed
+- [x] Maintenance branch pushed
 - [ ] Pull request opened to `main`
 - [ ] GitHub Actions passes on PR
 - [ ] SARIF upload succeeds
@@ -129,7 +132,7 @@ Also verify online OSV separately because network results are dynamic.
 
 Do not begin v0.13 feature work until:
 
-- [ ] Full freeze regression passes
+- [x] Full freeze regression passes
 - [ ] v0.12.7 is merged to `main`
 - [ ] main CI passes
 - [ ] v0.12.7 tag is pushed

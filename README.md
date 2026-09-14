@@ -30,7 +30,7 @@ Comparison result:
 - Findings reduced: **22**
 - Risk reduction: **100%**
 - Verdict: `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`
-- Automated tests: **53 passing**
+- Automated tests: **57 passing**
 
 The vulnerable sample is intentionally insecure. Findings uploaded to GitHub Code Scanning from that sample are demonstration findings, not evidence that the BuildShield-CI source code itself contains those vulnerabilities.
 
@@ -170,13 +170,13 @@ pip install -e ".[dev]"
 buildshield version
 ```
 
-Current package version during the maintenance branch:
+Current release-candidate version:
 
 ```text
-BuildShield-CI version: 0.12.6
+BuildShield-CI version: 0.12.7
 ```
 
-The release version will be bumped only after the maintenance validation is complete.
+This maintenance branch is the v0.12.7 release candidate pending PR, CI, merge, and tag verification.
 
 ---
 
@@ -308,10 +308,10 @@ The container runs as a non-root user and uses health checks. Docker Compose pro
 pytest -q
 ```
 
-Current verified maintenance result:
+Current verified release-candidate result:
 
 ```text
-53 passed
+57 passed
 ```
 
 Coverage includes scanner orchestration, npm/Python/GitHub Actions/Dockerfile analyzers, policy, reporting, comparison, dashboard APIs, history, SBOM-lite inventory, OSV intelligence, deployment files, immutable workflow references, and repository hygiene.

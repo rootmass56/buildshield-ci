@@ -6,7 +6,7 @@ Use this checklist for the final portfolio/submission/demo capture.
 
 - [ ] `buildshield --help`
 - [ ] `buildshield version`
-- [ ] `pytest -q` showing `53 passed`
+- [ ] `pytest -q` showing `57 passed`
 - [ ] Vulnerable scan showing `22 findings`
 - [ ] Vulnerable scan showing `5/100`, `CRITICAL`, `FAILED`
 - [ ] Vulnerable severity counts: `4 Critical / 10 High / 7 Medium / 1 Low`

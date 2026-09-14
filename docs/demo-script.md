@@ -15,8 +15,8 @@ git status --short
 Expected maintenance baseline:
 
 ```text
-53 passed
-BuildShield-CI version: 0.12.6
+57 passed
+BuildShield-CI version: 0.12.7
 working tree clean
 ```
 
