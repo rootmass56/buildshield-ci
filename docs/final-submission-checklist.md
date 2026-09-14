@@ -4,7 +4,7 @@ This checklist distinguishes **already implemented/verified capabilities** from 
 
 ## Current Maintenance Baseline
 
-Verified before final v0.12.7 release:
+Verified for the frozen v0.12.7 release:
 
 - [x] 57 automated tests pass
 - [x] Vulnerable sample: 22 findings
@@ -51,9 +51,9 @@ Verified before final v0.12.7 release:
 - [x] Health endpoint
 - [x] Non-root container execution
 
-## Final Local Release Verification
+## Completed Local Release Verification (v0.12.7)
 
-Before tagging v0.12.7:
+The following release verification was completed successfully before the v0.12.7 tag was created:
 
 ```powershell
 git status --short
@@ -66,21 +66,23 @@ buildshield inventory samples/vulnerable-repo --hide-packages
 buildshield vulncheck samples/secure-repo --offline-plan
 ```
 
-Also verify online OSV separately because network results are dynamic.
+Online OSV was also validated separately because network results are dynamic.
 
-## Dashboard Verification
+## Dashboard / Portfolio Capture Checklist
 
-- [ ] Start dashboard
-- [ ] `/health` returns OK
-- [ ] Overview loads
-- [ ] Scanner works
-- [ ] Findings load
-- [ ] Policy page loads
-- [ ] Compare page loads
-- [ ] Inventory works
-- [ ] Vulnerability intelligence works
-- [ ] History and trends work
-- [ ] Reports are downloadable
+These items remain a presentation/screenshot checklist and are not release blockers for the already frozen v0.12.7 baseline:
+
+- [ ] Start dashboard for final capture
+- [ ] `/health` response screenshot
+- [ ] Overview screenshot
+- [ ] Scanner screenshot
+- [ ] Findings screenshot
+- [ ] Policy screenshot
+- [ ] Compare screenshot
+- [ ] Inventory screenshot
+- [ ] Vulnerability Intelligence screenshot
+- [ ] History and Trends screenshot
+- [ ] Reports download screenshot
 
 ## Docker Verification
 
@@ -93,18 +95,18 @@ Also verify online OSV separately because network results are dynamic.
 - [x] Persistent data volume works
 - [x] Compose shutdown succeeds cleanly
 
-## GitHub Verification
+## GitHub Release Verification
 
 - [x] Maintenance branch pushed
-- [ ] Pull request opened to `main`
-- [ ] GitHub Actions passes on PR
-- [ ] SARIF upload succeeds
-- [ ] Artifacts upload succeeds
-- [ ] Code Scanning receives controlled sample findings
-- [ ] Documentation reviewed in GitHub UI
-- [ ] Merge completed
-- [ ] `main` CI revalidated
-- [ ] v0.12.7 tag created and pushed
+- [x] Pull request opened to `main`
+- [x] GitHub Actions passes on PR
+- [x] SARIF upload succeeds
+- [x] Artifacts upload succeeds
+- [ ] Code Scanning page visually reviewed for controlled sample alerts
+- [ ] Documentation visually reviewed in GitHub UI for final portfolio capture
+- [x] Merge completed
+- [x] `main` CI revalidated
+- [x] v0.12.7 annotated tag created and pushed
 
 ## Documentation
 
@@ -128,12 +130,15 @@ Also verify online OSV separately because network results are dynamic.
 - OSV online results are dynamic.
 - BuildShield-CI is deployment-ready for controlled environments, not claimed as a fully hardened enterprise multi-user service.
 
-## Upgrade Gate
+## Final-Hardening Entry Gate
 
-Do not begin v0.13 feature work until:
+The gate required before beginning the final hardening program is complete:
 
 - [x] Full freeze regression passes
-- [ ] v0.12.7 is merged to `main`
-- [ ] main CI passes
-- [ ] v0.12.7 tag is pushed
-- [ ] Working tree is clean
+- [x] v0.12.7 is merged to `main`
+- [x] main CI passes
+- [x] v0.12.7 annotated tag is pushed
+- [x] Working tree was clean at freeze
+- [x] `upgrade/v0.13-security-hardening` was created from the exact frozen v0.12.7 commit
+
+Current state: the hardening branch is active and was created from the frozen baseline. **H1 has not started yet.** The next implementation phase is the H1-H10 finalization program targeting **BuildShield-CI v1.0.0 Final**.

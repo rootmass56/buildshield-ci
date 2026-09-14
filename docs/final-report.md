@@ -299,33 +299,71 @@ It does not:
 
 All intentionally vulnerable content is confined to controlled sample files.
 
-## 17. Current Limitations
+## 17. Current v0.12.7 Limitations and Final Scope Boundaries
 
-- Static-analysis focus
-- Limited ecosystem coverage
-- Heuristic dependency-confusion detection
-- No enterprise authentication/RBAC
-- No multi-tenant isolation
-- No distributed scan-job architecture
-- No Kubernetes or GitLab CI analyzer yet
+The frozen v0.12.7 baseline is complete and verified, but it is not yet the final hardened web-enabled product. The following are current limitations that the finalization program will address where they are in scope:
 
-## 18. Future Roadmap
+- API filesystem access is not yet constrained to explicit approved workspace roots.
+- API authentication/authorization is not yet implemented.
+- Dashboard rendering still requires final XSS/browser-security hardening.
+- Request/resource controls and safe public error handling require hardening.
+- Report/history storage and retention require final security review.
+- Docker/runtime controls can be tightened beyond the already verified non-root baseline.
+- CI/dependency reproducibility and least-privilege controls can be improved.
+- The final adversarial-security and dead-code audit has not yet been performed.
 
-Potential next-stage improvements include:
+The following are intentional final scope boundaries, not missing future features:
 
-1. Authentication and RBAC
-2. Repository/webhook-triggered scans
-3. More package ecosystems
-4. Kubernetes manifest analysis
-5. GitLab CI analysis
-6. Advanced vulnerability prioritization
-7. AI-assisted remediation with grounding
-8. Enterprise policy profiles
-9. Operational observability and rate limiting
-10. Hardened cloud deployment patterns
+- Analysis remains focused on npm, Python, GitHub Actions, and Dockerfiles.
+- Dependency-confusion detection remains a static heuristic security control rather than an active registry attack.
+- No Maven, Go, NuGet, Rust, or other new package-ecosystem analyzers are planned.
+- No Kubernetes manifest analyzer is planned.
+- No GitLab CI or Jenkins analyzer is planned.
+- No AI/LLM remediation assistant is planned.
+- No multi-tenant SaaS, distributed worker architecture, or cloud-provider-specific deployment stack is planned.
+
+## 18. Final v1.0.0 Hardening Roadmap
+
+The active `upgrade/v0.13-security-hardening` branch is the final development workspace. It was created from the exact frozen v0.12.7 commit. The final release target is **BuildShield-CI v1.0.0 Final**.
+
+The remaining program is:
+
+1. **H1 - Workspace / filesystem trust boundary**
+   Constrain caller-controlled scan and policy paths to approved roots, use canonical containment, prevent traversal/absolute/sibling-prefix/symlink escape, and harden report path validation.
+
+2. **H2 - Authentication and API authorization**
+   Add a focused single-tenant authentication/authorization layer suitable for the project scope and protect sensitive API operations.
+
+3. **H3 - Frontend XSS elimination and browser security**
+   Remove unsafe rendering of untrusted scanner-controlled values and add appropriate browser security headers/CSP.
+
+4. **H4 - Request validation and resource controls**
+   Bound request sizes, path/input values, OSV timeouts, history/report limits, and repeated expensive operations.
+
+5. **H5 - Safe errors, auditability, and logging**
+   Replace raw internal exception leakage with stable public errors, structured server-side logs, and useful request/run identifiers.
+
+6. **H6 - Report/history security and retention**
+   Strengthen report naming/containment, history access, retention/cleanup, and predictable storage behavior.
+
+7. **H7 - Docker/runtime hardening**
+   Preserve non-root execution and add practical no-new-privileges, capability, filesystem, and resource restrictions.
+
+8. **H8 - Dependency and CI/CD hardening**
+   Improve dependency reproducibility, refine GitHub Actions permissions, and add focused security/quality checks without tool bloat.
+
+9. **H9 - Adversarial and regression test expansion**
+   Add traversal, symlink, XSS, authentication, validation, report, resource-abuse, and safe-error tests while preserving the controlled benchmark.
+
+10. **H10 - Final v1.0.0 freeze and repository audit**
+    Perform dead-code/reference cleanup, remove obsolete residues only after confirming they are unused, synchronize every document/version, run full local/API/Docker/Compose/CI regression, merge through a green PR, verify post-merge `main`, and create the annotated `v1.0.0` tag.
+
+No broad feature roadmap follows H10. After v1.0.0 is verified and tagged, planned feature development ends. Only an exceptional corrective patch for a critical security defect or release-breaking bug would justify modifying the final release.
 
 ## 19. Conclusion
 
 BuildShield-CI demonstrates end-to-end cybersecurity engineering across supply-chain security, static analysis, DevSecOps policy enforcement, CI/CD hardening, vulnerability intelligence, reporting, dashboard development, persistence, testing, and containerization.
 
-It is suitable as a placement, internship, and portfolio project while remaining explicit about the difference between a controlled deployment-ready demonstration and a fully hardened enterprise production service.
+**v0.12.7 is the completed and frozen verified baseline.** The current hardening branch is the isolated workspace for the H1-H10 finalization program. The project should not be described as v1.0.0-complete until those hardening stages and the final acceptance gate pass.
+
+The intended endpoint is a focused, clean, fully verified **BuildShield-CI v1.0.0 Final** release for controlled single-instance environments, with no planned feature upgrades after finalization.
