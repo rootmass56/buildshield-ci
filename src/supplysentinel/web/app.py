@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -26,6 +26,11 @@ from supplysentinel.reporters.report_generator import (
     write_report,
 )
 from supplysentinel.reporters.sarif_reporter import generate_scan_sarif
+from supplysentinel.web.auth import (
+    require_authenticated_session,
+    require_csrf_token,
+    router as auth_router,
+)
 from supplysentinel.web.history import (
     get_recent_scan_history,
     get_risk_trend,
@@ -78,6 +83,7 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.include_router(auth_router)
 
 
 def timestamp_id(prefix: str) -> str:
@@ -214,7 +220,9 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/sample-repositories")
-def sample_repositories() -> dict[str, Any]:
+def sample_repositories(
+    _session: object = Depends(require_authenticated_session),
+) -> dict[str, Any]:
     return {
         "repositories": [
             {
@@ -233,7 +241,10 @@ def sample_repositories() -> dict[str, Any]:
 
 
 @app.post("/api/scan")
-def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
+def scan_repository_api(
+    request: ScanRequest,
+    _session: object = Depends(require_csrf_token),
+) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
     policy_path: Path | None = None
@@ -295,7 +306,10 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
 
 
 @app.post("/api/inventory")
-def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
+def dependency_inventory_api(
+    request: InventoryRequest,
+    _session: object = Depends(require_csrf_token),
+) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
     try:
@@ -318,6 +332,7 @@ def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
 @app.post("/api/vulnerability-intelligence")
 def vulnerability_intelligence_api(
     request: VulnerabilityIntelligenceRequest,
+    _session: object = Depends(require_csrf_token),
 ) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
@@ -346,7 +361,10 @@ def vulnerability_intelligence_api(
 
 
 @app.post("/api/compare")
-def compare_repositories_api(request: CompareRequest) -> dict[str, Any]:
+def compare_repositories_api(
+    request: CompareRequest,
+    _session: object = Depends(require_csrf_token),
+) -> dict[str, Any]:
     baseline_path = resolve_workspace_directory(request.baseline_path)
     target_path = resolve_workspace_directory(request.target_path)
 
@@ -386,21 +404,29 @@ def compare_repositories_api(request: CompareRequest) -> dict[str, Any]:
 
 
 @app.get("/api/history")
-def scan_history(limit: int = 20) -> dict[str, Any]:
+def scan_history(
+    limit: int = 20,
+    _session: object = Depends(require_authenticated_session),
+) -> dict[str, Any]:
     return {
         "history": get_recent_scan_history(limit=limit),
     }
 
 
 @app.get("/api/history/trend")
-def risk_trend(limit: int = 20) -> dict[str, Any]:
+def risk_trend(
+    limit: int = 20,
+    _session: object = Depends(require_authenticated_session),
+) -> dict[str, Any]:
     return {
         "trend": get_risk_trend(limit=limit),
     }
 
 
 @app.get("/api/reports")
-def list_reports() -> dict[str, list[dict[str, str]]]:
+def list_reports(
+    _session: object = Depends(require_authenticated_session),
+) -> dict[str, list[dict[str, str]]]:
     REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
 
     reports: list[dict[str, str]] = []
@@ -430,7 +456,11 @@ def list_reports() -> dict[str, list[dict[str, str]]]:
 
 
 @app.get("/api/reports/{run_id}/{filename}")
-def download_report(run_id: str, filename: str) -> FileResponse:
+def download_report(
+    run_id: str,
+    filename: str,
+    _session: object = Depends(require_authenticated_session),
+) -> FileResponse:
     report_file = safe_report_file(run_id, filename)
 
     return FileResponse(

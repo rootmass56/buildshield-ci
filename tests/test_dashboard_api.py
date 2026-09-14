@@ -3,11 +3,11 @@ from fastapi.testclient import TestClient
 from supplysentinel.web.app import app
 
 
-client = TestClient(app)
+public_client = TestClient(app)
 
 
 def test_dashboard_health_endpoint():
-    response = client.get("/health")
+    response = public_client.get("/health")
 
     assert response.status_code == 200
 
@@ -19,13 +19,15 @@ def test_dashboard_health_endpoint():
 
 
 def test_dashboard_homepage_loads():
-    response = client.get("/")
+    response = public_client.get("/")
 
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
 
 
-def test_sample_repositories_endpoint():
+def test_sample_repositories_endpoint(authenticated_client):
+    client, _ = authenticated_client
+
     response = client.get("/api/sample-repositories")
 
     assert response.status_code == 200
@@ -44,9 +46,12 @@ def test_sample_repositories_endpoint():
     )
 
 
-def test_dashboard_scan_secure_repo():
+def test_dashboard_scan_secure_repo(authenticated_client):
+    client, csrf_token = authenticated_client
+
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "samples/secure-repo",
             "policy_path": "buildshield-policy.yml",
@@ -65,9 +70,12 @@ def test_dashboard_scan_secure_repo():
     assert len(data["reports"]) == 2
 
 
-def test_dashboard_scan_vulnerable_repo():
+def test_dashboard_scan_vulnerable_repo(authenticated_client):
+    client, csrf_token = authenticated_client
+
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "samples/vulnerable-repo",
             "policy_path": "buildshield-policy.yml",
@@ -86,9 +94,12 @@ def test_dashboard_scan_vulnerable_repo():
     assert len(data["reports"]) == 2
 
 
-def test_dashboard_compare_endpoint():
+def test_dashboard_compare_endpoint(authenticated_client):
+    client, csrf_token = authenticated_client
+
     response = client.post(
         "/api/compare",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "baseline_path": "samples/vulnerable-repo",
             "target_path": "samples/secure-repo",
@@ -110,7 +121,9 @@ def test_dashboard_compare_endpoint():
     assert len(data["reports"]) == 2
 
 
-def test_reports_listing_endpoint():
+def test_reports_listing_endpoint(authenticated_client):
+    client, _ = authenticated_client
+
     response = client.get("/api/reports")
 
     assert response.status_code == 200

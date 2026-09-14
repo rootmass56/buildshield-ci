@@ -1,15 +1,12 @@
-from fastapi.testclient import TestClient
-
-from supplysentinel.web.app import app
 from supplysentinel.web.history import get_recent_scan_history, get_risk_trend
 
 
-client = TestClient(app)
+def test_scan_history_is_created_after_dashboard_scan(authenticated_client):
+    client, csrf_token = authenticated_client
 
-
-def test_scan_history_is_created_after_dashboard_scan():
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "samples/secure-repo",
             "policy_path": "buildshield-policy.yml",
@@ -27,7 +24,9 @@ def test_scan_history_is_created_after_dashboard_scan():
     assert data["history_record"]["policy_status"] == "PASSED"
 
 
-def test_history_api_returns_recent_scans():
+def test_history_api_returns_recent_scans(authenticated_client):
+    client, _ = authenticated_client
+
     response = client.get("/api/history")
 
     assert response.status_code == 200
@@ -39,7 +38,9 @@ def test_history_api_returns_recent_scans():
     assert len(data["history"]) >= 1
 
 
-def test_trend_api_returns_score_trend():
+def test_trend_api_returns_score_trend(authenticated_client):
+    client, _ = authenticated_client
+
     response = client.get("/api/history/trend")
 
     assert response.status_code == 200

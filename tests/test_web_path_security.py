@@ -4,17 +4,12 @@ from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
-
 import supplysentinel.web.app as web_app
 from supplysentinel.web.path_security import (
     WORKSPACE_ROOT_ENV,
     resolve_workspace_directory,
     resolve_workspace_file,
 )
-
-
-client = TestClient(web_app.app)
 
 
 def test_workspace_allows_relative_directory_inside_root(monkeypatch, tmp_path):
@@ -139,7 +134,8 @@ def test_workspace_requires_policy_file(monkeypatch, tmp_path):
     assert error.value.status_code == 400
 
 
-def test_scan_api_rejects_target_outside_workspace(monkeypatch, tmp_path):
+def test_scan_api_rejects_target_outside_workspace(monkeypatch, tmp_path, authenticated_client):
+    client, csrf_token = authenticated_client
     workspace = tmp_path / "workspace"
     outside = tmp_path / "outside"
     workspace.mkdir()
@@ -149,6 +145,7 @@ def test_scan_api_rejects_target_outside_workspace(monkeypatch, tmp_path):
 
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": str(outside.resolve()),
             "policy_path": None,
@@ -160,7 +157,8 @@ def test_scan_api_rejects_target_outside_workspace(monkeypatch, tmp_path):
     assert "outside the configured workspace" in response.json()["detail"]
 
 
-def test_scan_api_rejects_policy_outside_workspace(monkeypatch, tmp_path):
+def test_scan_api_rejects_policy_outside_workspace(monkeypatch, tmp_path, authenticated_client):
+    client, csrf_token = authenticated_client
     workspace = tmp_path / "workspace"
     repository = workspace / "repo"
     repository.mkdir(parents=True)
@@ -172,6 +170,7 @@ def test_scan_api_rejects_policy_outside_workspace(monkeypatch, tmp_path):
 
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "repo",
             "policy_path": str(outside_policy.resolve()),
@@ -183,7 +182,8 @@ def test_scan_api_rejects_policy_outside_workspace(monkeypatch, tmp_path):
     assert "outside the configured workspace" in response.json()["detail"]
 
 
-def test_api_uses_canonical_workspace_path_for_relative_target(monkeypatch, tmp_path):
+def test_api_uses_canonical_workspace_path_for_relative_target(monkeypatch, tmp_path, authenticated_client):
+    client, csrf_token = authenticated_client
     workspace = tmp_path / "workspace"
     repository = workspace / "repo"
     repository.mkdir(parents=True)
@@ -192,6 +192,7 @@ def test_api_uses_canonical_workspace_path_for_relative_target(monkeypatch, tmp_
 
     response = client.post(
         "/api/scan",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "repo",
             "policy_path": None,
@@ -203,7 +204,8 @@ def test_api_uses_canonical_workspace_path_for_relative_target(monkeypatch, tmp_
     assert response.json()["summary"]["security_score"] == 100
 
 
-def test_compare_api_uses_workspace_paths(monkeypatch, tmp_path):
+def test_compare_api_uses_workspace_paths(monkeypatch, tmp_path, authenticated_client):
+    client, csrf_token = authenticated_client
     workspace = tmp_path / "workspace"
     baseline = workspace / "baseline"
     target = workspace / "target"
@@ -214,6 +216,7 @@ def test_compare_api_uses_workspace_paths(monkeypatch, tmp_path):
 
     response = client.post(
         "/api/compare",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "baseline_path": "baseline",
             "target_path": "target",

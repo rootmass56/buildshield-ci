@@ -18,15 +18,17 @@ This file is the project source of truth for the final hardening program. It is 
 - Comparison: +95 score, 22 findings reduced, 100% risk reduction, `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`.
 - Pre-H1 regression baseline: 57 tests passing.
 - H1 final local regression: 70 passed, 2 skipped.
-- The two skipped tests are platform-dependent symlink-creation checks that require Windows symlink privileges; the canonical containment code and the remaining path-security tests passed.
+- H1 checkpoint commit: `aed539980677f871a45ac97ebf5b9edffd5cce68`.
+- H2 final local regression: 90 passed, 2 skipped in 3.43s.
+- H2 controlled benchmark: preserved exactly.
 
 ## Final Program
 
 | Stage | Scope | Status |
 |---|---|---|
 | H1 | Filesystem / workspace trust boundary | COMPLETE |
-| H2 | Authentication, sessions and API authorization | NEXT |
-| H3 | React + TypeScript dashboard and browser security | PENDING |
+| H2 | Authentication, sessions and API authorization | COMPLETE |
+| H3 | React + TypeScript dashboard and browser security | NEXT |
 | H4 | Request validation, rate/resource controls | PENDING |
 | H5 | Safe errors, structured logging and auditability | PENDING |
 | H6 | Report/history security and retention | PENDING |
@@ -35,113 +37,127 @@ This file is the project source of truth for the final hardening program. It is 
 | H9 | Security evaluation corpus and adversarial regression testing | PENDING |
 | H10 | Final audit, cleanup, v1.0.0 freeze and release | PENDING |
 
-## H1 — Filesystem / Workspace Trust Boundary
+## H1 â€” Filesystem / Workspace Trust Boundary
 
 Status: COMPLETE.
 
-### H1A — Pre-implementation freeze
+H1 added:
+- `BUILDSHIELD_WORKSPACE_ROOT`;
+- canonical repository and policy path validation;
+- rejection of traversal, sibling-prefix and external absolute-path escapes;
+- symlink-aware containment checks;
+- canonical report-root containment and report filename/run-ID validation;
+- dedicated path-security regression tests.
 
-Complete.
+Final H1 checkpoint:
 
-Verified:
-- branch `upgrade/v0.13-security-hardening`;
-- exact starting checkpoint `6e9e5822e87e026802ac6008886f99ac484685f8`;
-- clean working tree;
-- 57-test baseline;
-- exact vulnerable/hardened/comparison benchmark.
+```text
+aed539980677f871a45ac97ebf5b9edffd5cce68
+Harden web workspace and report path boundaries
+```
 
-### H1B — Workspace and report path security
+## H2 â€” Authentication, Sessions and API Authorization
+
+Status: COMPLETE.
+
+### H2A â€” Authentication foundation
 
 Complete.
 
 Implemented:
-- `BUILDSHIELD_WORKSPACE_ROOT`;
-- canonical workspace root resolution;
-- canonical repository-directory validation;
-- canonical policy-file validation;
-- relative-path support inside the approved workspace;
-- rejection of parent traversal;
-- rejection of absolute external paths;
-- rejection of sibling-prefix containment tricks;
-- canonical symlink-aware containment checks;
-- repository directory type enforcement;
-- policy file type enforcement;
-- API use of validated canonical paths for scan, inventory, OSV and comparison operations;
-- report run-ID and filename component validation;
-- canonical report-root containment;
-- report symlink escape protection;
-- `.env.example` workspace-root documentation;
-- dedicated path-security regression tests.
+- PBKDF2-HMAC-SHA256 password hashing;
+- environment-driven admin username and password hash;
+- fail-closed missing/invalid authentication configuration;
+- opaque cryptographically random server-side sessions;
+- HttpOnly session cookie;
+- SameSite=Strict cookie policy;
+- configurable Secure-cookie mode for HTTPS deployment;
+- bounded session lifetime;
+- CSRF token generation and validation;
+- logout/session invalidation;
+- constant-time username/password comparison;
+- generic invalid-credential responses;
+- bounded temporary failed-login lockout;
+- `/api/auth/login`;
+- `/api/auth/session`;
+- `/api/auth/logout`;
+- authentication regression tests.
 
-### H1C — Final verification and checkpoint
+### H2B â€” API authorization integration
 
-Complete when the H1 checkpoint commit is created and pushed by the H1C finalization script.
+Complete.
 
-Final H1 acceptance requirements:
-- focused H1 regression passes;
-- complete regression passes;
-- controlled benchmark remains exact;
+Protected authenticated GET operations:
+- `/api/sample-repositories`;
+- `/api/history`;
+- `/api/history/trend`;
+- `/api/reports`;
+- `/api/reports/{run_id}/{filename}`.
+
+Protected authenticated + CSRF state-changing operations:
+- `/api/scan`;
+- `/api/inventory`;
+- `/api/vulnerability-intelligence`;
+- `/api/compare`;
+- `/api/auth/logout`.
+
+Public service/bootstrap endpoints:
+- `/`;
+- `/health`;
+- `/api/auth/login`;
+- `/api/auth/session`.
+
+The existing API, scan-history, OSV and H1 path-security tests authenticate through the real login flow rather than bypassing authorization dependencies.
+
+### H2C â€” Final verification and checkpoint
+
+Complete when the H2C script creates and pushes the H2 checkpoint.
+
+Final H2 acceptance requirements:
+- authentication tests pass;
+- authorization boundary tests pass;
+- H1 security regressions remain intact;
+- complete test suite passes;
+- controlled 22-to-0 benchmark remains exact;
 - `git diff --check` passes;
-- exactly the five intended H1 files are committed;
-- branch push succeeds;
-- remote branch matches local H1 checkpoint;
+- exactly the intended ten H2 files are committed;
+- remote upgrade branch matches the local H2 checkpoint;
 - working tree is clean.
 
-## Current Security Architecture After H1
-
-The CLI remains capable of scanning explicit local paths as a trusted local-user interface.
-
-The web/API boundary now follows:
+## Current Security Architecture After H2
 
 ```text
-Caller-supplied path
+Browser / API client
         |
-        v
-Configured workspace root
+        +--> GET /health, GET / ----------------------> public
         |
-        v
-Canonical path resolution
+        +--> /api/auth/login -------------------------> credential verification
+        |                                                |
+        |                                                v
+        |                                      random server-side session
+        |                                                |
+        |                                      HttpOnly SameSite cookie
         |
-        v
-Path containment check
+        +--> protected GET ----------------------------> authenticated session required
         |
-        +--> outside workspace -> reject
-        |
-        v
-Existence + file/directory validation
-        |
-        v
-Canonical validated path
-        |
-        v
-Scanner / policy / inventory / OSV / comparison
+        +--> protected POST ---------------------------> authenticated session
+                                                         + valid CSRF token
+                                                               |
+                                                               v
+                                                   H1 workspace boundary
+                                                               |
+                                                               v
+                                                   scanner / policy / OSV /
+                                                   inventory / comparison
 ```
 
-Report downloads now follow:
-
-```text
-run_id + filename
-        |
-        v
-Single-component validation
-        |
-        v
-Canonical report/run/file resolution
-        |
-        v
-Containment verification
-        |
-        +--> escape/symlink escape -> reject
-        |
-        v
-Existing regular report file
-```
+The authentication model is intentionally focused on controlled, single-instance deployment. It is not a multi-tenant SaaS identity platform.
 
 ## Next Stage
 
-H2 — Authentication, Sessions and API Authorization.
+H3 â€” React + TypeScript dashboard and browser security.
 
-H2 will add a focused single-instance authentication foundation for sensitive API operations. It will not introduce enterprise multi-tenancy, SSO, SCIM or broad RBAC.
+H3 will replace the legacy vanilla dashboard with the final React/TypeScript interface while preserving the FastAPI backend, authenticated session model, H1 workspace boundary and current functional benchmark.
 
 ## Permanent Scope Boundaries
 
