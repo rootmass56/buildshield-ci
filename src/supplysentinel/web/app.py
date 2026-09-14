@@ -31,6 +31,11 @@ from supplysentinel.web.history import (
     get_risk_trend,
     save_scan_history,
 )
+from supplysentinel.web.path_security import (
+    resolve_report_file,
+    resolve_workspace_directory,
+    resolve_workspace_file,
+)
 
 
 PROJECT_ROOT = Path.cwd()
@@ -81,23 +86,6 @@ def timestamp_id(prefix: str) -> str:
     return f"{prefix}-{timestamp}-{random_suffix}"
 
 
-def resolve_project_path(path_value: str) -> Path:
-    path = Path(path_value)
-
-    if not path.is_absolute():
-        path = PROJECT_ROOT / path
-
-    resolved = path.resolve()
-
-    if not resolved.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"Path does not exist: {path_value}",
-        )
-
-    return resolved
-
-
 def normalize_report_formats(
     formats: list[str],
     allowed_formats: set[str],
@@ -120,16 +108,11 @@ def normalize_report_formats(
 
 
 def safe_report_file(run_id: str, filename: str) -> Path:
-    reports_root = REPORTS_ROOT.resolve()
-    target = (REPORTS_ROOT / run_id / filename).resolve()
-
-    if not str(target).startswith(str(reports_root)):
-        raise HTTPException(status_code=400, detail="Invalid report path.")
-
-    if not target.exists() or not target.is_file():
-        raise HTTPException(status_code=404, detail="Report file not found.")
-
-    return target
+    return resolve_report_file(
+        reports_root=REPORTS_ROOT,
+        run_id=run_id,
+        filename=filename,
+    )
 
 
 def model_to_json_safe(model: Any) -> Any:
@@ -251,10 +234,12 @@ def sample_repositories() -> dict[str, Any]:
 
 @app.post("/api/scan")
 def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
-    target_path = resolve_project_path(request.target_path)
+    target_path = resolve_workspace_directory(request.target_path)
+
+    policy_path: Path | None = None
 
     if request.policy_path:
-        resolve_project_path(request.policy_path)
+        policy_path = resolve_workspace_file(request.policy_path)
 
     report_formats = normalize_report_formats(
         request.report_formats,
@@ -262,12 +247,12 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
     )
 
     try:
-        result = scan_repository(request.target_path)
+        result = scan_repository(str(target_path))
 
-        if request.policy_path:
+        if policy_path is not None:
             policy_evaluation = evaluate_policy(
                 result=result,
-                policy_path=request.policy_path,
+                policy_path=str(policy_path),
             )
             result = result.model_copy(
                 update={"policy_evaluation": policy_evaluation}
@@ -311,10 +296,10 @@ def scan_repository_api(request: ScanRequest) -> dict[str, Any]:
 
 @app.post("/api/inventory")
 def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
-    resolve_project_path(request.target_path)
+    target_path = resolve_workspace_directory(request.target_path)
 
     try:
-        inventory = build_dependency_inventory(request.target_path)
+        inventory = build_dependency_inventory(str(target_path))
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
 
@@ -334,11 +319,11 @@ def dependency_inventory_api(request: InventoryRequest) -> dict[str, Any]:
 def vulnerability_intelligence_api(
     request: VulnerabilityIntelligenceRequest,
 ) -> dict[str, Any]:
-    resolve_project_path(request.target_path)
+    target_path = resolve_workspace_directory(request.target_path)
 
     try:
         report = build_osv_vulnerability_report(
-            target=request.target_path,
+            target=str(target_path),
             online_lookup=request.online_lookup,
             timeout_seconds=request.timeout_seconds,
         )
@@ -362,8 +347,8 @@ def vulnerability_intelligence_api(
 
 @app.post("/api/compare")
 def compare_repositories_api(request: CompareRequest) -> dict[str, Any]:
-    resolve_project_path(request.baseline_path)
-    resolve_project_path(request.target_path)
+    baseline_path = resolve_workspace_directory(request.baseline_path)
+    target_path = resolve_workspace_directory(request.target_path)
 
     report_formats = normalize_report_formats(
         request.report_formats,
@@ -371,8 +356,8 @@ def compare_repositories_api(request: CompareRequest) -> dict[str, Any]:
     )
 
     try:
-        baseline_result = scan_repository(request.baseline_path)
-        target_result = scan_repository(request.target_path)
+        baseline_result = scan_repository(str(baseline_path))
+        target_result = scan_repository(str(target_path))
 
         comparison = build_comparison_result(
             baseline=baseline_result,
@@ -428,11 +413,16 @@ def list_reports() -> dict[str, list[dict[str, str]]]:
             if not report_file.is_file():
                 continue
 
+            try:
+                safe_file = safe_report_file(run_dir.name, report_file.name)
+            except HTTPException:
+                continue
+
             reports.append(
                 {
                     "run_id": run_dir.name,
-                    "filename": report_file.name,
-                    "download_url": f"/api/reports/{run_dir.name}/{report_file.name}",
+                    "filename": safe_file.name,
+                    "download_url": f"/api/reports/{run_dir.name}/{safe_file.name}",
                 }
             )
 
