@@ -2,84 +2,39 @@
 
 ## 1. Overview
 
-BuildShield-CI is an advanced CI/CD supply-chain security analyzer. It performs static analysis of repository files and identifies security weaknesses related to dependency confusion, insecure package usage, weak GitHub Actions configurations, risky build scripts, and policy violations.
+BuildShield-CI is a modular DevSecOps security platform for passive CI/CD supply-chain analysis. It discovers security-relevant repository files, dispatches them to explicit analyzer interfaces, normalizes findings, calculates risk, evaluates policy, produces reports, exposes dashboard/API functionality, and integrates with CI/CD and container deployment.
 
-The tool is designed for both local security assessment and automated DevSecOps pipeline enforcement.
-
----
-
-## 2. High-Level Architecture
+## 2. High-Level Flow
 
 ```text
 Repository
    |
    v
-File Discovery Engine
+File Discovery
    |
    v
-Analyzer Layer
+Canonical Analyzer Layer
    |-- npm Analyzer
    |-- Python Analyzer
    |-- GitHub Actions Analyzer
+   `-- Dockerfile Analyzer
    |
    v
 Finding Model
    |
-   v
-Risk Scoring Engine
-   |
-   v
-Policy-as-Code Engine
-   |
-   v
-Report Generation Layer
-   |-- Terminal Output
-   |-- JSON Report
-   |-- Markdown Report
-   |-- HTML Report
-   |-- SARIF Report
-   |
-   v
-CI/CD Integration
-   |-- GitHub Actions
-   |-- Artifact Upload
-   |-- SARIF Code Scanning
+   +--> Risk Scoring Engine
+   +--> Policy-as-Code Engine
+   +--> Reporters
+   +--> SARIF / GitHub Code Scanning
+   +--> SBOM-lite Inventory
+   +--> OSV Vulnerability Intelligence
+   +--> FastAPI / Dashboard
+   `--> SQLite History / Trends
 ```
 
----
+## 3. Scanner Core
 
-## 3. Component Breakdown
-
-### 3.1 CLI Layer
-
-Location:
-
-```text
-src/supplysentinel/cli.py
-```
-
-Responsibilities:
-
-- Provides `buildshield` command
-- Supports scanning repositories
-- Supports comparison between vulnerable and secure repositories
-- Supports policy-as-code evaluation
-- Supports report generation
-- Supports CI/CD-compatible exit codes
-
-Main commands:
-
-```powershell
-buildshield scan <target>
-buildshield compare <baseline> <target>
-buildshield version
-```
-
----
-
-### 3.2 File Discovery Engine
-
-Location:
+Primary location:
 
 ```text
 src/supplysentinel/core/scanner.py
@@ -87,19 +42,35 @@ src/supplysentinel/core/scanner.py
 
 Responsibilities:
 
-- Walks the repository directory
-- Identifies security-relevant files
-- Detects files such as:
-  - `package.json`
-  - `package-lock.json`
-  - `requirements.txt`
-  - `.npmrc`
-  - `pip.conf`
-  - `.github/workflows/*.yml`
+- Validate target repository path
+- Discover security-relevant files
+- Classify files by type
+- Dispatch files to analyzers
+- Deduplicate normalized findings
+- Build scan summary
+- Invoke the scoring engine
 
----
+The maintenance refactor removed dynamic analyzer-name guessing and hidden npm/GitHub Actions fallback implementations. The scanner now invokes the canonical analyzer functions directly.
 
-### 3.3 Analyzer Layer
+## 4. File Discovery
+
+Relevant inputs include:
+
+- `package.json`
+- npm lockfiles
+- `.npmrc`
+- `requirements*.txt`
+- `pip.conf`
+- `pip.ini`
+- `.pypirc`
+- `.github/workflows/*.yml`
+- `.github/workflows/*.yaml`
+- `Dockerfile`
+- `*.dockerfile`
+
+Ignored development/runtime folders include `.git`, virtual environments, caches, `node_modules`, build output, and similar non-source directories.
+
+## 5. Analyzer Layer
 
 Location:
 
@@ -107,48 +78,68 @@ Location:
 src/supplysentinel/analyzers/
 ```
 
-Analyzers:
-
-| Analyzer | Purpose |
+| Analyzer | Primary responsibility |
 |---|---|
-| npm Analyzer | Detects npm dependency and registry risks. |
-| Python Analyzer | Detects Python dependency and package index risks. |
-| GitHub Actions Analyzer | Detects CI/CD workflow risks. |
+| npm | Lockfiles, mutable versions, lifecycle scripts, dependency confusion / registry controls |
+| Python | Pinning, loose versions, dependency confusion / package index controls |
+| GitHub Actions | Action pinning, token permissions, secret echo, pipe-to-shell, `pull_request_target` |
+| Dockerfile | Base image pinning, user hardening, secrets, remote shell execution, upgrade behavior, health checks |
 
----
+## 6. Detection Rules
 
-## 4. Detection Rules
+### npm
 
-### npm Rules
+- `DG-NPM-001` — Missing npm lockfile
+- `DG-NPM-002` — Loose npm dependency version
+- `DG-NPM-003` — Risky npm lifecycle script
+- `DG-NPM-004` — Potential npm dependency confusion risk
 
-| Rule ID | Description |
-|---|---|
-| DG-NPM-001 | Missing npm lockfile |
-| DG-NPM-002 | Loose npm dependency version |
-| DG-NPM-003 | Risky npm lifecycle script |
-| DG-NPM-004 | Potential npm dependency confusion risk |
+### Python
 
-### Python Rules
+- `DG-PY-001` — Unpinned Python dependency
+- `DG-PY-002` — Loose Python dependency version
+- `DG-PY-003` — Potential Python dependency confusion risk
 
-| Rule ID | Description |
-|---|---|
-| DG-PY-001 | Unpinned Python dependency |
-| DG-PY-002 | Loose Python dependency version |
-| DG-PY-003 | Potential Python dependency confusion risk |
+### GitHub Actions
 
-### GitHub Actions Rules
+- `DG-GHA-001` — Action not pinned to full commit SHA
+- `DG-GHA-002` — Over-permissive token permissions
+- `DG-GHA-003` — Remote script piped directly to shell
+- `DG-GHA-004` — Secret printed in workflow
+- `DG-GHA-005` — Risky `pull_request_target`
 
-| Rule ID | Description |
-|---|---|
-| DG-GHA-001 | GitHub Action not pinned to full commit SHA |
-| DG-GHA-002 | Over-permissive GitHub Actions token permissions |
-| DG-GHA-003 | Remote script piped directly to shell |
-| DG-GHA-004 | Secret value printed in workflow |
-| DG-GHA-005 | Use of pull_request_target trigger |
+### Dockerfile
 
----
+Current controlled benchmark exercises:
 
-## 5. Risk Scoring Architecture
+- `DG-DOCKER-001`
+- `DG-DOCKER-002`
+- `DG-DOCKER-004`
+- `DG-DOCKER-005`
+- `DG-DOCKER-006`
+- `DG-DOCKER-007`
+
+## 7. Finding Model
+
+Findings carry structured fields including:
+
+- Rule ID
+- Title
+- Severity
+- Category
+- Confidence
+- Description
+- Impact
+- Evidence
+- File path
+- Line number
+- Snippet
+- Remediation
+- Reference
+
+This normalized model allows all analyzers to feed the same scoring, policy, report, SARIF, API, and dashboard layers.
+
+## 8. Risk Scoring
 
 Location:
 
@@ -156,48 +147,34 @@ Location:
 src/supplysentinel/core/scoring.py
 ```
 
-The risk scoring engine converts findings into a security score.
-
-### Inputs
-
-- Finding severity
-- Finding category
-- Confidence
-- Number of findings
-- Category risk caps
-
-### Outputs
+Outputs include:
 
 - Overall security score
-- Risk level
+- Overall risk level
+- Category-wise risk
+- Penalty contribution
+- Top risk drivers
 - Build gate status
 - Build gate reason
-- Category-wise risk breakdown
-- Top risk drivers
 
-### Example
+Controlled benchmark:
 
 ```text
-Vulnerable repository:
-Security Score: 5/100
-Risk Level: CRITICAL
-Build Gate Status: FAILED
+Vulnerable sample
+22 findings
+4 Critical / 10 High / 7 Medium / 1 Low
+5/100
+CRITICAL
+FAILED
 
-Secure repository:
-Security Score: 100/100
-Risk Level: LOW
-Build Gate Status: PASSED
+Hardened sample
+0 findings
+100/100
+LOW
+PASSED
 ```
 
----
-
-## 6. Policy-as-Code Engine
-
-Location:
-
-```text
-src/supplysentinel/policies/policy_engine.py
-```
+## 9. Policy-as-Code
 
 Policy file:
 
@@ -205,163 +182,131 @@ Policy file:
 buildshield-policy.yml
 ```
 
-The policy engine checks whether the repository satisfies defined security requirements.
+Controls include:
 
-Example policy controls:
+- Minimum score
+- Severity thresholds
+- Lockfile requirement
+- Pinned GitHub Actions
+- Secret-echo prevention
+- Pipe-to-shell prevention
+- Dependency confusion prevention
+- `pull_request_target` control
 
-- Minimum security score
-- Maximum allowed critical findings
-- Maximum allowed high findings
-- Require npm lockfiles
-- Require pinned GitHub Actions
-- Block secret echoing
-- Block `curl | bash`
-- Block dependency confusion risks
-- Block risky `pull_request_target`
+Policy evaluation is independent from the risk score: both are reported so CI/CD can reason about posture and enforcement.
 
-CI/CD behavior:
+## 10. Reporting
 
-```text
-Policy passed -> exit code 0
-Policy failed -> exit code 2
-```
+Supported output includes:
 
----
+- Terminal
+- JSON
+- Markdown
+- HTML
+- SARIF 2.1.0
+- Comparison reports
+- Dependency inventory output
+- OSV intelligence output
 
-## 7. Reporting Architecture
+SARIF is consumed by GitHub Code Scanning through the project workflow.
 
-Location:
+## 11. Intelligence Layer
 
-```text
-src/supplysentinel/reporters/
-```
+### SBOM-lite
 
-Report types:
+BuildShield-CI extracts dependency inventory information from supported npm and Python files, including package name, ecosystem, version/pinning state, and security-relevant metadata.
 
-| Format | Purpose |
-|---|---|
-| JSON | Automation and machine-readable output |
-| Markdown | Documentation and readable reports |
-| HTML | Professional visual report |
-| SARIF | GitHub Code Scanning integration |
+### OSV
 
----
+The OSV integration supports:
 
-## 8. SARIF Integration
+- Offline query-plan generation
+- Online vulnerability lookup
+- OSV/GHSA identifiers
+- Vulnerability reporting
 
-Location:
+The number of known vulnerabilities is dynamic and must not be hard-coded into documentation.
 
-```text
-src/supplysentinel/reporters/sarif_reporter.py
-```
+## 12. API, Dashboard, and Persistence
 
-BuildShield-CI generates SARIF 2.1.0 output and uploads it to GitHub Code Scanning through GitHub Actions.
+BuildShield-CI includes a FastAPI backend and browser dashboard for:
 
-SARIF output file:
+- Scanning
+- Comparison
+- Findings
+- Policy results
+- Reports
+- Dependency inventory
+- Vulnerability intelligence
+- Scan history
+- Risk trends
 
-```text
-reports/buildshield-results.sarif
-```
+SQLite is used for local history and trend persistence.
 
-GitHub location:
+## 13. CI/CD Architecture
 
-```text
-Security and quality → Code scanning
-```
-
----
-
-## 9. CI/CD Architecture
-
-Location:
+Workflow:
 
 ```text
 .github/workflows/buildshield-ci.yml
 ```
 
-The workflow performs:
+The workflow installs the project, runs tests, validates the hardened sample, demonstrates controlled vulnerable-sample failure, generates reports, uploads SARIF, and uploads artifacts.
 
-1. Checkout repository
-2. Set up Python
-3. Install BuildShield-CI
-4. Validate CLI
-5. Run automated tests
-6. Run secure repo policy gate
-7. Demonstrate vulnerable repo policy failure
-8. Generate JSON, Markdown, HTML reports
-9. Generate SARIF
-10. Upload SARIF to GitHub Code Scanning
-11. Upload reports as artifacts
+All third-party GitHub Actions in the workflow are pinned to reviewed full commit SHAs. `tests/test_workflow_security.py` guards against regression to mutable tags or branches.
 
----
+## 14. Deployment Layer
 
-## 10. Testing Architecture
+BuildShield-CI supports:
 
-Location:
+- Local CLI/API/dashboard execution
+- Docker image build
+- Non-root container execution
+- Health endpoint
+- Docker Compose
+- Persistent report/data volumes
 
-```text
-tests/
-```
+This is suitable for controlled deployment demonstrations. Enterprise production use would require additional authentication, authorization, isolation, secret management, rate limiting, observability, network controls, and operational governance.
 
-Test coverage:
+## 15. Repository Hygiene
 
-| Test File | Purpose |
-|---|---|
-| test_scan_engine.py | Validates detection engine |
-| test_policy_engine.py | Validates policy pass/fail |
-| test_comparison_engine.py | Validates before/after comparison |
-| test_reporters.py | Validates report generation and SARIF |
-| test_cli.py | Validates CLI and exit codes |
+The maintenance baseline includes:
 
-Expected test result:
+- `.gitignore` for runtime, build, cache, secret, and local artifacts
+- `.dockerignore` to reduce Docker build context
+- `.gitattributes` for deterministic line endings
+- Explicit development dependencies
+- No global pytest warning suppression
+- Repository metadata URLs
+
+## 16. Testing
+
+Current verified result:
 
 ```text
-12 passed
+53 passed
 ```
 
----
+Coverage includes analyzer routing, analyzer behavior, benchmark preservation, policy, reports, comparison, CLI, dashboard APIs, scan history, OSV, inventory, deployment files, workflow SHA pinning, and repository hygiene.
 
-## 11. Security Design Principles
+## 17. Limitations and Next Expansion Areas
 
-BuildShield-CI follows these principles:
+Current limitations include:
 
-- Passive static analysis only
-- No exploit execution
-- No malware generation
-- No credential collection
-- No unauthorized scanning
-- Safe vulnerable sample repository
-- Policy-as-code enforcement
-- CI/CD shift-left security
-- Evidence-based findings
-- Remediation-focused reporting
+- Static analysis focus
+- Limited ecosystem coverage
+- Heuristic dependency-confusion detection
+- No enterprise identity/access-control layer
+- No multi-tenant isolation
+- No production-grade distributed job system
+- No Kubernetes or GitLab CI analyzer yet
 
----
+Possible future expansion:
 
-## 12. Limitations
-
-Current limitations:
-
-- Static analysis only
-- No live package registry API validation
-- No SBOM generation yet
-- No CVE database integration yet
-- No enterprise dashboard yet
-- No multi-language support beyond npm, Python, and GitHub Actions
-
----
-
-## 13. Future Enhancements
-
-Planned enhancements:
-
-- FastAPI backend
-- React frontend dashboard
-- SBOM generation
-- OSV vulnerability database integration
-- Package registry reputation checks
-- Dockerfile analyzer
-- Kubernetes manifest analyzer
-- GitLab CI analyzer
-- PDF report export
+- Additional ecosystems such as Maven, Go, and NuGet
+- Kubernetes manifest analysis
+- GitLab CI analysis
+- Authentication/RBAC
+- Webhook-driven repository scanning
+- Advanced prioritization and remediation assistance
 - Enterprise policy profiles

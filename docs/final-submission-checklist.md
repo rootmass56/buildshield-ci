@@ -1,198 +1,136 @@
-﻿# BuildShield-CI Final Submission Checklist
+# BuildShield-CI Final Submission Checklist
 
-## Repository Status
+This checklist distinguishes **already implemented/verified capabilities** from **final release/submission actions that still need to be performed**.
 
-- [ ] GitHub repository is public or accessible to evaluator
-- [ ] Latest code pushed to main branch
-- [ ] GitHub Actions workflow passing
-- [ ] Code Scanning page shows BuildShield-CI SARIF findings
-- [ ] README is updated
-- [ ] docs folder contains final documentation
-- [ ] reports folder is ignored or used only for generated artifacts
-- [ ] data folder is ignored because it stores local SQLite runtime data
+## Current Maintenance Baseline
 
-## Local Verification
+Verified before final v0.12.7 release:
 
-Run:
+- [x] 53 automated tests pass
+- [x] Vulnerable sample: 22 findings
+- [x] Vulnerable sample: 4 Critical / 10 High / 7 Medium / 1 Low
+- [x] Vulnerable sample: 5/100, CRITICAL, build gate FAILED
+- [x] Hardened sample: 0 findings
+- [x] Hardened sample: 100/100, LOW, build gate PASSED
+- [x] Comparison: +95 score
+- [x] Comparison: 22 findings reduced
+- [x] Comparison: 100% risk reduction
+- [x] Canonical analyzer routing is explicit
+- [x] Legacy npm/GitHub Actions fallback routing removed
+- [x] GitHub Actions are pinned to immutable SHAs
+- [x] `.github` self-scan reports 0 findings
+- [x] Repository hygiene and line-ending policy added
 
-    git status
+## Implemented Capabilities
 
-Expected:
+- [x] npm analyzer
+- [x] Python analyzer
+- [x] GitHub Actions analyzer
+- [x] Dockerfile analyzer
+- [x] Dependency confusion detection
+- [x] Risk scoring
+- [x] Policy-as-code
+- [x] JSON reports
+- [x] Markdown reports
+- [x] HTML reports
+- [x] SARIF
+- [x] GitHub Code Scanning integration
+- [x] Secure-vs-vulnerable comparison
+- [x] SBOM-lite inventory
+- [x] OSV offline mode
+- [x] OSV online mode
+- [x] FastAPI backend
+- [x] Web dashboard
+- [x] SQLite scan history
+- [x] Risk trends
+- [x] Dockerfile
+- [x] Docker Compose
+- [x] Health endpoint
+- [x] Non-root container execution
 
-    nothing to commit, working tree clean
+## Final Local Release Verification
 
-Run:
+Before tagging v0.12.7:
 
-    pytest -q
+```powershell
+git status --short
+pytest -q
+buildshield version
+buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
+buildshield scan samples/secure-repo --policy buildshield-policy.yml --hide-files
+buildshield compare samples/vulnerable-repo samples/secure-repo
+buildshield inventory samples/vulnerable-repo --hide-packages
+buildshield vulncheck samples/secure-repo --offline-plan
+```
 
-Expected:
-
-    all tests passed
-
-Run:
-
-    buildshield version
-
-Expected:
-
-    BuildShield-CI version: 0.12.6
-
-## CLI Verification
-
-Run vulnerable scan:
-
-    buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
-
-Expected:
-
-- Policy failed
-- Build gate failed
-- Multiple findings detected
-
-Run secure scan:
-
-    buildshield scan samples/secure-repo --policy buildshield-policy.yml --hide-files
-
-Expected:
-
-- Policy passed
-- Build gate passed
-
-Run comparison:
-
-    buildshield compare samples/vulnerable-repo samples/secure-repo
-
-Expected:
-
-- Score improvement
-- Findings reduced
-- Risk reduction shown
-
-Run inventory:
-
-    buildshield inventory samples/vulnerable-repo --hide-packages
-
-Expected:
-
-- Dependency inventory summary shown
-
-Run OSV offline:
-
-    buildshield vulncheck samples/secure-repo --offline-plan
-
-Expected:
-
-- Queryable dependencies shown
-- JSON report generated
+Also verify online OSV separately because network results are dynamic.
 
 ## Dashboard Verification
 
-Start:
-
-    buildshield dashboard --port 8080
-
-Open:
-
-    http://127.0.0.1:8080
-
-Check pages:
-
-- [ ] Overview
-- [ ] Scanner
-- [ ] SBOM Inventory
-- [ ] Vulnerability Intel
-- [ ] History & Trends
-- [ ] Compare
-- [ ] Findings
-- [ ] Policy
-- [ ] Reports
-- [ ] CI/CD
-- [ ] About
+- [ ] Start dashboard
+- [ ] `/health` returns OK
+- [ ] Overview loads
+- [ ] Scanner works
+- [ ] Findings load
+- [ ] Policy page loads
+- [ ] Compare page loads
+- [ ] Inventory works
+- [ ] Vulnerability intelligence works
+- [ ] History and trends work
+- [ ] Reports are downloadable
 
 ## Docker Verification
 
-Build image:
+- [ ] `docker build` succeeds
+- [ ] Container starts
+- [ ] Non-root execution confirmed
+- [ ] `/health` works
+- [ ] Docker Compose starts
+- [ ] Persistent report volume works
+- [ ] Persistent data volume works
+- [ ] Compose shutdown succeeds cleanly
 
-    docker build -t buildshield-ci:latest .
+## GitHub Verification
 
-Run container:
+- [ ] Maintenance branch pushed
+- [ ] Pull request opened to `main`
+- [ ] GitHub Actions passes on PR
+- [ ] SARIF upload succeeds
+- [ ] Artifacts upload succeeds
+- [ ] Code Scanning receives controlled sample findings
+- [ ] Documentation reviewed in GitHub UI
+- [ ] Merge completed
+- [ ] `main` CI revalidated
+- [ ] v0.12.7 tag created and pushed
 
-    docker run -d --name buildshield-ci-test -p 8080:8080 buildshield-ci:latest
+## Documentation
 
-Check health:
+- [x] README
+- [x] Architecture
+- [x] Deployment guide
+- [x] Research log
+- [x] Final project summary
+- [x] Final report
+- [x] Demo script
+- [x] Interview explanation
+- [x] Resume points
+- [x] Screenshot checklist
+- [x] Final submission checklist
 
-    Invoke-RestMethod http://127.0.0.1:8080/health
+## Important Presentation Notes
 
-Expected:
+- The vulnerable sample is intentionally insecure.
+- Code Scanning alerts generated from that sample are intentional demonstration alerts.
+- `100/100` is the internal static-configuration score for the controlled hardened sample; it does not guarantee zero external CVEs forever.
+- OSV online results are dynamic.
+- BuildShield-CI is deployment-ready for controlled environments, not claimed as a fully hardened enterprise multi-user service.
 
-    status ok
-    product BuildShield-CI
-    version 0.12.6
+## Upgrade Gate
 
-Stop container:
+Do not begin v0.13 feature work until:
 
-    docker stop buildshield-ci-test
-    docker rm buildshield-ci-test
-
-Docker Compose:
-
-    docker compose up --build -d
-    docker compose ps
-    Invoke-RestMethod http://127.0.0.1:8080/health
-    docker compose down
-
-## Screenshots Needed
-
-- [ ] GitHub repository main page
-- [ ] GitHub Actions successful workflow
-- [ ] GitHub Code Scanning alerts
-- [ ] CLI vulnerable scan
-- [ ] CLI secure scan
-- [ ] CLI comparison
-- [ ] Dashboard overview
-- [ ] Dashboard scanner
-- [ ] Dashboard findings
-- [ ] Dashboard policy
-- [ ] Dashboard SBOM inventory
-- [ ] Dashboard vulnerability intelligence
-- [ ] Dashboard history and trends
-- [ ] Reports page
-- [ ] Docker health check output
-- [ ] Pytest passing output
-
-## Final Documents
-
-- [ ] README.md
-- [ ] docs/architecture.md
-- [ ] docs/deployment.md
-- [ ] docs/research-log.md
-- [ ] docs/final-project-summary.md
-- [ ] docs/demo-script.md
-- [ ] docs/interview-explanation.md
-- [ ] docs/resume-points.md
-- [ ] docs/final-submission-checklist.md
-
-## Final Interview Points
-
-Remember to explain:
-
-1. Why CI/CD supply-chain security matters
-2. What dependency confusion is
-3. How private registry misconfiguration creates risk
-4. Why unpinned dependencies are risky
-5. Why GitHub Actions should be pinned
-6. Why secrets should not be echoed
-7. Why SARIF is useful
-8. Why policy-as-code is important
-9. Why OSV vulnerability intelligence adds value
-10. Why Docker deployment makes it production-ready
-
-## Final Status
-
-When all checklist items are done, BuildShield-CI is ready for:
-
-- Resume
-- Placement interview
-- Internship demo
-- Final project submission
-- GitHub portfolio
+- [ ] Full freeze regression passes
+- [ ] v0.12.7 is merged to `main`
+- [ ] main CI passes
+- [ ] v0.12.7 tag is pushed
+- [ ] Working tree is clean
