@@ -73,7 +73,7 @@ Add a caption when showing Code Scanning: **alerts originating from `samples/vul
 ```text
 01-repository-home.png
 02-cli-help.png
-03-pytest-53-passed.png
+03-pytest-57-passed.png
 04-vulnerable-scan.png
 05-hardened-scan.png
 06-comparison.png

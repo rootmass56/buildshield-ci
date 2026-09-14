@@ -10,7 +10,7 @@ The project includes a CLI scanner, FastAPI backend, web dashboard, policy-as-co
 
 ## Current Verified Baseline
 
-Maintenance baseline before the next feature-upgrade phase:
+Frozen verified release baseline: **v0.12.7**.
 
 | Metric | Vulnerable Sample | Hardened Sample |
 |---|---:|---:|
@@ -33,6 +33,8 @@ Comparison result:
 - Automated tests: **57 passing**
 
 The vulnerable sample is intentionally insecure. Findings uploaded to GitHub Code Scanning from that sample are demonstration findings, not evidence that the BuildShield-CI source code itself contains those vulnerabilities.
+
+The active `upgrade/v0.13-security-hardening` branch is the isolated workspace for the H1-H10 final hardening program targeting **BuildShield-CI v1.0.0 Final**. The v0.12.7 release remains the frozen functional baseline.
 
 ---
 
@@ -134,7 +136,7 @@ Normalized Findings
    `--> CI/CD + Docker
 ```
 
-The scanner now calls the canonical analyzer interfaces directly. Legacy dynamic function-name guessing and hidden npm/GitHub Actions fallback analyzers were removed during the v0.12.7 maintenance cleanup.
+The scanner calls the canonical analyzer interfaces directly. Legacy dynamic function-name guessing and hidden npm/GitHub Actions fallback analyzers were removed during the v0.12.7 maintenance cleanup.
 
 ---
 
@@ -170,13 +172,13 @@ pip install -e ".[dev]"
 buildshield version
 ```
 
-Current release-candidate version:
+Current frozen release baseline:
 
 ```text
 BuildShield-CI version: 0.12.7
 ```
 
-This maintenance branch is the v0.12.7 release candidate pending PR, CI, merge, and tag verification.
+The `v0.12.7` annotated tag, merged `main` baseline, and associated CI verification are complete. Final web/API hardening is being developed separately on `upgrade/v0.13-security-hardening` toward v1.0.0.
 
 ---
 
@@ -308,7 +310,7 @@ The container runs as a non-root user and uses health checks. Docker Compose pro
 pytest -q
 ```
 
-Current verified release-candidate result:
+Current verified result:
 
 ```text
 57 passed
@@ -328,7 +330,9 @@ The vulnerable repository under `samples/vulnerable-repo` is intentionally insec
 
 ## Deployment Positioning
 
-BuildShield-CI is deployment-ready for controlled environments and demonstrates a production-style architecture. A real enterprise deployment would still require additional authentication, authorization, tenant isolation, secret management, audit controls, rate limiting, network hardening, observability, and operational governance.
+BuildShield-CI v0.12.7 is deployment-ready for controlled environments and demonstrates a production-style architecture. It is not claimed to be a fully hardened enterprise or multi-tenant service.
+
+The final H1-H10 hardening program addresses the remaining in-scope web/API security boundaries, including workspace containment, authentication/authorization, browser security, request/resource controls, safe errors/logging, report/history security, Docker/runtime hardening, CI/dependency hardening, adversarial tests, and final repository cleanup.
 
 ---
 
