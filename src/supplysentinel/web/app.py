@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,11 @@ from supplysentinel.web.resource_controls import (
     RequestBodyLimitMiddleware,
     require_expensive_operation_access,
 )
+from supplysentinel.web.runtime_config import (
+    RuntimeConfigurationError,
+    ensure_runtime_ready,
+    runtime_readiness_payload,
+)
 from supplysentinel.web.logging_utils import (
     RequestCorrelationMiddleware,
     configure_structured_logging,
@@ -73,10 +79,17 @@ FRONTEND_ASSETS_DIR = FRONTEND_DIST_DIR / "assets"
 REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
+@asynccontextmanager
+async def application_lifespan(_app: FastAPI):
+    ensure_runtime_ready()
+    yield
+
+
 app = FastAPI(
     title=PRODUCT_NAME,
     description=DESCRIPTION,
     version=__version__,
+    lifespan=application_lifespan,
 )
 
 configure_structured_logging()
@@ -306,6 +319,17 @@ def health() -> dict[str, str]:
         "product": PRODUCT_NAME,
         "version": __version__,
     }
+
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    try:
+        return runtime_readiness_payload()
+    except RuntimeConfigurationError as error:
+        raise HTTPException(
+            status_code=503,
+            detail="Runtime is not ready.",
+        ) from error
 
 
 @app.get("/api/sample-repositories")
@@ -632,7 +656,10 @@ def download_report(
 def react_spa_fallback(full_path: str) -> FileResponse | HTMLResponse:
     first_segment = full_path.split("/", 1)[0].lower()
 
-    if first_segment in {"api", "assets", "static"} or full_path.lower() == "health":
+    if (
+        first_segment in {"api", "assets", "static"}
+        or full_path.lower() in {"health", "ready"}
+    ):
         raise HTTPException(status_code=404, detail="Not found.")
 
     return frontend_index_response()

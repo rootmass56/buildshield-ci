@@ -5,15 +5,34 @@ services:
       dockerfile: Dockerfile
     image: buildshield-ci:latest
     container_name: buildshield-ci
+    user: "10001:10001"
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    stop_grace_period: 15s
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${BUILDSHIELD_HOST_PORT:-8080}:8080"
     environment:
       BUILDSHIELD_HOST: "0.0.0.0"
       BUILDSHIELD_PORT: "8080"
       BUILDSHIELD_ENV: "production"
+      BUILDSHIELD_WORKSPACE_ROOT: "/app"
+      BUILDSHIELD_ADMIN_USERNAME: "${BUILDSHIELD_ADMIN_USERNAME:?Set BUILDSHIELD_ADMIN_USERNAME}"
+      BUILDSHIELD_ADMIN_PASSWORD_HASH: "${BUILDSHIELD_ADMIN_PASSWORD_HASH:?Set BUILDSHIELD_ADMIN_PASSWORD_HASH}"
+      BUILDSHIELD_COOKIE_SECURE: "${BUILDSHIELD_COOKIE_SECURE:-false}"
+      BUILDSHIELD_SESSION_TTL_SECONDS: "${BUILDSHIELD_SESSION_TTL_SECONDS:-3600}"
+      BUILDSHIELD_LOGIN_MAX_FAILURES: "${BUILDSHIELD_LOGIN_MAX_FAILURES:-5}"
+      BUILDSHIELD_LOGIN_LOCKOUT_SECONDS: "${BUILDSHIELD_LOGIN_LOCKOUT_SECONDS:-60}"
+      TMPDIR: "/tmp"
     volumes:
-      - buildshield_reports:/app/reports
-      - buildshield_data:/app/data
+      - buildshield_reports:/app/reports:rw
+      - buildshield_data:/app/data:rw
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
     restart: unless-stopped
     healthcheck:
       test:
@@ -21,7 +40,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/ready', timeout=3)"
         ]
       interval: 30s
       timeout: 5s
