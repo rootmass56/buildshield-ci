@@ -21,6 +21,13 @@ build/
 dist/
 *.egg-info/
 
+# Frontend dependencies / generated output
+node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+*.tsbuildinfo
+
 # BuildShield runtime output
 reports/
 data/

@@ -3,9 +3,8 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
 from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
@@ -45,7 +44,9 @@ from supplysentinel.web.path_security import (
 
 PROJECT_ROOT = Path.cwd()
 REPORTS_ROOT = PROJECT_ROOT / "reports" / "dashboard"
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+FRONTEND_DIST_DIR = PROJECT_ROOT / "frontend" / "dist"
+FRONTEND_INDEX = FRONTEND_DIST_DIR / "index.html"
+FRONTEND_ASSETS_DIR = FRONTEND_DIST_DIR / "assets"
 
 REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -82,8 +83,49 @@ app = FastAPI(
     version=__version__,
 )
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(auth_router)
+
+
+CONTENT_SECURITY_POLICY = "; ".join(
+    [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "frame-ancestors 'none'",
+        "form-action 'self'",
+    ]
+)
+
+
+@app.middleware("http")
+async def add_browser_security_headers(request: Request, call_next):
+    response = await call_next(request)
+
+    response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=()"
+    )
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+
+    content_type = response.headers.get("content-type", "")
+
+    if request.url.path.startswith("/assets/") and response.status_code == 200:
+        response.headers["Cache-Control"] = (
+            "public, max-age=31536000, immutable"
+        )
+    elif request.url.path.startswith("/api/") or "text/html" in content_type:
+        response.headers["Cache-Control"] = "no-store"
+
+    return response
 
 
 def timestamp_id(prefix: str) -> str:
@@ -205,9 +247,56 @@ def save_vulnerability_intelligence_report(run_id: str, report) -> list[dict[str
     return [build_report_link(run_id, written_path)]
 
 
-@app.get("/")
-def dashboard() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+def frontend_index_response() -> FileResponse | HTMLResponse:
+    if FRONTEND_INDEX.is_file():
+        return FileResponse(
+            FRONTEND_INDEX,
+            media_type="text/html",
+        )
+
+    return HTMLResponse(
+        content=(
+            "<!doctype html>"
+            "<html lang=\"en\">"
+            "<head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+            "<title>BuildShield-CI</title></head>"
+            "<body><main>"
+            "<h1>BuildShield-CI</h1>"
+            "<p>The React production build is not available yet.</p>"
+            "<p>Run the frontend production build before launching the dashboard.</p>"
+            "</main></body></html>"
+        ),
+        status_code=200,
+    )
+
+
+@app.get("/", response_model=None)
+def dashboard() -> FileResponse | HTMLResponse:
+    return frontend_index_response()
+
+
+@app.get("/assets/{asset_path:path}", include_in_schema=False)
+def frontend_asset(asset_path: str) -> FileResponse:
+    if not asset_path or "\x00" in asset_path:
+        raise HTTPException(status_code=404, detail="Frontend asset not found.")
+
+    try:
+        asset_root = FRONTEND_ASSETS_DIR.resolve()
+        target = (asset_root / asset_path).resolve(strict=False)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise HTTPException(
+            status_code=404,
+            detail="Frontend asset not found.",
+        ) from error
+
+    if not target.is_relative_to(asset_root):
+        raise HTTPException(status_code=404, detail="Frontend asset not found.")
+
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="Frontend asset not found.")
+
+    return FileResponse(target)
 
 
 @app.get("/health")
@@ -468,3 +557,17 @@ def download_report(
         filename=report_file.name,
         media_type="application/octet-stream",
     )
+
+
+@app.get(
+    "/{full_path:path}",
+    include_in_schema=False,
+    response_model=None,
+)
+def react_spa_fallback(full_path: str) -> FileResponse | HTMLResponse:
+    first_segment = full_path.split("/", 1)[0].lower()
+
+    if first_segment in {"api", "assets", "static"} or full_path.lower() == "health":
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    return frontend_index_response()
