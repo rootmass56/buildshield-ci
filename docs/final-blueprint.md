@@ -1,6 +1,6 @@
 # BuildShield-CI v1.0.0 Final Blueprint
 
-This file is the project source of truth for the final hardening program. It is updated whenever a verified phase is completed.
+This file is the project source of truth for the final hardening program and is updated after each verified phase/subphase.
 
 ## Release Target
 
@@ -8,137 +8,254 @@ This file is the project source of truth for the final hardening program. It is 
 - Final target: v1.0.0
 - Development branch: `upgrade/v0.13-security-hardening`
 - Historical verified release: `v0.12.7`
-- Final scope: controlled, single-instance deployment with production-style security architecture
-- Feature development ends after the verified v1.0.0 release.
+- Deployment positioning: controlled, single-instance deployment with production-style architecture
+- Package version remains `0.12.7` until H10 performs the verified `1.0.0` bump and release freeze.
 
-## Verified Baseline
+## Verified Checkpoints
 
-- Controlled vulnerable fixture: 22 findings, 4 Critical, 10 High, 7 Medium, 1 Low, score 5/100, CRITICAL, build gate FAILED, policy FAILED.
-- Controlled hardened fixture: 0 findings, score 100/100, LOW, build gate PASSED, policy PASSED.
+- H1 checkpoint: `aed539980677f871a45ac97ebf5b9edffd5cce68`
+- H2 checkpoint: `d6c687244bc8b3573f111a20c4a253b43e517964`
+- H3 checkpoint: `9aac2ad28e2dfb3252a1f360ef95f328011c4e56`
+- H4 checkpoint: created by the successful H4D verification/commit on `upgrade/v0.13-security-hardening`
+
+## Controlled Benchmark
+
+- Vulnerable: 22 findings, 4 Critical, 10 High, 7 Medium, 1 Low, 0 Info, score 5/100, CRITICAL, gate FAILED, policy FAILED.
+- Hardened: 0 findings, score 100/100, LOW, gate PASSED, policy PASSED.
 - Comparison: +95 score, 22 findings reduced, 100% risk reduction, `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`.
-- H1 final local regression: 70 passed, 2 skipped.
-- H1 checkpoint: `aed539980677f871a45ac97ebf5b9edffd5cce68`.
-- H2 final local regression: 90 passed, 2 skipped.
-- H2 checkpoint: `d6c687244bc8b3573f111a20c4a253b43e517964`.
-- H3A: React foundation validated; React tests/build passed; Python regression 94 passed, 2 skipped; benchmark preserved.
-- H3B: complete React feature migration validated; React tests/build passed; Python regression 96 passed, 2 skipped; benchmark preserved.
-- H3C: React production integration and browser security validated; React 6 tests passed; Python regression 102 passed, 2 skipped; exact benchmark preserved.
-- H3 final checkpoint: the H3D commit that marks H3 COMPLETE on `upgrade/v0.13-security-hardening`.
 
-## Final Program
+## Final Program Status
 
 | Stage | Scope | Status |
 |---|---|---|
 | H1 | Filesystem / workspace trust boundary | COMPLETE |
 | H2 | Authentication, sessions and API authorization | COMPLETE |
 | H3 | React + TypeScript dashboard and browser security | COMPLETE |
-| H4 | Request validation, rate/resource controls | NEXT |
-| H5 | Safe errors, structured logging and auditability | PENDING |
+| H4 | Request validation, rate/resource controls | COMPLETE |
+| H5 | Safe errors, structured logging and auditability | NEXT |
 | H6 | Report/history security and retention | PENDING |
 | H7 | Docker/runtime hardening | PENDING |
 | H8 | CycloneDX, reproducible build, dependency and CI quality | PENDING |
-| H9 | Security evaluation corpus and adversarial regression testing | PENDING |
+| H9 | Evaluation corpus and adversarial regression testing | PENDING |
 | H10 | Final audit, cleanup, v1.0.0 freeze and release | PENDING |
 
-## H3 — React + TypeScript Dashboard and Browser Security
+# H4 — Request Validation and Resource-Abuse Controls
 
 Status: COMPLETE.
 
-### H3A — React application foundation
+## H4A — Strict Request + Query Validation
 
 Status: COMPLETE.
 
-Delivered:
-- React + TypeScript + Vite application foundation;
-- strict TypeScript configuration;
-- React Router;
-- authenticated application shell;
-- typed H2 session API client;
-- administrator login;
-- Vitest + React Testing Library;
-- Vite production build;
-- regression checks preventing raw HTML-rendering APIs;
-- no credential persistence in browser local/session storage.
+Delivered and verified:
+- centralized strict Pydantic request models;
+- unknown JSON fields rejected;
+- bounded target/policy path strings;
+- explicit report-format enums;
+- duplicate report formats rejected;
+- established `report_formats=[]` no-report execution contract preserved;
+- comparison labels bounded with CR/LF/NUL rejection;
+- OSV timeout bounded to 1–30 seconds;
+- history/trend query limit bounded to 1–100;
+- API-level `422` validation regressions;
+- focused H4A tests: 22 passed;
+- H1/H2/H3 behavior preserved.
 
-### H3B — Full React feature migration
-
-Status: COMPLETE.
-
-Delivered React workflows:
-- security posture overview;
-- protected repository scanner;
-- findings explorer with search and severity filtering;
-- policy-as-code results;
-- dependency inventory;
-- OSV vulnerability intelligence;
-- vulnerable-versus-hardened comparison;
-- scan history;
-- Recharts security-score trends;
-- authenticated report center;
-- CI/CD security posture;
-- product health/about page.
-
-Security behavior:
-- H2 CSRF token is sent on state-changing operations;
-- scanner-controlled values are rendered using React text interpolation;
-- external OSV links are passed through `safeOsvUrl`;
-- no `dangerouslySetInnerHTML`, `.innerHTML`, `.outerHTML` or `document.write`;
-- no authentication credentials are stored in localStorage/sessionStorage.
-
-### H3C — Production integration and browser security
+## H4B — Request Body, Rate + Concurrency Controls
 
 Status: COMPLETE.
 
-Delivered:
-- FastAPI serves the built Vite React SPA;
-- direct `/app/...` routes receive the React shell;
-- unknown `/api/...` routes remain API 404 responses rather than SPA rewrites;
-- canonical frontend-asset containment blocks asset traversal;
-- legacy vanilla dashboard assets were removed after React parity;
-- feature pages use lazy loading/code splitting;
-- Content Security Policy is enforced;
-- `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, COOP and CORP headers are applied;
-- HTML/API responses use `Cache-Control: no-store`;
-- hashed Vite assets use long-term immutable caching;
-- dedicated FindingsPage XSS regression proves HTML-looking finding content is rendered as inert text;
-- dedicated OSV URL unit tests cover valid HTTPS `osv.dev`, HTTP rejection, lookalike-domain rejection and `javascript:` rejection;
-- obsolete vanilla OSV UI regression was migrated to the React implementation.
+Delivered and verified:
+- bounded state-changing `/api/` request bodies;
+- early `Content-Length` rejection plus streamed-body byte counting;
+- deterministic `413` oversized-body responses;
+- per-authenticated-session sliding-window rate limiting for expensive security operations;
+- deterministic `429 Too Many Requests` with `Retry-After`;
+- global concurrency gate for scan, inventory, OSV intelligence and comparison;
+- concurrency slots released in `finally`, including failed operations;
+- hashed session material used for in-memory rate-limit keys;
+- stale rate-bucket pruning;
+- fail-closed environment configuration;
+- deterministic tests without wall-clock sleeps;
+- focused H4B tests: 7 passed.
 
-Final H3 verification before checkpoint:
-- React/Vitest: 6 passed;
-- TypeScript/Vite production build: PASS;
-- FastAPI React production integration: PASS;
-- React OSV SPA route: PASS;
-- browser security controls: PASS;
-- legacy vanilla UI removal: PASS;
-- Python regression: 102 passed, 2 skipped;
-- controlled benchmark: exact 22 findings / 5 score to 0 findings / 100 score preserved.
+Default H4B controls:
+- request body: 65,536 bytes;
+- expensive operations: 30 per 60 seconds per authenticated session;
+- concurrent expensive operations: 2.
 
-The 2 skipped Python tests are the existing Windows symlink tests that require symlink-creation privilege; the security tests remain present.
+Environment controls:
+- `BUILDSHIELD_MAX_REQUEST_BODY_BYTES`
+- `BUILDSHIELD_API_RATE_LIMIT_REQUESTS`
+- `BUILDSHIELD_API_RATE_LIMIT_WINDOW_SECONDS`
+- `BUILDSHIELD_MAX_CONCURRENT_OPERATIONS`
 
-### H3D — Final H3 verification and checkpoint
+## H4C — Scanner / Resource Budgets
 
-Status: COMPLETE when the H3D checkpoint script succeeds.
+Status: COMPLETE.
 
-H3D performs:
-- final frontend unit/security tests;
-- final TypeScript/Vite production build;
-- final focused H1/H2/H3 security regression;
+Delivered and verified:
+- repository entry traversal budget;
+- security-relevant file-count budget;
+- per-security-file byte budget;
+- aggregate security-relevant input byte budget;
+- ignored dependency/build/cache directories pruned before recursive traversal;
+- symlink directories/files not followed by scanner discovery;
+- deterministic resource-limit failures before analyzer execution;
+- web scan/comparison map scanner budget exhaustion to `413`;
+- fail-closed scanner-budget environment validation;
+- adversarial tests for entry, file-count, per-file and aggregate limits;
+- focused H4C tests: 8 passed;
+- analyzer-routing / scanner benchmark tests: 5 passed;
+- H4A + H4B regression: 29 passed;
+- H1/H2/H3 security regression: 46 passed, 2 skipped;
+- complete Python regression after H4C: 139 passed, 2 skipped;
+- exact controlled benchmark preserved.
+
+Default H4C controls:
+- repository entries inspected: 20,000;
+- security-relevant files: 500;
+- single security-relevant file: 2 MiB;
+- aggregate security-relevant input: 10 MiB.
+
+Environment controls:
+- `BUILDSHIELD_SCAN_MAX_ENTRIES`
+- `BUILDSHIELD_SCAN_MAX_FILES`
+- `BUILDSHIELD_SCAN_MAX_FILE_BYTES`
+- `BUILDSHIELD_SCAN_MAX_TOTAL_BYTES`
+
+## H4D — Final H4 Verification + Checkpoint
+
+Status: COMPLETE when the H4D checkpoint script succeeds.
+
+H4D performs:
+- final frontend tests and Vite production build;
+- final focused H1–H4 security regression;
 - final complete Python regression;
 - final exact controlled benchmark verification;
-- exact changed-file validation;
-- H3 commit creation and push;
+- exact H4 changed-file validation;
+- H4 commit creation and push;
 - local/remote commit equality verification;
 - clean working-tree verification.
 
-## H4 — Next Stage
+# H5 — Safe Errors, Structured Logging and Auditability
 
-H4 will harden request validation and resource-abuse controls, including bounded request inputs, scan/resource limits and rate controls appropriate for the controlled single-instance deployment model.
+Status: NEXT.
 
-## Permanent Scope Boundaries
+Planned:
+- remove raw internal exception details from API responses;
+- introduce safe public error envelopes;
+- structured server-side logging;
+- request/correlation identifiers;
+- security-relevant audit events;
+- authentication/action audit coverage;
+- sensitive-data redaction;
+- deterministic error and logging regressions.
 
-The final v1.0.0 does not add Maven, Go, NuGet, Rust, Kubernetes scanning, GitLab CI, Jenkins, AI/LLM remediation, multi-tenant SaaS architecture, Redis/Kafka/Celery, distributed workers, enterprise SSO/SCIM, extra databases, cloud-provider-specific deployment stacks, or package-wide renaming.
+# H6 — Report / History Security and Retention
 
-The internal Python package remains `supplysentinel`; the product and CLI brand remains BuildShield-CI.
+Status: PENDING.
 
-The package version remains `0.12.7` until H10 performs the final verified `1.0.0` version bump and release freeze.
+Planned:
+- report access hardening;
+- report metadata validation;
+- retention policy;
+- bounded report/history growth;
+- cleanup behavior;
+- download/content-type hardening;
+- regression coverage.
+
+# H7 — Docker / Runtime Hardening
+
+Status: PENDING.
+
+Planned:
+- non-root runtime;
+- minimal runtime permissions;
+- filesystem/runtime constraints;
+- environment/config handling;
+- health behavior;
+- final Docker/Compose hardening.
+
+# H8 — CycloneDX + Reproducible Build + CI Quality
+
+Status: PENDING.
+
+Mandatory:
+- CycloneDX JSON SBOM;
+- Ruff;
+- mypy;
+- pytest + pytest-cov;
+- `python -m build`;
+- `pip check`;
+- frontend `npm ci`;
+- ESLint;
+- TypeScript typecheck;
+- Vitest;
+- Vite production build;
+- Python locking/reproducibility strategy;
+- fresh-environment wheel installation test;
+- least-privilege CI permissions;
+- immutable GitHub Actions SHA pins.
+
+# H9 — Evaluation Corpus + Adversarial Regression Testing
+
+Status: PENDING.
+
+Mandatory:
+- positive fixtures per rule;
+- negative fixtures per rule;
+- edge/adversarial fixtures;
+- TP / TN / FP / FN;
+- precision;
+- recall;
+- F1;
+- aggregate metrics;
+- per-rule metrics;
+- claims limited to the curated deterministic corpus.
+
+# H10 — Final Audit, Cleanup and v1.0.0 Release
+
+Status: PENDING.
+
+Will:
+- remove dead code;
+- final documentation synchronization;
+- final README / SECURITY / architecture review;
+- confirm no stale legacy frontend remains;
+- final dependency/build audit;
+- version bump from `0.12.7` to `1.0.0`;
+- fresh clean build;
+- complete backend/frontend regressions;
+- exact controlled benchmark;
+- final branch/PR review;
+- CI verification;
+- merge;
+- tag `v1.0.0`;
+- release verification;
+- feature development ends after verified v1.0.0 except critical patches.
+
+# Permanent Scope Boundaries
+
+Out of scope for v1.0.0:
+- Maven
+- Go
+- NuGet
+- Rust
+- Kubernetes scanner
+- GitLab CI
+- Jenkins
+- AI/LLM remediation
+- multi-tenant SaaS
+- Redis/Kafka/Celery
+- distributed workers
+- cloud-provider stacks
+- enterprise SSO/SCIM
+- extra databases
+- package-wide rename
+
+The internal Python package remains `supplysentinel`.
+
+The product and CLI brand remains BuildShield-CI.
+
+Async/background scan jobs are not part of v1.0.0.

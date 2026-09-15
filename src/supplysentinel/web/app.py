@@ -3,12 +3,11 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, Field
-
 from supplysentinel import DESCRIPTION, PRODUCT_NAME, __version__
 from supplysentinel.core.comparison import build_comparison_result
+from supplysentinel.core.resource_budget import RepositoryResourceLimitError
 from supplysentinel.core.scanner import scan_repository
 from supplysentinel.intelligence.osv_client import (
     build_osv_vulnerability_report,
@@ -27,7 +26,6 @@ from supplysentinel.reporters.report_generator import (
 from supplysentinel.reporters.sarif_reporter import generate_scan_sarif
 from supplysentinel.web.auth import (
     require_authenticated_session,
-    require_csrf_token,
     router as auth_router,
 )
 from supplysentinel.web.history import (
@@ -40,6 +38,16 @@ from supplysentinel.web.path_security import (
     resolve_workspace_directory,
     resolve_workspace_file,
 )
+from supplysentinel.web.request_models import (
+    CompareRequest,
+    InventoryRequest,
+    ScanRequest,
+    VulnerabilityIntelligenceRequest,
+)
+from supplysentinel.web.resource_controls import (
+    RequestBodyLimitMiddleware,
+    require_expensive_operation_access,
+)
 
 
 PROJECT_ROOT = Path.cwd()
@@ -51,32 +59,6 @@ FRONTEND_ASSETS_DIR = FRONTEND_DIST_DIR / "assets"
 REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
-class ScanRequest(BaseModel):
-    target_path: str = Field(default="samples/vulnerable-repo")
-    policy_path: str | None = Field(default="buildshield-policy.yml")
-    report_formats: list[str] = Field(
-        default_factory=lambda: ["json", "md", "html", "sarif"]
-    )
-
-
-class CompareRequest(BaseModel):
-    baseline_path: str = Field(default="samples/vulnerable-repo")
-    target_path: str = Field(default="samples/secure-repo")
-    baseline_label: str = Field(default="Vulnerable Repo")
-    target_label: str = Field(default="Secure Repo")
-    report_formats: list[str] = Field(default_factory=lambda: ["json", "md", "html"])
-
-
-class InventoryRequest(BaseModel):
-    target_path: str = Field(default="samples/vulnerable-repo")
-
-
-class VulnerabilityIntelligenceRequest(BaseModel):
-    target_path: str = Field(default="samples/secure-repo")
-    online_lookup: bool = Field(default=False)
-    timeout_seconds: int = Field(default=10)
-
-
 app = FastAPI(
     title=PRODUCT_NAME,
     description=DESCRIPTION,
@@ -84,6 +66,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.add_middleware(RequestBodyLimitMiddleware)
 
 
 CONTENT_SECURITY_POLICY = "; ".join(
@@ -332,7 +315,7 @@ def sample_repositories(
 @app.post("/api/scan")
 def scan_repository_api(
     request: ScanRequest,
-    _session: object = Depends(require_csrf_token),
+    _session: object = Depends(require_expensive_operation_access),
 ) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
@@ -358,6 +341,8 @@ def scan_repository_api(
                 update={"policy_evaluation": policy_evaluation}
             )
 
+    except RepositoryResourceLimitError as error:
+        raise HTTPException(status_code=413, detail=str(error)) from error
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
 
@@ -397,7 +382,7 @@ def scan_repository_api(
 @app.post("/api/inventory")
 def dependency_inventory_api(
     request: InventoryRequest,
-    _session: object = Depends(require_csrf_token),
+    _session: object = Depends(require_expensive_operation_access),
 ) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
@@ -421,7 +406,7 @@ def dependency_inventory_api(
 @app.post("/api/vulnerability-intelligence")
 def vulnerability_intelligence_api(
     request: VulnerabilityIntelligenceRequest,
-    _session: object = Depends(require_csrf_token),
+    _session: object = Depends(require_expensive_operation_access),
 ) -> dict[str, Any]:
     target_path = resolve_workspace_directory(request.target_path)
 
@@ -452,7 +437,7 @@ def vulnerability_intelligence_api(
 @app.post("/api/compare")
 def compare_repositories_api(
     request: CompareRequest,
-    _session: object = Depends(require_csrf_token),
+    _session: object = Depends(require_expensive_operation_access),
 ) -> dict[str, Any]:
     baseline_path = resolve_workspace_directory(request.baseline_path)
     target_path = resolve_workspace_directory(request.target_path)
@@ -473,6 +458,8 @@ def compare_repositories_api(
             target_label=request.target_label,
         )
 
+    except RepositoryResourceLimitError as error:
+        raise HTTPException(status_code=413, detail=str(error)) from error
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
 
@@ -494,7 +481,7 @@ def compare_repositories_api(
 
 @app.get("/api/history")
 def scan_history(
-    limit: int = 20,
+    limit: int = Query(default=20, ge=1, le=100),
     _session: object = Depends(require_authenticated_session),
 ) -> dict[str, Any]:
     return {
@@ -504,7 +491,7 @@ def scan_history(
 
 @app.get("/api/history/trend")
 def risk_trend(
-    limit: int = 20,
+    limit: int = Query(default=20, ge=1, le=100),
     _session: object = Depends(require_authenticated_session),
 ) -> dict[str, Any]:
     return {

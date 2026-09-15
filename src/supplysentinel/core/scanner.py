@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from supplysentinel.analyzers import (
@@ -11,6 +12,7 @@ from supplysentinel.analyzers import (
 from supplysentinel.core import scoring
 from supplysentinel.core.constants import Severity
 from supplysentinel.core.exceptions import SupplySentinelError
+from supplysentinel.core.resource_budget import validate_repository_scan_budget
 from supplysentinel.core.models import (
     Finding,
     RepositoryFile,
@@ -162,19 +164,37 @@ def discover_security_relevant_files(
 ) -> list[RepositoryFile]:
     discovered_files: list[RepositoryFile] = []
 
-    for path in target_path.rglob("*"):
-        if not path.is_file():
-            continue
+    for directory, dirnames, filenames in os.walk(
+        target_path,
+        topdown=True,
+        followlinks=False,
+    ):
+        directory_path = Path(directory)
 
-        if not is_security_relevant_file(path):
-            continue
-
-        discovered_files.append(
-            build_repository_file(
-                path=path,
-                target_path=target_path,
+        dirnames[:] = [
+            name
+            for name in dirnames
+            if (
+                name not in IGNORED_DIRECTORIES
+                and not (directory_path / name).is_symlink()
             )
-        )
+        ]
+
+        for filename in filenames:
+            path = directory_path / filename
+
+            if path.is_symlink() or not path.is_file():
+                continue
+
+            if not is_security_relevant_file(path):
+                continue
+
+            discovered_files.append(
+                build_repository_file(
+                    path=path,
+                    target_path=target_path,
+                )
+            )
 
     return sorted(
         discovered_files,
@@ -341,6 +361,12 @@ def scan_repository(target: str) -> ScanResult:
         raise SupplySentinelError(
             f"Target path is not a directory: {target}"
         )
+
+    validate_repository_scan_budget(
+        target_path,
+        is_relevant_file=is_security_relevant_file,
+        ignored_directories=IGNORED_DIRECTORIES,
+    )
 
     discovered_files = discover_security_relevant_files(
         target_path
