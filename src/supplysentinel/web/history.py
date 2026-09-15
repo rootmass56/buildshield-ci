@@ -1,12 +1,71 @@
 import json
+import os
 import sqlite3
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+from fastapi import HTTPException
 
 
 DATA_DIR = Path.cwd() / "data"
 DATABASE_PATH = DATA_DIR / "buildshield_history.db"
+
+HISTORY_MAX_ROWS_ENV = "BUILDSHIELD_HISTORY_MAX_ROWS"
+HISTORY_RETENTION_DAYS_ENV = "BUILDSHIELD_HISTORY_RETENTION_DAYS"
+
+DEFAULT_HISTORY_MAX_ROWS = 1_000
+DEFAULT_HISTORY_RETENTION_DAYS = 90
+
+
+@dataclass(frozen=True)
+class HistoryRetentionSettings:
+    max_rows: int
+    retention_days: int
+
+
+def _parse_positive_int(
+    env_name: str,
+    default: int,
+    *,
+    maximum: int,
+) -> int:
+    raw_value = os.getenv(env_name)
+
+    if raw_value is None or not raw_value.strip():
+        return default
+
+    try:
+        value = int(raw_value)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=f"History retention configuration is invalid: {env_name}.",
+        ) from error
+
+    if value < 1 or value > maximum:
+        raise HTTPException(
+            status_code=503,
+            detail=f"History retention configuration is invalid: {env_name}.",
+        )
+
+    return value
+
+
+def get_history_retention_settings() -> HistoryRetentionSettings:
+    return HistoryRetentionSettings(
+        max_rows=_parse_positive_int(
+            HISTORY_MAX_ROWS_ENV,
+            DEFAULT_HISTORY_MAX_ROWS,
+            maximum=100_000,
+        ),
+        retention_days=_parse_positive_int(
+            HISTORY_RETENTION_DAYS_ENV,
+            DEFAULT_HISTORY_RETENTION_DAYS,
+            maximum=3_650,
+        ),
+    )
 
 
 def utc_now() -> str:
@@ -16,7 +75,7 @@ def utc_now() -> str:
 def ensure_database() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS scan_history (
@@ -38,6 +97,18 @@ def ensure_database() -> None:
                 report_count INTEGER NOT NULL,
                 metadata_json TEXT NOT NULL
             )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_scan_history_created_at
+            ON scan_history(created_at)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_scan_history_run_id
+            ON scan_history(run_id)
             """
         )
         connection.commit()
@@ -68,6 +139,70 @@ def policy_status_from_result(policy_evaluation: Any) -> str:
     return "UNKNOWN"
 
 
+def _prune_scan_history(
+    connection: sqlite3.Connection,
+    *,
+    settings: HistoryRetentionSettings,
+    now: datetime,
+) -> dict[str, int]:
+    cutoff = (
+        now.astimezone(timezone.utc)
+        - timedelta(days=settings.retention_days)
+    ).isoformat()
+
+    age_cursor = connection.execute(
+        """
+        DELETE FROM scan_history
+        WHERE created_at < ?
+        """,
+        (cutoff,),
+    )
+
+    count_cursor = connection.execute(
+        """
+        DELETE FROM scan_history
+        WHERE id NOT IN (
+            SELECT id
+            FROM scan_history
+            ORDER BY id DESC
+            LIMIT ?
+        )
+        """,
+        (settings.max_rows,),
+    )
+
+    return {
+        "age_deleted": max(0, age_cursor.rowcount),
+        "count_deleted": max(0, count_cursor.rowcount),
+    }
+
+
+def apply_history_retention(
+    *,
+    now: datetime | None = None,
+) -> dict[str, int]:
+    ensure_database()
+    settings = get_history_retention_settings()
+    current_time = now or datetime.now(timezone.utc)
+
+    if current_time.tzinfo is None:
+        current_time = current_time.replace(tzinfo=timezone.utc)
+
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+        result = _prune_scan_history(
+            connection,
+            settings=settings,
+            now=current_time,
+        )
+        connection.commit()
+
+    return {
+        **result,
+        "max_rows": settings.max_rows,
+        "retention_days": settings.retention_days,
+    }
+
+
 def save_scan_history(
     run_id: str,
     kind: str,
@@ -77,6 +212,7 @@ def save_scan_history(
     policy_evaluation: Any,
     reports: list[dict[str, str]],
 ) -> dict[str, Any]:
+    settings = get_history_retention_settings()
     ensure_database()
 
     policy_status = policy_status_from_result(policy_evaluation)
@@ -89,8 +225,12 @@ def save_scan_history(
     }
 
     created_at = utc_now()
+    retention_now = datetime.fromisoformat(created_at)
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    if retention_now.tzinfo is None:
+        retention_now = retention_now.replace(tzinfo=timezone.utc)
+
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
         cursor = connection.execute(
             """
             INSERT INTO scan_history (
@@ -131,6 +271,12 @@ def save_scan_history(
                 len(reports),
                 json.dumps(metadata),
             ),
+        )
+
+        _prune_scan_history(
+            connection,
+            settings=settings,
+            now=retention_now,
         )
 
         connection.commit()
@@ -182,7 +328,7 @@ def get_recent_scan_history(limit: int = 20) -> list[dict[str, Any]]:
 
     safe_limit = max(1, min(limit, 100))
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(
@@ -203,7 +349,7 @@ def get_risk_trend(limit: int = 20) -> list[dict[str, Any]]:
 
     safe_limit = max(1, min(limit, 100))
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(
@@ -240,8 +386,66 @@ def get_risk_trend(limit: int = 20) -> list[dict[str, Any]]:
 def clear_scan_history() -> dict[str, int]:
     ensure_database()
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
         cursor = connection.execute("DELETE FROM scan_history")
         connection.commit()
 
     return {"deleted_rows": cursor.rowcount}
+
+
+def clear_report_metadata_for_runs(
+    run_ids: list[str],
+) -> int:
+    unique_run_ids = list(dict.fromkeys(run_ids))
+
+    if not unique_run_ids:
+        return 0
+
+    ensure_database()
+    updated_rows = 0
+    chunk_size = 250
+
+    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+        connection.row_factory = sqlite3.Row
+
+        for start in range(0, len(unique_run_ids), chunk_size):
+            chunk = unique_run_ids[start : start + chunk_size]
+            placeholders = ",".join("?" for _ in chunk)
+
+            rows = connection.execute(
+                f"""
+                SELECT id, metadata_json
+                FROM scan_history
+                WHERE run_id IN ({placeholders})
+                """,
+                tuple(chunk),
+            ).fetchall()
+
+            for row in rows:
+                try:
+                    metadata = json.loads(row["metadata_json"])
+                except (TypeError, ValueError):
+                    metadata = {}
+
+                if not isinstance(metadata, dict):
+                    metadata = {}
+
+                metadata["reports"] = []
+
+                connection.execute(
+                    """
+                    UPDATE scan_history
+                    SET report_count = 0,
+                        metadata_json = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        json.dumps(metadata),
+                        row["id"],
+                    ),
+                )
+                updated_rows += 1
+
+        connection.commit()
+
+    return updated_rows

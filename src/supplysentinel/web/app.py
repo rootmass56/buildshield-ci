@@ -43,6 +43,11 @@ from supplysentinel.web.path_security import (
     resolve_workspace_directory,
     resolve_workspace_file,
 )
+from supplysentinel.web.report_security import (
+    enforce_report_retention,
+    list_safe_reports,
+    resolve_safe_report_download,
+)
 from supplysentinel.web.request_models import (
     CompareRequest,
     InventoryRequest,
@@ -375,6 +380,11 @@ def scan_repository_api(
         report_formats=report_formats,
     )
 
+    enforce_report_retention(
+        REPORTS_ROOT,
+        actor=getattr(_session, "username", None),
+    )
+
     history_record = save_scan_history(
         run_id=run_id,
         kind="scan",
@@ -421,6 +431,11 @@ def dependency_inventory_api(
     run_id = timestamp_id("inventory")
     reports = save_inventory_report(run_id=run_id, inventory=inventory)
 
+    enforce_report_retention(
+        REPORTS_ROOT,
+        actor=getattr(_session, "username", None),
+    )
+
     audit_event(
         "security.operation",
         outcome="success",
@@ -458,6 +473,11 @@ def vulnerability_intelligence_api(
     reports = save_vulnerability_intelligence_report(
         run_id=run_id,
         report=report,
+    )
+
+    enforce_report_retention(
+        REPORTS_ROOT,
+        actor=getattr(_session, "username", None),
     )
 
     audit_event(
@@ -521,6 +541,11 @@ def compare_repositories_api(
         report_formats=report_formats,
     )
 
+    enforce_report_retention(
+        REPORTS_ROOT,
+        actor=getattr(_session, "username", None),
+    )
+
     audit_event(
         "security.operation",
         outcome="success",
@@ -560,33 +585,10 @@ def risk_trend(
 @app.get("/api/reports")
 def list_reports(
     _session: object = Depends(require_authenticated_session),
-) -> dict[str, list[dict[str, str]]]:
-    REPORTS_ROOT.mkdir(parents=True, exist_ok=True)
-
-    reports: list[dict[str, str]] = []
-
-    for run_dir in sorted(REPORTS_ROOT.iterdir(), reverse=True):
-        if not run_dir.is_dir():
-            continue
-
-        for report_file in sorted(run_dir.iterdir()):
-            if not report_file.is_file():
-                continue
-
-            try:
-                safe_file = safe_report_file(run_dir.name, report_file.name)
-            except HTTPException:
-                continue
-
-            reports.append(
-                {
-                    "run_id": run_dir.name,
-                    "filename": safe_file.name,
-                    "download_url": f"/api/reports/{run_dir.name}/{safe_file.name}",
-                }
-            )
-
-    return {"reports": reports}
+) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "reports": list_safe_reports(REPORTS_ROOT),
+    }
 
 
 @app.get("/api/reports/{run_id}/{filename}")
@@ -595,12 +597,30 @@ def download_report(
     filename: str,
     _session: object = Depends(require_authenticated_session),
 ) -> FileResponse:
-    report_file = safe_report_file(run_id, filename)
+    report = resolve_safe_report_download(
+        reports_root=REPORTS_ROOT,
+        run_id=run_id,
+        filename=filename,
+    )
+
+    audit_event(
+        "report.download",
+        outcome="success",
+        actor=getattr(_session, "username", None),
+        operation="report_download",
+        details={
+            "format": report.path.suffix.lower(),
+            "size_bytes": report.size_bytes,
+        },
+    )
 
     return FileResponse(
-        path=report_file,
-        filename=report_file.name,
+        path=report.path,
+        filename=report.path.name,
         media_type="application/octet-stream",
+        headers={
+            "Cache-Control": "no-store",
+        },
     )
 
 
