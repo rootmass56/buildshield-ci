@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from supplysentinel.web.audit import audit_event
+
 
 SESSION_COOKIE_NAME = "buildshield_session"
 PASSWORD_SCHEME = "pbkdf2_sha256"
@@ -383,11 +385,19 @@ def login(
     now = time.time()
     client_key = _client_key(request)
 
-    _check_login_lockout(
-        client_key=client_key,
-        settings=settings,
-        now=now,
-    )
+    try:
+        _check_login_lockout(
+            client_key=client_key,
+            settings=settings,
+            now=now,
+        )
+    except HTTPException:
+        audit_event(
+            "auth.login",
+            outcome="blocked",
+            reason="lockout_active",
+        )
+        raise
 
     username_matches = hmac.compare_digest(
         credentials.username,
@@ -403,6 +413,11 @@ def login(
             client_key=client_key,
             settings=settings,
             now=now,
+        )
+        audit_event(
+            "auth.login",
+            outcome="failure",
+            reason="invalid_credentials",
         )
         raise HTTPException(
             status_code=401,
@@ -425,6 +440,12 @@ def login(
         secure=settings.cookie_secure,
         samesite="strict",
         path="/",
+    )
+
+    audit_event(
+        "auth.login",
+        outcome="success",
+        actor=record.username,
     )
 
     return {
@@ -471,6 +492,12 @@ def logout(
         path="/",
         httponly=True,
         samesite="strict",
+    )
+
+    audit_event(
+        "auth.logout",
+        outcome="success",
+        actor=record.username,
     )
 
     return {

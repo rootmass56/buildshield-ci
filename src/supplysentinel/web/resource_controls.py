@@ -13,6 +13,7 @@ from fastapi import Depends, HTTPException, Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from supplysentinel.web.audit import audit_event
 from supplysentinel.web.auth import (
     SESSION_COOKIE_NAME,
     SessionRecord,
@@ -173,6 +174,15 @@ def _consume_rate_limit(
                 1,
                 math.ceil(window_seconds - (current_time - oldest)),
             )
+            audit_event(
+                "resource.rate_limit",
+                outcome="blocked",
+                reason="rate_limit_exceeded",
+                details={
+                    "limit": max_requests,
+                    "window_seconds": window_seconds,
+                },
+            )
             raise HTTPException(
                 status_code=429,
                 detail="Too many security operations. Try again later.",
@@ -200,6 +210,14 @@ def acquire_concurrency_slot(
 
     with _STATE_LOCK:
         if _ACTIVE_OPERATIONS >= max_concurrent_operations:
+            audit_event(
+                "resource.concurrency",
+                outcome="blocked",
+                reason="concurrency_limit_exceeded",
+                details={
+                    "limit": max_concurrent_operations,
+                },
+            )
             raise HTTPException(
                 status_code=429,
                 detail="Too many concurrent security operations.",
@@ -308,6 +326,15 @@ class RequestBodyLimitMiddleware:
                 break
 
         if content_length is not None and content_length > max_bytes:
+            audit_event(
+                "resource.request_body",
+                outcome="blocked",
+                reason="content_length_exceeded",
+                details={
+                    "limit_bytes": max_bytes,
+                    "method": method,
+                },
+            )
             await _send_json_error(
                 scope,
                 receive,
@@ -328,6 +355,15 @@ class RequestBodyLimitMiddleware:
                 consumed += len(message.get("body", b""))
 
                 if consumed > max_bytes:
+                    audit_event(
+                        "resource.request_body",
+                        outcome="blocked",
+                        reason="streamed_body_exceeded",
+                        details={
+                            "limit_bytes": max_bytes,
+                            "method": method,
+                        },
+                    )
                     raise _RequestBodyTooLarge
 
             return message

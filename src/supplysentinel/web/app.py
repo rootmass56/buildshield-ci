@@ -28,6 +28,11 @@ from supplysentinel.web.auth import (
     require_authenticated_session,
     router as auth_router,
 )
+from supplysentinel.web.audit import audit_event
+from supplysentinel.web.error_handling import (
+    safe_internal_error,
+    safe_unhandled_exception_handler,
+)
 from supplysentinel.web.history import (
     get_recent_scan_history,
     get_risk_trend,
@@ -48,6 +53,10 @@ from supplysentinel.web.resource_controls import (
     RequestBodyLimitMiddleware,
     require_expensive_operation_access,
 )
+from supplysentinel.web.logging_utils import (
+    RequestCorrelationMiddleware,
+    configure_structured_logging,
+)
 
 
 PROJECT_ROOT = Path.cwd()
@@ -65,8 +74,11 @@ app = FastAPI(
     version=__version__,
 )
 
+configure_structured_logging()
 app.include_router(auth_router)
 app.add_middleware(RequestBodyLimitMiddleware)
+app.add_middleware(RequestCorrelationMiddleware)
+app.add_exception_handler(Exception, safe_unhandled_exception_handler)
 
 
 CONTENT_SECURITY_POLICY = "; ".join(
@@ -342,9 +354,16 @@ def scan_repository_api(
             )
 
     except RepositoryResourceLimitError as error:
+        audit_event(
+            "resource.scanner_budget",
+            outcome="blocked",
+            actor=getattr(_session, "username", None),
+            operation="scan",
+            reason="scanner_budget_exceeded",
+        )
         raise HTTPException(status_code=413, detail=str(error)) from error
     except Exception as error:
-        raise HTTPException(status_code=500, detail=str(error)) from error
+        raise safe_internal_error("scan", error) from error
 
     run_id = timestamp_id("scan")
     target_name = target_path.name or "repository"
@@ -364,6 +383,14 @@ def scan_repository_api(
         risk_profile=result.risk_profile,
         policy_evaluation=result.policy_evaluation,
         reports=reports,
+    )
+
+    audit_event(
+        "security.operation",
+        outcome="success",
+        actor=getattr(_session, "username", None),
+        operation="scan",
+        details={"reports_generated": len(reports)},
     )
 
     return {
@@ -389,10 +416,18 @@ def dependency_inventory_api(
     try:
         inventory = build_dependency_inventory(str(target_path))
     except Exception as error:
-        raise HTTPException(status_code=500, detail=str(error)) from error
+        raise safe_internal_error("inventory", error) from error
 
     run_id = timestamp_id("inventory")
     reports = save_inventory_report(run_id=run_id, inventory=inventory)
+
+    audit_event(
+        "security.operation",
+        outcome="success",
+        actor=getattr(_session, "username", None),
+        operation="inventory",
+        details={"reports_generated": len(reports)},
+    )
 
     return {
         "run_id": run_id,
@@ -417,12 +452,20 @@ def vulnerability_intelligence_api(
             timeout_seconds=request.timeout_seconds,
         )
     except Exception as error:
-        raise HTTPException(status_code=500, detail=str(error)) from error
+        raise safe_internal_error("vulnerability_intelligence", error) from error
 
     run_id = timestamp_id("osv")
     reports = save_vulnerability_intelligence_report(
         run_id=run_id,
         report=report,
+    )
+
+    audit_event(
+        "security.operation",
+        outcome="success",
+        actor=getattr(_session, "username", None),
+        operation="vulnerability_intelligence",
+        details={"reports_generated": len(reports)},
     )
 
     return {
@@ -459,9 +502,16 @@ def compare_repositories_api(
         )
 
     except RepositoryResourceLimitError as error:
+        audit_event(
+            "resource.scanner_budget",
+            outcome="blocked",
+            actor=getattr(_session, "username", None),
+            operation="compare",
+            reason="scanner_budget_exceeded",
+        )
         raise HTTPException(status_code=413, detail=str(error)) from error
     except Exception as error:
-        raise HTTPException(status_code=500, detail=str(error)) from error
+        raise safe_internal_error("compare", error) from error
 
     run_id = timestamp_id("compare")
 
@@ -469,6 +519,14 @@ def compare_repositories_api(
         run_id=run_id,
         comparison=comparison,
         report_formats=report_formats,
+    )
+
+    audit_event(
+        "security.operation",
+        outcome="success",
+        actor=getattr(_session, "username", None),
+        operation="compare",
+        details={"reports_generated": len(reports)},
     )
 
     return {
