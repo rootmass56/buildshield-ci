@@ -29,7 +29,11 @@ def test_dockerfile_uses_multistage_frontend_and_python_builds():
     assert "--package-lock=false" not in content
 
     assert "FROM python:3.13-slim AS python-builder" in content
-    assert "python -m pip wheel --wheel-dir /wheels ." in content
+    assert "COPY pyproject.toml README.md LICENSE ./" in content
+    assert (
+        "python -m pip wheel --no-deps --wheel-dir /wheels ."
+        in content
+    )
     assert "FROM python:3.13-slim AS runtime" in content
     assert (
         "COPY --from=frontend-builder /frontend/dist ./frontend/dist"
@@ -47,7 +51,18 @@ def test_dockerfile_runtime_is_non_root_and_not_editable_install():
     assert "--gid 10001" in content
     assert "--no-create-home" in content
     assert "--shell /usr/sbin/nologin" in content
-    assert "pip install --no-cache-dir /wheels/*.whl" in content
+    assert (
+        "COPY requirements/runtime-py313-linux.lock.txt "
+        "/tmp/runtime-py313-linux.lock.txt"
+        in content
+    )
+    assert "--require-hashes" in content
+    assert "-r /tmp/runtime-py313-linux.lock.txt" in content
+    assert (
+        "pip install --no-cache-dir --no-deps /wheels/*.whl"
+        in content
+    )
+    assert "python -m pip check" in content
     assert "pip install --no-cache-dir -e ." not in content
     assert "pip install -e ." not in content
     assert "chown -R buildshield:buildshield /app" not in content
@@ -139,7 +154,7 @@ def test_env_example_exists():
     assert "BUILDSHIELD_ENV" in content
 
 
-def test_deployment_documentation_exists_and_records_h7a_controls():
+def test_deployment_documentation_matches_current_container_controls():
     deployment_doc = project_root() / "docs" / "deployment.md"
 
     assert deployment_doc.exists()
@@ -150,10 +165,15 @@ def test_deployment_documentation_exists_and_records_h7a_controls():
     assert "docker build" in content
     assert "docker compose up" in content
     assert "Cloud Deployment Readiness" in content
-    assert "Multi-stage production image" in content
+    assert "multi-stage production build" in content
     assert "UID/GID `10001:10001`" in content
     assert "frontend production build" in content
-    assert "non-editable wheel installation" in content
+    assert "non-editably with `--no-deps`" in content
+    assert "Node 22.23.2" in content
+    assert "npm 12.0.2" in content
+    assert "hash-locked" in content
+    assert "Node 22.15.0" not in content
+    assert "@typescript/typescript-linux-x64@7.0.2" not in content
 
 
 def test_h7c_compose_requires_runtime_auth_and_uses_readiness():
