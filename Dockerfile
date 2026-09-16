@@ -22,10 +22,10 @@ ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /build
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 
-RUN python -m pip wheel --wheel-dir /wheels .
+RUN python -m pip wheel --no-deps --wheel-dir /wheels .
 
 
 FROM python:3.13-slim AS runtime
@@ -52,10 +52,14 @@ RUN groupadd --gid 10001 buildshield && \
     mkdir -p /app/reports/dashboard /app/data && \
     chown -R 10001:10001 /app/reports /app/data
 
+COPY requirements/runtime-py313-linux.lock.txt /tmp/runtime-py313-linux.lock.txt
 COPY --from=python-builder /wheels /wheels
 
-RUN python -m pip install --no-cache-dir /wheels/*.whl && \
-    rm -rf /wheels
+RUN python -m pip install --no-cache-dir --require-hashes \
+        -r /tmp/runtime-py313-linux.lock.txt && \
+    python -m pip install --no-cache-dir --no-deps /wheels/*.whl && \
+    python -m pip check && \
+    rm -rf /wheels /tmp/runtime-py313-linux.lock.txt
 
 COPY buildshield-policy.yml ./
 COPY samples ./samples

@@ -44,37 +44,58 @@ Invoke-RestMethod http://127.0.0.1:8080/health
 
 Protected dashboard/API operations require the H2 authentication environment configuration at runtime. Real credentials or password hashes must not be baked into the image.
 
-## H7A Container Image Security
+## Container Image Security
 
-The H7A image uses a **Multi-stage production image** design.
+The current image uses a **multi-stage production build**.
 
-The frontend stage:
-- uses Node 22.15.0 on a Debian/glibc builder image;
-- installs the checked-in dependency graph with `npm ci`;
-- retrieves all Linux x64 native packages currently omitted by the Windows-generated lockfile using exact pinned `npm pack` payloads: TypeScript `7.0.2`, Rolldown `1.2.8`, and Lightning CSS `1.33.0`;
-- extracts those package payloads directly into their expected optional-dependency locations without a second dependency-tree install or lockfile mutation;
-- ignores lifecycle scripts during dependency installation;
-- verifies the native Linux TypeScript compiler and Rolldown binding before the TypeScript/Vite frontend production build;
-- contributes only the generated `frontend/dist` output to the Python runtime image.
+The frontend builder:
 
-The Python build stage:
-- builds BuildShield-CI and its Python dependencies as wheels;
-- keeps build activity outside the final runtime stage.
+- uses Node 22.23.2 on the Debian/glibc `bookworm-slim` image;
+- pins npm to 12.0.2;
+- installs the canonical checked-in dependency graph with
+  `npm ci --ignore-scripts --no-audit --no-fund`;
+- verifies the resolved dependency tree with `npm ls --all`;
+- runs TypeScript type checking and the Vite production build;
+- contributes only the generated `frontend/dist` output to the Python
+  runtime image.
+
+The earlier H7 platform-specific frontend workaround is no longer part of the
+current image. H8 normalized the frontend dependency baseline, so the final
+Docker builder uses the canonical package lock directly.
+
+The Python build/runtime path:
+
+- copies `pyproject.toml`, `README.md`, `LICENSE`, and the Python source needed
+  to build the BuildShield-CI wheel;
+- builds the BuildShield-CI wheel separately with `--no-deps`;
+- installs the canonical Linux runtime dependency set from
+  `requirements/runtime-py313-linux.lock.txt` using pip hash-checking mode;
+- installs the BuildShield-CI project wheel non-editably with `--no-deps`;
+- runs `pip check` before completing the runtime image.
+
+This keeps the production container aligned with the same validated,
+hash-locked Linux dependency baseline used by CI and CycloneDX SBOM
+generation, instead of resolving the open-ended project dependency ranges
+again during a Docker rebuild.
 
 The runtime stage:
+
 - uses a dedicated unprivileged account with UID/GID `10001:10001`;
 - uses `/nonexistent` as the account home and a non-login shell;
-- performs a non-editable wheel installation;
 - does not copy the project source tree into `/app/src`;
 - copies only runtime project assets needed by the application;
 - includes the frontend production build;
-- pre-creates `/app/reports/dashboard` and `/app/data` as application-owned writable locations;
-- leaves application code/assets root-owned and read-only to the application user under normal container permissions;
+- pre-creates `/app/reports/dashboard` and `/app/data` as application-owned
+  writable locations;
+- leaves application code/assets root-owned and read-only to the application
+  user under normal container permissions;
 - disables Python bytecode generation;
 - uses unbuffered Python output;
-- includes a health check and `SIGTERM` stop signal.
+- includes a readiness health check and `SIGTERM` stop signal.
 
-The build context excludes local virtual environments, runtime data/reports, test files, frontend `node_modules`, local frontend build output, editor files, caches, and secrets such as `.env`.
+The build context excludes local virtual environments, runtime data/reports,
+test files, frontend `node_modules`, local frontend build output, editor files,
+caches, and local secret files such as `.env`.
 
 ## Docker Compose
 
@@ -165,26 +186,16 @@ It should not be described as enterprise multi-tenant SaaS or as universally pro
 
 With suitable environment-specific controls, the OCI image can be adapted to managed container platforms. No specific cloud platform is claimed as production-validated until it has been tested in that environment.
 
-### H7A TypeScript 7 Linux builder note
+### Frontend Reproducibility Closure
 
-The checked-in frontend lockfile was generated on Windows and currently omits the Linux x64 optional package required by TypeScript 7. The first H7A Linux build therefore failed when `tsc` could not resolve `@typescript/typescript-linux-x64`.
+H8 retired the temporary H7 frontend platform-package workaround. The
+checked-in frontend lock now supports the validated Linux build path directly,
+and the production image uses the canonical lock with `npm ci`.
 
-A follow-up attempt used a second `npm install` after `npm ci`, but npm 10.9.2 failed internally while rebuilding the dependency graph (`edgesOut`). H7A therefore does not perform a second install. The builder uses `npm pack` for the exact platform package and extracts the verified package payload into TypeScript's expected optional-dependency path. This is a builder-only compatibility measure.
-
-H8 remains responsible for normalizing/regenerating the frontend lockfile for cross-platform reproducibility.
-
-### H7A complete Linux-native optional-dependency repair
-
-The latest Docker failure confirmed that the Windows-generated lockfile problem is broader than TypeScript. TypeScript successfully reached the Vite phase, after which Rolldown failed because `@rolldown/binding-linux-x64-gnu` was absent. The checked-in lockfile records the Windows Rolldown binding while Rolldown itself declares the Linux x64 GNU binding at the same `1.2.8` version. The lockfile likewise contains the Windows Lightning CSS binding while declaring `lightningcss-linux-x64-gnu` at `1.33.0`.
-
-H7A therefore installs the complete set of Linux x64 native optional packages currently required by this frontend build using exact package versions already implied by the dependency graph:
-
-- `@typescript/typescript-linux-x64@7.0.2`
-- `@rolldown/binding-linux-x64-gnu@1.2.8`
-- `lightningcss-linux-x64-gnu@1.33.0`
-
-These are retrieved with `npm pack` and extracted directly. No second `npm install` is used, so the npm 10.9.2 `edgesOut` failure path is avoided. H8 will replace this compatibility measure with a normalized cross-platform lockfile.
-
+The current validated frontend toolchain is Node 22.23.2 with npm 12.0.2.
+CI verifies that `npm ci` does not mutate `frontend/package-lock.json`, then
+runs linting, TypeScript checks, Vitest, the high-severity npm audit gate, and
+the production build.
 
 ## H7C Runtime Configuration and Readiness
 
