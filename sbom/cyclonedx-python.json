@@ -1128,6 +1128,14 @@
           "url": "https://github.com/rootmass56/buildshield-ci"
         }
       ],
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "declared",
+            "id": "Apache-2.0"
+          }
+        }
+      ],
       "name": "buildshield-ci",
       "type": "application",
       "version": "1.0.0"
