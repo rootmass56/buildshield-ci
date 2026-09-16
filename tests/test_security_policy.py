@@ -35,7 +35,7 @@ def test_security_policy_does_not_claim_enterprise_hardening() -> None:
         encoding="utf-8-sig"
     )
 
-    assert "Enterprise deployment would require additional controls" in content
+    assert "Enterprise or organization-wide deployment would require additional controls" in content
     assert "does not claim to provide complete vulnerability coverage" in content
 
 
@@ -45,5 +45,6 @@ def test_readme_marks_controlled_vulnerable_sample_as_intentional() -> None:
     )
 
     assert "samples/vulnerable-repo" in readme
-    assert "intentionally insecure" in readme
-    assert "demonstration findings" in readme
+    assert "Controlled vulnerable-to-hardened benchmark" in readme
+    assert "checked-in controlled fixtures" in readme
+    assert "not a universal security guarantee" in readme
