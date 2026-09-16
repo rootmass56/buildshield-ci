@@ -24,27 +24,3 @@ class FindingCategory(str, Enum):
     BUILD_SCRIPT = "BUILD_SCRIPT"
     CONTAINER = "CONTAINER"
     POLICY = "POLICY"
-
-
-SECURITY_RELEVANT_FILENAMES = {
-    "package.json",
-    "package-lock.json",
-    "npm-shrinkwrap.json",
-    "requirements.txt",
-    "pyproject.toml",
-    "poetry.lock",
-    "Pipfile",
-    "Pipfile.lock",
-    "go.mod",
-    "go.sum",
-    "pom.xml",
-    "build.gradle",
-    "gradle.lockfile",
-    ".npmrc",
-    ".pypirc",
-    "pip.conf",
-    "Dockerfile",
-    "docker-compose.yml",
-    "docker-compose.yaml",
-    ".gitlab-ci.yml",
-}

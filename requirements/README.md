@@ -26,7 +26,7 @@ The H8B lock generator is pinned to:
 - pip-tools: 7.6.1
 - CycloneDX Python: 7.4.0
 
-The project version remains `0.12.7` until H10.
+H10B freezes the release-candidate project version at `1.0.0`. The dependency versions in these H8-generated lock files are unchanged.
 
 ## Regeneration
 
@@ -83,7 +83,7 @@ package dependency relationships while `--pyproject` supplies the
 BuildShield-CI root-component metadata. H8D2 requires:
 
 - two independent SBOM generations to be byte-identical;
-- root component `buildshield-ci` version `0.12.7`;
+- root component `buildshield-ci` version `1.0.0`;
 - a populated root dependency graph containing the six direct runtime
   dependencies;
 - no dependency references to unknown components.

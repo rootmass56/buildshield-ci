@@ -281,66 +281,47 @@ The maintenance baseline includes:
 
 ## 16. Testing
 
-Current verified result:
+Current verified Windows Python regression:
 
 ```text
-57 passed
+276 passed, 2 skipped
 ```
 
-Coverage includes analyzer routing, analyzer behavior, benchmark preservation, policy, reports, comparison, CLI, dashboard APIs, scan history, OSV, inventory, deployment files, workflow SHA pinning, and repository hygiene.
+Validation also includes frontend lint/typecheck/Vitest/build, reproducible dependency installation, fresh wheel installation, CycloneDX SBOM regeneration, Docker/runtime checks, immutable GitHub Actions references, and the controlled vulnerable-to-hardened security gate.
 
-## 17. Current v0.12.7 Security Boundaries
+The H9 deterministic evaluation framework covers 20 static `DG-*` rules across a fixed 100-case adversarial corpus. Before H9D hardening the baseline was 41 TP / 45 TN / 4 FP / 10 FN (micro F1 0.854167). After bounded hardening on the unchanged corpus it is 51 TP / 49 TN / 0 FP / 0 FN. Those figures describe only the curated regression corpus and are not estimates of real-world detection accuracy.
 
-The frozen v0.12.7 baseline is functionally complete and verified for controlled environments. The remaining in-scope hardening work applies primarily to the web/API and runtime security boundary rather than the core analyzer architecture.
+## 17. Verified H1-H9 Security Boundary
 
-Current limitations that are intentionally carried into the final hardening program include:
+The original v0.12.7 release remains the historical frozen baseline. The active hardening branch has completed H1-H9 and passed the H9 hosted CI checkpoint.
 
-- API filesystem access is not yet constrained to explicit approved workspace roots.
-- API authentication/authorization is not yet implemented.
-- Dashboard rendering still requires final XSS/browser-security hardening.
-- Request/resource controls and safe public error handling require hardening.
-- Report/history storage and retention require final security review.
-- Docker/runtime controls can be tightened beyond the current non-root baseline.
-- CI/dependency reproducibility and least-privilege controls can be improved.
-- Final adversarial-security and dead-code audits remain pending.
+Completed in-scope hardening includes:
 
-These limitations do not invalidate the verified CLI/analyzer/policy/reporting baseline. They define the remaining trust-boundary work before the final v1.0.0 release.
+- approved workspace-root containment and path/symlink escape prevention;
+- focused single-tenant authentication and API authorization;
+- React/browser security hardening and CSP-oriented controls;
+- request validation, body/resource limits, concurrency controls and bounded expensive operations;
+- safe public errors, structured logging, request correlation and audit records;
+- report/history path security, lifecycle handling and retention;
+- non-root/read-only Docker runtime controls, dropped capabilities and `no-new-privileges`;
+- reproducible Python/frontend dependency and build validation;
+- SHA-pinned GitHub Actions with least-privilege CI permissions;
+- deterministic adversarial evaluation and regression closure.
 
-## 18. Final v1.0.0 Hardening Program
+The project remains intentionally scoped as a controlled single-instance security platform rather than an enterprise multi-tenant SaaS service.
 
-The active `upgrade/v0.13-security-hardening` branch is the isolated final-development workspace. The target endpoint is **BuildShield-CI v1.0.0 Final**.
+## 18. Final v1.0.0 Release Program
 
-The remaining stages are:
+H1-H9, H10A and H10B are complete. The `1.0.0` release candidate has passed local release-candidate validation. H10C closes final portfolio/documentation material and H10D performs final release acceptance before the annotated `v1.0.0` tag.
 
-1. **H1 — Workspace / filesystem trust boundary**
-   Constrain caller-controlled scan and policy paths to approved roots, enforce canonical containment, and prevent traversal, absolute-path escape, sibling-prefix tricks, symlink escape, and report-path escape.
+H10 performs:
 
-2. **H2 — Authentication and API authorization**
-   Add focused single-tenant authentication/authorization for sensitive API operations.
-
-3. **H3 — Frontend XSS elimination and browser security**
-   Remove unsafe rendering of untrusted scanner-controlled values and add appropriate browser security headers/CSP.
-
-4. **H4 — Request validation and resource controls**
-   Bound request sizes, input/path values, timeouts, history/report limits, and repeated expensive operations.
-
-5. **H5 — Safe errors, auditability, and logging**
-   Replace raw internal exception leakage with stable public errors, structured server-side logging, and request/run identifiers.
-
-6. **H6 — Report/history security and retention**
-   Strengthen report naming, containment, history access, retention, cleanup, and storage behavior.
-
-7. **H7 — Docker/runtime hardening**
-   Preserve non-root execution while adding practical no-new-privileges, capability, filesystem, and resource restrictions.
-
-8. **H8 — Dependency and CI/CD hardening**
-   Improve dependency reproducibility, GitHub Actions least privilege, and focused quality/security checks without tool bloat.
-
-9. **H9 — Adversarial and regression test expansion**
-   Add traversal, symlink, XSS, authentication, validation, report, resource-abuse, and safe-error tests while preserving the controlled benchmark.
-
-10. **H10 — Final v1.0.0 freeze and repository audit**
-    Perform dead-code/reference cleanup, synchronize documentation/versioning, run full local/API/Docker/Compose/CI regression, merge through a green PR, verify post-merge `main`, and create the annotated `v1.0.0` tag.
+1. final dead-code, stale-reference and repository-hygiene cleanup;
+2. synchronized README/SECURITY/architecture/report/release documentation;
+3. the verified package-version bump from `0.12.7` to `1.0.0`;
+4. complete Python/frontend/build/SBOM/Docker/Compose/security-gate regression;
+5. final branch/PR review and hosted CI verification;
+6. merge to the release branch, annotated `v1.0.0` tag, and release verification.
 
 ## 19. Explicit Final Scope Boundaries
 

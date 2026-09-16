@@ -143,7 +143,7 @@ Expected shape:
 {
   "status": "ok",
   "product": "BuildShield-CI",
-  "version": "0.12.7"
+  "version": "1.0.0"
 }
 ```
 

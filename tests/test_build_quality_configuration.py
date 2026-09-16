@@ -12,10 +12,10 @@ def _pyproject() -> dict:
         return tomllib.load(handle)
 
 
-def test_h8a_preserves_package_version_until_h10():
+def test_h10b_freezes_python_package_version_at_1_0_0():
     data = _pyproject()
 
-    assert data["project"]["version"] == "0.12.7"
+    assert data["project"]["version"] == "1.0.0"
 
 
 def test_h8a_declares_required_python_quality_tools():

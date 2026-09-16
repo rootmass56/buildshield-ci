@@ -1,7 +1,7 @@
 {
   "name": "buildshield-ci-frontend",
   "private": true,
-  "version": "0.0.0-h3a",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": "^22.22.2"

@@ -1,6 +1,6 @@
 # BuildShield-CI v1.0.0 Final Blueprint
 
-Updated through H9D cumulative validation and H9 checkpoint preparation.
+Updated through H10D final local/container release acceptance.
 
 ## Release Target
 
@@ -9,7 +9,7 @@ Updated through H9D cumulative validation and H9 checkpoint preparation.
 - Development branch: `upgrade/v0.13-security-hardening`
 - Historical verified release: `v0.12.7`
 - Deployment positioning: controlled, single-instance deployment with production-style architecture
-- Package version remains `0.12.7` until H10 performs the verified `1.0.0` version bump and release freeze.
+- Current H10 release-candidate package version: `1.0.0`; H10D local/container acceptance has passed, while the final `v1.0.0` tag/release remains deferred until checkpoint hosted-CI acceptance, merge and final release verification.
 
 ## Verified Checkpoints
 
@@ -41,7 +41,7 @@ Updated through H9D cumulative validation and H9 checkpoint preparation.
 | H7 | Docker/runtime hardening | COMPLETE |
 | H8 | CycloneDX, reproducible build, dependency and CI quality | COMPLETE |
 | H9 | Evaluation corpus and adversarial regression testing | COMPLETE |
-| H10 | Final audit, cleanup, v1.0.0 freeze and release | NEXT AFTER H9 HOSTED CI |
+| H10 | Final audit, cleanup, v1.0.0 freeze and release | IN PROGRESS — LOCAL ACCEPTANCE COMPLETE; CHECKPOINT/HOSTED CI RELEASE SEQUENCE |
 
 # H7 — Docker / Runtime Hardening
 
@@ -467,7 +467,7 @@ Mandatory:
 
 # H10 — Final Audit, Cleanup and v1.0.0 Release
 
-Status: NEXT after H9 checkpoint push and hosted CI acceptance.
+Status: IN PROGRESS — H10D FINAL RELEASE ACCEPTANCE; LOCAL ACCEPTANCE COMPLETE; CHECKPOINT/HOSTED CI RELEASE SEQUENCE.
 
 Will:
 - remove dead code;
@@ -485,6 +485,124 @@ Will:
 - tag `v1.0.0`;
 - release verification;
 - stop feature development after verified v1.0.0 except critical patches.
+
+## H10A — Final Release Audit + Cleanup
+
+Status: COMPLETE.
+
+Audit source:
+- exact H9 checkpoint `7dc643bf5ab6446e9b9e463be14431fb2d76be6e`;
+- exact H8 parent `367ead5670b26c7e6076d063e08b9fb8fdcb206e`;
+- local/remote hardening refs matched;
+- working tree was clean;
+- package version remained `0.12.7`;
+- hosted H9 GitHub Actions passed all three jobs.
+
+Bounded cleanup candidate:
+- remove the empty, unused `supplysentinel.parsers` package;
+- remove unused duplicate security-filename scaffolding and unused exception classes;
+- remove obsolete setuptools package-data references to deleted legacy `web/static` assets;
+- make `.npmrc` / `.pypirc` / `*.conf` line-ending policy explicit and classify `*.tgz` as binary;
+- synchronize stale H1-H9/test-count/security-boundary wording in canonical release documentation;
+- add persistent H10 release-hygiene regression tests;
+- keep package version at `0.12.7` until H10B.
+
+Validated H10A closure:
+- H10A hygiene: 9 passed;
+- focused existing regression: 16 passed;
+- complete H9 regression: 37 passed;
+- full Windows Python regression: 268 passed, 2 skipped;
+- exact controlled 22→0 benchmark preserved;
+- zero staging and no checkpoint commit.
+
+## H10B — v1.0.0 Release-Candidate Freeze + Reproducible Build/SBOM Refresh
+
+Status: COMPLETE LOCALLY.
+
+Candidate scope:
+- freeze Python package/runtime version at `1.0.0`;
+- freeze private frontend package/lock identity at `1.0.0`;
+- move the package classifier to Production/Stable;
+- refresh CycloneDX root-component metadata to `1.0.0` without changing the locked dependency graph;
+- update hosted-CI SBOM version assertions;
+- preserve H9 historical evaluation artifacts at their original `0.12.7` product version;
+- validate fresh Python wheel metadata and clean installation;
+- validate frontend package/lock consistency and production quality gates;
+- verify deterministic SBOM structure and the exact 22→0 controlled benchmark;
+- keep the final `v1.0.0` Git tag/release deferred to H10D.
+
+
+Validated H10B closure:
+- H10B release-candidate tests: 8 passed;
+- H10A regression: 9 passed;
+- H9 regression: 37 passed;
+- fresh v1.0.0 wheel + sdist and fresh Windows hash-lock installation: PASS;
+- CycloneDX graph preserved with root version 1.0.0;
+- exact Node 22.23.2 / npm 12.0.2 frontend quality gates: PASS;
+- exact controlled 22 -> 0 benchmark: PASS;
+- full Windows Python regression: 276 passed, 2 skipped;
+- exact 29-file candidate state preserved with zero staging.
+
+## H10C — Final Portfolio / Demo / Documentation Closure
+
+Status: COMPLETE LOCALLY.
+
+Validated H10C closure:
+- documentation consistency tests: 10 passed;
+- H10B release-candidate regression: 8 passed;
+- H10A cleanup regression: 9 passed;
+- complete H9 evaluation regression: 37 passed;
+- H9 deterministic evidence remained byte-for-byte identical;
+- Ruff: PASS;
+- exact controlled 22 -> 0 benchmark preserved;
+- full Windows Python regression: 286 passed, 2 skipped;
+- exact 32-file candidate state preserved with zero staging.
+
+Scope:
+- synchronize README, security, architecture, final report and project summary with authoritative H10B evidence;
+- make the demo script production-auth/readiness aware;
+- synchronize interview/resume/screenshot/submission material;
+- preserve historical H9 evidence and all claim boundaries;
+- add persistent documentation-consistency regression tests;
+- no feature work, no version change and no release tag.
+
+## H10D — Final Release Acceptance
+
+Status: LOCAL RELEASE ACCEPTANCE COMPLETE — H10 CHECKPOINT/HOSTED CI RELEASE SEQUENCE.
+
+H10D performs:
+- final release-invariant regression checks;
+- cumulative H9/H10 regression preservation;
+- exact controlled 22 -> 0 benchmark preservation;
+- fresh v1.0.0 production image build;
+- fail-closed production startup verification;
+- real hardened Docker Compose runtime verification;
+- non-root/read-only/capability/PID/tmpfs/localhost-only runtime checks;
+- liveness/readiness, authentication, restart and writable-boundary checks;
+- final full Windows regression;
+- then, only after local acceptance passes, the single H10 checkpoint,
+  push, final PR/hosted-CI acceptance, merge, annotated `v1.0.0` tag and
+  release verification.
+
+Validated H10D local acceptance:
+- H10D final-release invariant tests: 8 passed;
+- cumulative H9/H10 selected release regression: 72 passed;
+- historical H9 metrics remained byte-for-byte identical at 51 TP / 49 TN / 0 FP / 0 FN;
+- Ruff, mypy and `pip check`: PASS;
+- exact controlled benchmark remained 22 vulnerable findings -> 0 secure findings;
+- fresh production image: PASS and reports BuildShield-CI `1.0.0`;
+- runtime identity/assets/source boundary: PASS (`10001:10001`, production frontend present, `/app/src` absent);
+- missing production authentication configuration fails closed;
+- hardened Compose runtime: read-only rootfs, `cap_drop: ALL`, `no-new-privileges`, PID limit 256, restricted `/tmp`, localhost-only binding;
+- liveness/readiness, authenticated login/session, writable state boundaries and restart/readiness recovery: PASS;
+- complete Windows Python regression: 294 passed, 2 skipped;
+- temporary Docker/Compose validation resources cleaned up;
+- exact 34-file candidate state preserved with zero staging.
+
+The local validation step itself did not create a commit, merge, tag or release.
+This finalized closure text is intended to be included in the single H10
+checkpoint commit. That checkpoint must be pushed and accepted by hosted
+GitHub Actions before any PR merge or `v1.0.0` tag/release.
 
 # Permanent Scope Boundaries
 

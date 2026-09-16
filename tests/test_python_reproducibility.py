@@ -66,7 +66,7 @@ def test_h8d2_cyclonedx_sbom_metadata_runtime_components_and_graph():
 
     root = payload["metadata"]["component"]
     assert root["name"] == "buildshield-ci"
-    assert root["version"] == "0.12.7"
+    assert root["version"] == "1.0.0"
     assert root["bom-ref"] == "root-component"
 
     components = payload.get("components", [])

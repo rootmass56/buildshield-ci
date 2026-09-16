@@ -2,7 +2,7 @@
 
 ## Demo Goal
 
-Demonstrate the problem, the scanner, measurable hardening, policy enforcement, vulnerability intelligence, dashboard visibility, GitHub integration, and container deployment.
+Demonstrate the security problem, BuildShield-CI's static-analysis workflow, controlled hardening result, deterministic evaluation, policy enforcement, supply-chain intelligence, dashboard visibility, GitHub integration and hardened container deployment.
 
 ## 1. Pre-Demo Verification
 
@@ -12,13 +12,15 @@ buildshield version
 git status --short
 ```
 
-Expected maintenance baseline:
+Expected release-candidate baseline:
 
 ```text
-57 passed
-BuildShield-CI version: 0.12.7
-working tree clean
+276 passed, 2 skipped
+BuildShield-CI version: 1.0.0
+working tree contains only the reviewed H10 release candidate before H10D
 ```
+
+After the final H10D release checkpoint, use a clean tree for the public demo.
 
 ## 2. Vulnerable Sample
 
@@ -40,7 +42,7 @@ Build Gate: FAILED
 Policy: FAILED
 ```
 
-Explain that the sample is intentionally insecure and exists only for controlled demonstration.
+Explain that the repository is intentionally insecure and exists only for controlled demonstration and regression testing.
 
 ## 3. Hardened Sample
 
@@ -64,130 +66,91 @@ Policy: PASSED
 buildshield compare samples/vulnerable-repo samples/secure-repo
 ```
 
-Show:
+Show the +95 score change, 22 findings reduced and `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`. Describe the 100% reduction only as the result of this controlled benchmark.
+
+## 5. Explain the 20 Static Rules
+
+Summarize the four analyzer families:
+
+- npm: lockfile, version ranges, lifecycle scripts and dependency-confusion indicators
+- Python: pinning/version ranges and package-index/dependency-confusion indicators
+- GitHub Actions: immutable action refs, permissions, remote shell execution, secret logging and `pull_request_target` risk
+- Dockerfile: base-image pinning, final-stage user semantics, explicit root, secret-like ENV/ARG use, remote shell execution, package upgrades, health checks and remote-URL `ADD`
+
+## 6. Deterministic H9 Evaluation
+
+Show `docs/evaluation-metrics.md` and `evaluation/h9d-final-metrics-v1.json`.
+
+Explain the before/after result on the same fixed 100-case corpus:
 
 ```text
-+95 score
-22 findings reduced
-100% risk reduction
-SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED
+H9C: 41 TP / 45 TN / 4 FP / 10 FN, micro F1 0.854167
+H9D: 51 TP / 49 TN / 0 FP / 0 FN, micro F1 1.000000
 ```
 
-## 5. Explain Analyzer Coverage
+State explicitly that 1.000000 is regression performance on the curated corpus, not a claim of perfect real-world detection.
 
-Briefly show that BuildShield-CI analyzes:
-
-- npm dependencies / lockfiles / registries / lifecycle scripts
-- Python dependencies / indexes
-- GitHub Actions refs, permissions, secrets, remote shell execution, triggers
-- Dockerfile base images, user, secrets, remote scripts, upgrades, health checks
-
-Mention that analyzer orchestration is now explicit; legacy dynamic fallback routing was removed and regression-tested.
-
-## 6. SBOM-lite Inventory
+## 7. Inventory and OSV Intelligence
 
 ```powershell
 buildshield inventory samples/vulnerable-repo --hide-packages
-```
-
-Explain that the inventory extracts supply-chain dependency metadata and pinning state.
-
-## 7. OSV Intelligence
-
-Offline:
-
-```powershell
 buildshield vulncheck samples/secure-repo --offline-plan
 ```
 
-Online:
+Optional network-dependent lookup:
 
 ```powershell
 buildshield vulncheck samples/secure-repo --online --timeout 15
 ```
 
-Explain that online vulnerability counts are dynamic and should not be hard-coded.
+Explain that online OSV results are dynamic and are not hard-coded into the deterministic static-rule metrics.
 
 ## 8. Dashboard
+
+For a local development demonstration:
 
 ```powershell
 buildshield dashboard --port 8080
 ```
 
-Open:
+Open `http://127.0.0.1:8080` and show scanning, findings, policy, comparison, inventory, vulnerability intelligence, reports, history and trends.
 
-```text
-http://127.0.0.1:8080
-```
+## 9. GitHub Actions and Code Scanning
 
-Show scanning, findings, policy, reports, inventory, vulnerability intelligence, comparison, history, and trends.
+Show `.github/workflows/buildshield-ci.yml` and explain:
 
-## 9. GitHub Actions Self-Hardening
+- immutable full-SHA third-party action pins
+- Python quality/reproducibility gates
+- exact Node 22.23.2 / npm 12.0.2 frontend gates
+- controlled vulnerable/secure policy assertions
+- SARIF upload to GitHub Code Scanning
+- report artifacts
 
-Show:
+Alerts from the intentionally vulnerable fixture are demonstration findings, not proof that BuildShield-CI source itself is vulnerable.
 
-```text
-.github/workflows/buildshield-ci.yml
-```
+## 10. Production-Style Docker Compose Demo
 
-Explain:
-
-- Workflow runs tests and security gates.
-- SARIF is uploaded to GitHub Code Scanning.
-- Reports are uploaded as artifacts.
-- Third-party actions are pinned to full commit SHAs.
-- A regression test prevents mutable action refs.
-
-Optional self-scan:
+Production mode fails closed unless administrator authentication is configured. Generate an ephemeral demo hash without committing it:
 
 ```powershell
-buildshield scan .github --hide-files
-```
+$env:BUILDSHIELD_ADMIN_USERNAME = "admin"
+$env:BUILDSHIELD_ADMIN_PASSWORD_HASH = python -c "from supplysentinel.web.auth import hash_password; import getpass; print(hash_password(getpass.getpass('Admin password: ')))"
+$env:BUILDSHIELD_COOKIE_SECURE = "false"
+$env:BUILDSHIELD_HOST_PORT = "18080"
 
-Expected:
-
-```text
-0 findings
-100/100
-LOW
-PASSED
-```
-
-## 10. GitHub Code Scanning
-
-Open the repository's Code Scanning page.
-
-Explain clearly that alerts generated from `samples/vulnerable-repo` are intentional demonstration findings.
-
-## 11. Docker
-
-```powershell
-docker build -t buildshield-ci:latest .
-docker run -d --name buildshield-ci-test -p 8080:8080 buildshield-ci:latest
-Invoke-RestMethod http://127.0.0.1:8080/health
-docker stop buildshield-ci-test
-docker rm buildshield-ci-test
-```
-
-Explain:
-
-- Non-root container user
-- Health endpoint
-- Controlled deployment readiness
-
-## 12. Docker Compose
-
-```powershell
 docker compose up --build -d
 docker compose ps
-Invoke-RestMethod http://127.0.0.1:8080/health
+Invoke-RestMethod http://127.0.0.1:18080/health
+Invoke-RestMethod http://127.0.0.1:18080/ready
 docker compose down
 ```
 
-Explain persistent report/data volumes.
+Explain the non-root UID/GID, read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, bounded PID/tmpfs settings, localhost-only publication, persistent report/data volumes, liveness/readiness separation and graceful shutdown.
+
+Never commit the generated password hash.
 
 ## Closing
 
-BuildShield-CI combines static analysis, scoring, policy-as-code, SARIF, Code Scanning, dependency inventory, OSV intelligence, dashboard/history, CI/CD hardening, Docker deployment, and automated regression testing.
+BuildShield-CI combines supply-chain static analysis, policy-as-code, risk scoring, SARIF/Code Scanning, inventory, OSV intelligence, dashboard/history, reproducible CI/CD quality gates, deterministic adversarial evaluation and hardened container deployment.
 
-For enterprise production use, additional authentication, authorization, isolation, secret-management, observability, and operational hardening would still be required.
+The project's claims remain bounded: controlled benchmark results and curated regression-corpus metrics are evidence for the tested scenarios, not universal guarantees of repository security or real-world detection accuracy.

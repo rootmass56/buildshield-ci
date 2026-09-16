@@ -148,7 +148,7 @@ jobs:
               raise SystemExit("unexpected SBOM format")
           if payload["specVersion"] != "1.6":
               raise SystemExit("unexpected CycloneDX specification version")
-          if root["name"] != "buildshield-ci" or root["version"] != "0.12.7":
+          if root["name"] != "buildshield-ci" or root["version"] != "1.0.0":
               raise SystemExit("unexpected BuildShield-CI root component")
           if root["bom-ref"] != "root-component":
               raise SystemExit("unexpected root bom-ref")

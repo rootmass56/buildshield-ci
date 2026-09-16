@@ -10,7 +10,8 @@ The project includes a CLI scanner, FastAPI backend, web dashboard, policy-as-co
 
 ## Current Verified Baseline
 
-Frozen verified release baseline: **v0.12.7**.
+Historical frozen release baseline: **v0.12.7**.
+Current H10 release candidate package version: **1.0.0** (not yet the final tagged release).
 
 | Metric | Vulnerable Sample | Hardened Sample |
 |---|---:|---:|
@@ -30,11 +31,11 @@ Comparison result:
 - Findings reduced: **22**
 - Risk reduction: **100%**
 - Verdict: `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`
-- Automated tests: **57 passing**
+- Latest completed H10B Windows regression: **276 passed, 2 skipped**
 
 The vulnerable sample is intentionally insecure. Findings uploaded to GitHub Code Scanning from that sample are demonstration findings, not evidence that the BuildShield-CI source code itself contains those vulnerabilities.
 
-The active `upgrade/v0.13-security-hardening` branch is the isolated workspace for the H1-H10 final hardening program targeting **BuildShield-CI v1.0.0 Final**. The v0.12.7 release remains the frozen functional baseline.
+The active `upgrade/v0.13-security-hardening` branch has completed H1-H9 with hosted CI at the H9 checkpoint, completed H10A cleanup, and passed H10B release-candidate validation at version `1.0.0`. H10C finalizes portfolio/demo/documentation material; the final `v1.0.0` tag/release is created only after H10D release acceptance.
 
 ---
 
@@ -56,6 +57,7 @@ The active `upgrade/v0.13-security-hardening` branch is the isolated workspace f
 - Docker and Docker Compose deployment
 - SHA-pinned GitHub Actions workflow
 - Automated regression tests
+- Deterministic 100-case adversarial evaluation corpus across 20 static rules
 
 ---
 
@@ -86,10 +88,12 @@ The active `upgrade/v0.13-security-hardening` branch is the isolated workspace f
 
 - `DG-DOCKER-001` — Unpinned/latest base image
 - `DG-DOCKER-002` — Missing non-root `USER`
+- `DG-DOCKER-003` — Explicit root `USER`
 - `DG-DOCKER-004` — Potential secret in `ENV` or `ARG`
 - `DG-DOCKER-005` — Remote script piped directly to shell
 - `DG-DOCKER-006` — `apt-get upgrade` during image build
-- `DG-DOCKER-007` — Missing `HEALTHCHECK`
+- `DG-DOCKER-007` — Missing or disabled `HEALTHCHECK`
+- `DG-DOCKER-008` — Remote URL used with `ADD`
 
 ---
 
@@ -150,7 +154,7 @@ The scanner calls the canonical analyzer interfaces directly. Legacy dynamic fun
 | Backend | FastAPI |
 | Data Models | Pydantic |
 | Storage | SQLite |
-| Frontend | HTML, CSS, JavaScript |
+| Frontend | React 19, TypeScript 7, Vite 8 |
 | Reports | JSON, Markdown, HTML, SARIF |
 | CI/CD | GitHub Actions |
 | Vulnerability Intelligence | OSV |
@@ -172,13 +176,13 @@ pip install -e ".[dev]"
 buildshield version
 ```
 
-Current frozen release baseline:
+Current H10 release candidate:
 
 ```text
-BuildShield-CI version: 0.12.7
+BuildShield-CI version: 1.0.0
 ```
 
-The `v0.12.7` annotated tag, merged `main` baseline, and associated CI verification are complete. Final web/API hardening is being developed separately on `upgrade/v0.13-security-hardening` toward v1.0.0.
+The `v0.12.7` annotated tag remains the historical frozen baseline. On `upgrade/v0.13-security-hardening`, H1-H9, H10A and H10B are complete; the current package is the validated `1.0.0` release candidate. H10C finalizes presentation/documentation and H10D performs final release review, hosted CI, merge, tag and release verification.
 
 ---
 
@@ -310,13 +314,13 @@ The container runs as a non-root user and uses health checks. Docker Compose pro
 pytest -q
 ```
 
-Current verified result:
+Current verified Windows release-candidate result:
 
 ```text
-57 passed
+276 passed, 2 skipped
 ```
 
-Coverage includes scanner orchestration, npm/Python/GitHub Actions/Dockerfile analyzers, policy, reporting, comparison, dashboard APIs, history, SBOM-lite inventory, OSV intelligence, deployment files, immutable workflow references, and repository hygiene.
+Coverage includes scanner orchestration, npm/Python/GitHub Actions/Dockerfile analyzers, policy, reporting, comparison, authentication/authorization, path containment, browser security, request/resource controls, safe errors/logging, report/history security and retention, dashboard APIs, SBOM-lite inventory, OSV intelligence, Docker/runtime hardening, reproducible builds, immutable workflow references, deterministic H9 evaluation, and repository hygiene.
 
 ---
 
@@ -330,9 +334,9 @@ The vulnerable repository under `samples/vulnerable-repo` is intentionally insec
 
 ## Deployment Positioning
 
-BuildShield-CI v0.12.7 is deployment-ready for controlled environments and demonstrates a production-style architecture. It is not claimed to be a fully hardened enterprise or multi-tenant service.
+The validated v1.0.0 release candidate is deployment-ready for controlled single-instance environments and demonstrates a production-style architecture. It includes the in-scope workspace boundary, single-tenant authentication/authorization, browser security, resource controls, safe errors/audit logging, retention controls, hardened Docker runtime, reproducible build/CI gates, and adversarial regression evaluation. It is not claimed to be an enterprise multi-tenant service.
 
-The final H1-H10 hardening program addresses the remaining in-scope web/API security boundaries, including workspace containment, authentication/authorization, browser security, request/resource controls, safe errors/logging, report/history security, Docker/runtime hardening, CI/dependency hardening, adversarial tests, and final repository cleanup.
+H1-H9, H10A and H10B are complete. H10C is the final portfolio/demo/documentation closure. H10D is the only remaining release-engineering stage: final cumulative validation, checkpoint/PR/hosted-CI review, merge, annotated `v1.0.0` tag and release verification.
 
 ---
 

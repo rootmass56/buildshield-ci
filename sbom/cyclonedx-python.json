@@ -1130,7 +1130,7 @@
       ],
       "name": "buildshield-ci",
       "type": "application",
-      "version": "0.12.7"
+      "version": "1.0.0"
     },
     "properties": [
       {

@@ -1,89 +1,76 @@
 # BuildShield-CI Screenshots Checklist
 
-Use this checklist for the final portfolio/submission/demo capture.
+Use this checklist for the final portfolio/submission/demo capture. Capture final public-facing screenshots after H10D unless the item is explicitly marked as release-candidate evidence.
 
-## CLI and Tests
+## CLI and Validation
 
 - [ ] `buildshield --help`
-- [ ] `buildshield version`
-- [ ] `pytest -q` showing `57 passed`
-- [ ] Vulnerable scan showing `22 findings`
-- [ ] Vulnerable scan showing `5/100`, `CRITICAL`, `FAILED`
-- [ ] Vulnerable severity counts: `4 Critical / 10 High / 7 Medium / 1 Low`
-- [ ] Hardened scan showing `0 findings`
-- [ ] Hardened scan showing `100/100`, `LOW`, `PASSED`
-- [ ] Comparison showing `+95`
-- [ ] Comparison showing `22 findings reduced`
-- [ ] Comparison showing `100%` risk reduction
+- [ ] `buildshield version` showing `1.0.0`
+- [ ] full Windows regression showing `276 passed, 2 skipped` as H10B release-candidate evidence
+- [ ] vulnerable sample showing 22 findings / score 5/100
+- [ ] hardened sample showing 0 findings / score 100/100
+- [ ] comparison showing +95 and 22 findings reduced
+
+## H9 Evaluation Evidence
+
+- [ ] H9C baseline metrics: 41 TP / 45 TN / 4 FP / 10 FN
+- [ ] H9D unchanged-corpus result: 51 TP / 49 TN / 0 FP / 0 FN
+- [ ] visible claim boundary that 1.000000 F1 is curated regression-corpus performance, not real-world accuracy
 
 ## Supply-Chain Intelligence
 
-- [ ] SBOM-lite inventory
-- [ ] OSV offline query plan
-- [ ] OSV online result (do not rely on a fixed vulnerability count)
+- [ ] SBOM-lite inventory output
+- [ ] OSV offline-plan output
+- [ ] optional live OSV result with capture date/time noted because external results are dynamic
+- [ ] CycloneDX 1.6 SBOM metadata showing BuildShield-CI 1.0.0
 
 ## Dashboard
 
-- [ ] Overview
-- [ ] Scanner
-- [ ] Findings
-- [ ] Policy
-- [ ] Compare
-- [ ] SBOM Inventory
-- [ ] Vulnerability Intelligence
-- [ ] History & Trends
-- [ ] Reports
-- [ ] CI/CD
-- [ ] About
+- [ ] login/authenticated dashboard entry
+- [ ] overview
+- [ ] scanner
+- [ ] findings explorer
+- [ ] policy result
+- [ ] compare view
+- [ ] inventory
+- [ ] vulnerability intelligence
+- [ ] history and trends
+- [ ] reports/download view
 
-## Reports
+## GitHub / CI
 
-- [ ] Vulnerable HTML report
-- [ ] Hardened HTML report
-- [ ] Comparison HTML report
-- [ ] JSON report
-- [ ] Markdown report
-- [ ] SARIF preview showing version `2.1.0`
+- [ ] hardening-branch H9 hosted CI success
+- [ ] final H10D PR/check suite success
+- [ ] Code Scanning page showing controlled sample alerts with explanation
+- [ ] immutable full-SHA action pins in workflow
+- [ ] final `v1.0.0` tag/release page **after H10D only**
 
-## GitHub
+## Docker / Runtime
 
-- [ ] Repository home
-- [ ] SHA-pinned `.github/workflows/buildshield-ci.yml`
-- [ ] Successful Actions workflow
-- [ ] Pytest workflow step
-- [ ] SARIF upload step
-- [ ] Artifact upload step
-- [ ] Workflow artifacts
-- [ ] Code Scanning page
-- [ ] Example controlled sample alert
-- [ ] Self-scan of `.github` showing `0 findings`
-
-Add a caption when showing Code Scanning: **alerts originating from `samples/vulnerable-repo` are intentionally generated demo findings.**
-
-## Docker
-
-- [ ] Successful image build
-- [ ] Running container
-- [ ] `/health` response
-- [ ] Docker Compose service status
-- [ ] Dashboard running from container
+- [ ] `docker compose ps` with healthy service
+- [ ] `/health` liveness response
+- [ ] `/ready` production readiness response
+- [ ] runtime inspection showing numeric non-root user and read-only root filesystem
+- [ ] evidence of dropped capabilities / `no-new-privileges` if desired for technical portfolio material
 
 ## Recommended Naming
 
+Use ordered names such as:
+
 ```text
-01-repository-home.png
-02-cli-help.png
-03-pytest-57-passed.png
-04-vulnerable-scan.png
-05-hardened-scan.png
-06-comparison.png
-07-inventory.png
-08-osv.png
-09-dashboard-overview.png
-10-dashboard-findings.png
-11-html-report.png
-12-actions-success.png
+01-version.png
+02-tests.png
+03-vulnerable-scan.png
+04-hardened-scan.png
+05-comparison.png
+06-h9-evaluation.png
+07-dashboard-overview.png
+08-findings.png
+09-policy.png
+10-inventory-osv.png
+11-history-trends.png
+12-ci-success.png
 13-code-scanning.png
-14-workflow-sha-pinning.png
-15-docker-health.png
+14-docker-ready.png
+15-v1.0.0-release.png
 ```

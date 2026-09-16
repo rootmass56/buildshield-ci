@@ -87,7 +87,7 @@ def test_h8d2_lockfile_is_v3_and_matches_frontend_package_identity():
 
     assert lock["lockfileVersion"] == 3
     assert lock["name"] == "buildshield-ci-frontend"
-    assert lock["version"] == "0.0.0-h3a"
+    assert lock["version"] == "1.0.0"
 
 
 def test_h8d2_dockerfile_uses_supported_clean_frontend_install():

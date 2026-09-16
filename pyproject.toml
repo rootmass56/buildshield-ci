@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "buildshield-ci"
-version = "0.12.7"
+version = "1.0.0"
 description = "Advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,7 +24,7 @@ keywords = [
     "security-dashboard"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
@@ -67,13 +67,6 @@ supplysentinel = "supplysentinel.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-supplysentinel = [
-    "web/static/*.html",
-    "web/static/*.css",
-    "web/static/*.js"
-]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
