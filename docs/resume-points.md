@@ -6,7 +6,7 @@
 
 ## Recommended Technical Stack
 
-Python, FastAPI, React, TypeScript, GitHub Actions, SARIF, OSV API, Docker, SQLite, Pytest
+Python, FastAPI, React, TypeScript, GitHub Actions, SARIF, OSV API, CycloneDX, Docker, SQLite, Pytest
 
 ## Recommended Two-Bullet Resume Version
 
@@ -17,7 +17,7 @@ Python, FastAPI, React, TypeScript, GitHub Actions, SARIF, OSV API, Docker, SQLi
 
 - Built a deterministic 100-case adversarial evaluation framework across 20 static security rules; identified 14 initial detector mismatches and improved micro F1 from 0.854167 to 1.000000 on the unchanged curated corpus while preserving the independent 22 -> 0 controlled benchmark.
 
-Use the evaluation bullet only when space allows. Do not shorten it to “100% accurate”; the 1.000000 result is scoped to the fixed regression corpus.
+Use the evaluation bullet only when space allows. **Do not shorten it to “100% accurate”**; the 1.000000 result is scoped to the fixed regression corpus.
 
 ## Short Project Summary
 
@@ -27,12 +27,16 @@ Built BuildShield-CI, a defensive DevSecOps platform for pre-deployment supply-c
 
 - Controlled vulnerable fixture: 22 findings, score 5/100
 - Controlled hardened fixture: 0 findings, score 100/100
+- Representative realistic fixture: 3 findings, score 81/100, MEDIUM risk, WARNING gate, policy PASS
+- Natural vulnerable-to-realistic comparison: 5 -> 81, 22 -> 3 findings, 80% controlled reduction
 - H9 pre-hardening corpus: 41 TP / 45 TN / 4 FP / 10 FN, micro F1 0.854167
 - H9 post-hardening unchanged corpus: 51 TP / 49 TN / 0 FP / 0 FN, micro F1 1.000000
-- H10B Windows release-candidate suite: 276 passed, 2 skipped
+- Final pre-release Windows regression: 295 passed, 2 skipped
+- Hosted CI on final checkpoint, pull request and post-merge `main`: PASS
+- Released version: v1.0.0
 
 The controlled benchmark and curated corpus are not population-level or real-world accuracy measurements.
 
 ## Skills Demonstrated
 
-DevSecOps, CI/CD security, software supply-chain security, dependency confusion defense, static analysis, policy-as-code, GitHub Actions security, Docker security, SARIF, GitHub Code Scanning, OSV vulnerability intelligence, FastAPI, React/TypeScript, SQLite, reproducible builds, test automation and adversarial evaluation.
+DevSecOps, CI/CD security, software supply-chain security, dependency confusion defense, static analysis, policy-as-code, GitHub Actions security, Docker security, SARIF, GitHub Code Scanning, OSV vulnerability intelligence, CycloneDX SBOM, FastAPI, React/TypeScript, SQLite, reproducible builds, test automation and adversarial evaluation.

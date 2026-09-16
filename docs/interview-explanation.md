@@ -2,13 +2,13 @@
 
 ## 30-Second Explanation
 
-BuildShield-CI is a DevSecOps supply-chain security platform that statically analyzes npm/Python dependencies, registry configuration, GitHub Actions workflows and Dockerfiles before deployment. It normalizes findings, calculates risk, enforces policy-as-code, generates SARIF for GitHub Code Scanning, adds dependency inventory and OSV intelligence, exposes results through FastAPI plus a React/TypeScript dashboard, stores history in SQLite and supports a hardened Docker deployment.
+BuildShield-CI is a DevSecOps supply-chain security platform that statically analyzes npm/Python dependencies, registry configuration, GitHub Actions workflows and Dockerfiles before deployment. It normalizes findings, calculates risk, enforces policy-as-code, generates SARIF for GitHub Code Scanning, adds dependency inventory and OSV intelligence, exposes results through FastAPI plus a React/TypeScript dashboard, stores history in SQLite and supports hardened Docker deployment.
 
 ## 1-Minute Explanation
 
-I built BuildShield-CI to catch software supply-chain and CI/CD configuration risks before deployment. The scanner discovers relevant files and routes them explicitly to four canonical analyzer families. The analyzers produce structured findings with severity, evidence, impact and remediation. The platform then calculates a security score and build-gate decision, evaluates YAML policy, creates JSON/Markdown/HTML/SARIF reports, supports GitHub Code Scanning, produces dependency inventory, optionally queries OSV, stores scan history and trends, and exposes the workflow through a FastAPI backend and React/TypeScript dashboard.
+I built BuildShield-CI to catch software-supply-chain and CI/CD configuration risks before deployment. The scanner discovers relevant files and routes them explicitly to four canonical analyzer families. The analyzers produce structured findings with severity, evidence, impact and remediation. The platform then calculates a security score and build-gate decision, evaluates YAML policy, creates JSON/Markdown/HTML/SARIF reports, supports GitHub Code Scanning, produces dependency inventory, optionally queries OSV, stores scan history and trends, and exposes the workflow through a FastAPI backend and React/TypeScript dashboard.
 
-The project also hardens its own delivery path with hash-locked Python dependencies, an exact Node/npm frontend baseline, immutable GitHub Actions references, fresh wheel verification, CycloneDX 1.6 SBOM checks and a non-root/read-only Docker runtime.
+The project also hardens its own delivery path with hash-locked Python dependencies, an exact Node/npm frontend baseline, immutable GitHub Actions references, fresh wheel verification, reproducible CycloneDX 1.6 SBOM checks and a non-root/read-only Docker runtime.
 
 ## Architecture Point to Explain
 
@@ -16,11 +16,28 @@ A key engineering improvement was removing dynamic analyzer-name guessing and hi
 
 ## Controlled Benchmark
 
-The intentionally vulnerable fixture produces 22 findings, a 5/100 score, CRITICAL risk and a failed build/policy gate. The hardened fixture produces 0 static configuration findings, a 100/100 score, LOW risk and passing gates. The +95 score and 22-finding reduction are controlled benchmark results, not a universal security guarantee.
+The intentionally vulnerable fixture produces 22 findings, a 5/100 score, CRITICAL risk and failed build/policy gates.
+
+The hardened fixture produces 0 static configuration findings, a 100/100 score, LOW risk and passing gates.
+
+The +95 score and 22-finding reduction are controlled benchmark results, not a universal security guarantee.
 
 ## Representative Realistic Demo
 
-For normal demonstrations, I use a mixed-posture repository rather than always comparing a deliberately broken project with a perfect fixture. The realistic application produces 3 findings (2 Medium, 1 Low), an 81/100 score, MEDIUM risk, a WARNING build gate and passing policy. Comparing the vulnerable benchmark to that realistic application improves the score from 5 to 81 and reduces findings from 22 to 3, an 80% controlled reduction. The 100/100 hardened fixture remains a regression endpoint, not a claim that every healthy repository should score perfectly.
+For normal demonstrations, I use a mixed-posture repository rather than always comparing a deliberately broken project with a perfect fixture.
+
+The realistic application produces:
+
+- 3 findings
+- 2 Medium / 1 Low
+- 81/100
+- MEDIUM risk
+- WARNING build gate
+- passing policy
+
+Comparing the vulnerable benchmark to that realistic application improves the score from 5 to 81 and reduces findings from 22 to 3, an 80% controlled reduction.
+
+The 100/100 hardened fixture remains a regression endpoint, not a claim that every healthy repository should score perfectly.
 
 ## H9 Evaluation Answer
 
@@ -42,21 +59,98 @@ SARIF makes findings consumable by GitHub Code Scanning. Policy-as-code converts
 
 ## SBOM and OSV
 
-The project has two related but distinct supply-chain views: repository inventory/SBOM-lite for discovered package metadata, and a CycloneDX 1.6 runtime SBOM for the BuildShield-CI release environment. OSV lookup is external intelligence and is intentionally kept separate from the deterministic static-rule metrics.
+The project has two related but distinct supply-chain views:
+
+1. repository inventory/SBOM-lite for package metadata discovered in the scanned target;
+2. a reproducible CycloneDX 1.6 runtime SBOM for the BuildShield-CI release environment.
+
+OSV lookup is external intelligence and is intentionally kept separate from deterministic static-rule metrics.
+
+## Web/API Security Answer
+
+The web layer is intentionally single-tenant and includes:
+
+- administrator authentication
+- session handling and API authorization
+- login failure/lockout controls
+- workspace-root containment
+- path/symlink escape prevention
+- typed request validation
+- body/resource/concurrency controls
+- safe public error handling
+- structured logging and request correlation
+- audit events
+- report/history retention controls
+
+I would not present it as enterprise multi-tenant SaaS without stronger organization-wide identity/RBAC, tenant isolation and centralized operational controls.
 
 ## Deployment Answer
 
-The v1.0.0 release candidate is positioned for controlled single-instance deployment and production-style demonstrations. Production configuration fails closed if required administrator authentication/workspace settings are missing. The Compose runtime uses a numeric non-root user, read-only root filesystem, dropped capabilities, `no-new-privileges`, bounded PID/tmpfs controls, localhost-only publication and separate liveness/readiness checks. I would not describe it as enterprise multi-tenant SaaS without additional identity/RBAC, tenant isolation, centralized secrets, TLS/networking, observability, backup/recovery and operational controls.
+The released v1.0.0 architecture is positioned for controlled single-instance deployment and production-style demonstrations.
+
+Production configuration fails closed if required administrator authentication/workspace settings are missing.
+
+The Compose runtime uses:
+
+- numeric non-root user
+- read-only root filesystem
+- dropped capabilities
+- `no-new-privileges`
+- bounded PID/tmpfs controls
+- localhost-only publication
+- separate liveness/readiness checks
+- persistent report/data volumes
+
+Enterprise multi-tenant deployment would require additional identity/RBAC, tenant isolation, centralized secrets, TLS/networking, observability, backup/recovery and operational controls.
 
 ## Current Automated Validation
 
-The final post-checkpoint pre-release candidate completed:
+The accepted v1.0.0 state completed:
 
 ```text
 295 passed, 2 skipped
 ```
 
-It also passed the exact Node 22.23.2 / npm 12.0.2 frontend gates, Ruff, production Docker/API smoke, the realistic 81/100 profile contract, natural 5 -> 81 comparison, the preserved 22 -> 0 controlled benchmark, live browser review and final repository sanitation. The project remains a release candidate until the replacement final checkpoint passes hosted CI and the PR/tag/release sequence completes.
+It also passed:
+
+- exact Node 22.23.2 / npm 12.0.2 frontend gates
+- ESLint
+- TypeScript typecheck
+- Vitest
+- npm audit
+- production frontend build
+- Ruff
+- mypy typed-boundary checks
+- `pip check`
+- production Docker/API smoke
+- realistic 81/100 profile contract
+- natural 5 -> 81 comparison
+- preserved 22 -> 0 controlled benchmark
+- live browser review
+- final repository sanitation
+- hosted CI on the final checkpoint
+- pull-request CI
+- post-merge `main` CI
+
+## Release Answer
+
+BuildShield-CI v1.0.0 is released.
+
+Final pre-release checkpoint:
+
+```text
+f397d257638f3e3bd50eaaa6b9966442e158a849
+```
+
+Released merge commit:
+
+```text
+dec7eea405cd474fdea73bacd8f9847782887816
+```
+
+The annotated `v1.0.0` tag and GitHub release were published after the final checkpoint, PR and post-merge CI all passed.
+
+A useful release-engineering point is that the v1.0.0 tag is frozen. Later documentation cleanup on `main` should not move the release tag; behavior-changing corrections should use a new version.
 
 ## Strong Resume/Interview Summary
 

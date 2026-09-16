@@ -75,7 +75,7 @@ def test_h10b_hosted_ci_expects_release_candidate_sbom_version() -> None:
     assert workflow.count("cyclonedx-py environment") == 2
 
 
-def test_h10b_current_release_docs_expose_candidate_not_final_tag() -> None:
+def test_h10b_historical_candidate_evidence_and_current_release_docs() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     deployment = (
         ROOT / "docs" / "deployment.md"
@@ -87,13 +87,13 @@ def test_h10b_current_release_docs_expose_candidate_not_final_tag() -> None:
         ROOT / "docs" / "h10-release-candidate.md"
     ).read_text(encoding="utf-8")
 
-    assert "Current H10 release candidate" in readme
+    assert "Current released version: `v1.0.0`" in readme
     assert "BuildShield-CI version: 1.0.0" in readme
+    assert "dec7eea405cd474fdea73bacd8f9847782887816" in readme
     assert '"version": "1.0.0"' in deployment
-    assert "## H10B — v1.0.0 Release-Candidate Freeze" in blueprint
-    assert "Status: COMPLETE LOCALLY." in blueprint
-    assert "## H10C — Final Portfolio / Demo / Documentation Closure" in blueprint
-    assert "## H10D — Final Release Acceptance" in blueprint
+    assert "## 18. H10 — Final Audit and Release Acceptance" in blueprint
+    assert "f397d257638f3e3bd50eaaa6b9966442e158a849" in blueprint
+    assert "Release engineering is therefore **COMPLETE**." in blueprint
     assert "Historical evidence boundary" in release_doc
     assert "No H10 checkpoint commit is created in H10B" in release_doc
     assert "No final tag or release has been created" in release_doc

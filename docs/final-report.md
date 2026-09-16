@@ -4,39 +4,41 @@
 
 BuildShield-CI is an advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform. It performs passive static analysis of repository configuration and automation files, converts results into structured security findings, calculates risk, enforces policy-as-code, generates multiple report formats, integrates with GitHub Code Scanning, and provides dashboard/API visibility.
 
-The project covers npm, Python dependencies, GitHub Actions, Dockerfiles, private registry controls, SBOM-lite dependency inventory, OSV vulnerability intelligence, SQLite history, Docker deployment, and automated regression testing.
+The project covers npm, Python dependencies, GitHub Actions, Dockerfiles, private-registry controls, SBOM-lite dependency inventory, OSV vulnerability intelligence, SQLite history, reproducible build controls, hardened Docker deployment and automated regression testing.
+
+**BuildShield-CI v1.0.0 is released and verified.**
 
 ## 2. Problem Statement
 
-Modern software delivery depends on package registries, third-party actions, build scripts, containers, secrets, and automated pipelines. Misconfiguration can create risks such as dependency confusion, mutable dependency resolution, excessive workflow privileges, secret leakage, unsafe remote script execution, and insecure container builds.
+Modern software delivery depends on package registries, third-party actions, build scripts, containers, secrets and automated pipelines. Misconfiguration can create risks such as dependency confusion, mutable dependency resolution, excessive workflow privileges, secret leakage, unsafe remote script execution and insecure container builds.
 
-BuildShield-CI addresses these risks before deployment through static analysis and policy enforcement.
+BuildShield-CI addresses these risks before deployment through static analysis, risk scoring and policy enforcement.
 
 ## 3. Objectives
 
 The project objectives are to:
 
-1. Detect dependency confusion indicators.
-2. Detect insecure npm and Python dependency configuration.
-3. Detect GitHub Actions workflow risks.
-4. Detect Dockerfile hardening issues.
-5. Produce evidence-backed findings with remediation.
-6. Calculate security score, risk level, and top drivers.
-7. Enforce YAML policy-as-code.
-8. Generate JSON, Markdown, HTML, and SARIF reports.
-9. Integrate with GitHub Actions and Code Scanning.
-10. Build SBOM-lite dependency inventory.
-11. Add OSV vulnerability intelligence.
-12. Provide FastAPI/dashboard visibility.
-13. Persist history and risk trends with SQLite.
-14. Support Docker and Docker Compose deployment.
-15. Validate behavior through automated tests and controlled vulnerable/hardened samples.
+1. detect dependency confusion indicators;
+2. detect insecure npm and Python dependency configuration;
+3. detect GitHub Actions workflow risks;
+4. detect Dockerfile hardening issues;
+5. produce evidence-backed findings with remediation;
+6. calculate security score, risk level and top drivers;
+7. enforce YAML policy-as-code;
+8. generate JSON, Markdown, HTML and SARIF reports;
+9. integrate with GitHub Actions and Code Scanning;
+10. build SBOM-lite dependency inventory;
+11. add OSV vulnerability intelligence;
+12. provide FastAPI/dashboard visibility;
+13. persist history and risk trends with SQLite;
+14. support hardened Docker and Docker Compose deployment;
+15. validate behavior through automated tests, controlled fixtures and deterministic adversarial evaluation.
 
 ## 4. Technology Stack
 
 | Component | Technology |
 |---|---|
-| Language | Python 3.13 |
+| Release Python environment | Python 3.13 |
 | CLI | Typer |
 | Terminal UI | Rich |
 | Models | Pydantic |
@@ -47,8 +49,9 @@ The project objectives are to:
 | CI/CD | GitHub Actions |
 | Reports | JSON, Markdown, HTML, SARIF |
 | Vulnerability Intelligence | OSV |
+| Runtime SBOM | CycloneDX 1.6 |
 | Deployment | Docker, Docker Compose |
-| Testing | Pytest |
+| Testing | Pytest, Vitest |
 
 ## 5. System Architecture
 
@@ -56,7 +59,7 @@ The project objectives are to:
 Repository
    |
    v
-File Discovery
+Security-Relevant File Discovery
    |
    v
 Explicit Analyzer Layer
@@ -68,78 +71,81 @@ Explicit Analyzer Layer
    v
 Normalized Findings
    |
-   +--> Risk Scoring
+   +--> Risk Scoring / Build Gate
    +--> Policy-as-Code
    +--> Reports / SARIF
    +--> SBOM-lite / OSV
-   +--> FastAPI / Dashboard
-   `--> SQLite History
+   +--> FastAPI / React Dashboard
+   `--> SQLite History / Trends
 ```
 
-A maintenance refactor removed dynamic analyzer-name guessing and hidden fallback analyzers. Canonical analyzer functions are now invoked explicitly and protected by regression tests.
+A maintenance refactor removed dynamic analyzer-name guessing and hidden fallback analyzers. Canonical analyzer functions are invoked explicitly and protected by regression tests.
 
 ## 6. Implemented Security Analysis
 
 ### npm
 
-- Missing lockfile
-- Loose/mutable versions
-- Risky lifecycle scripts
-- Potential dependency confusion
-- Missing trusted private registry handling
+- missing lockfile
+- loose/mutable versions
+- risky lifecycle scripts
+- potential dependency confusion
+- missing trusted private-registry handling
 
 ### Python
 
-- Unpinned dependencies
-- Loose version ranges
-- Potential dependency confusion
-- Missing trusted package index handling
+- unpinned dependencies
+- loose version ranges
+- potential dependency confusion
+- missing trusted package-index handling
 
 ### GitHub Actions
 
-- Mutable action refs
-- Excessive token permissions
-- Pipe-to-shell
-- Secret echo
-- Risky `pull_request_target`
+- mutable action refs
+- excessive token permissions
+- pipe-to-shell
+- secret echo
+- risky `pull_request_target`
 
 ### Dockerfile
 
-- Unpinned/latest base image
-- Missing non-root user
-- Potential secret in `ENV`/`ARG`
-- Remote script execution
+- unpinned/latest base image
+- missing non-root user
+- explicit root user
+- potential secret in `ENV`/`ARG`
+- remote script execution
 - `apt-get upgrade`
-- Missing health check
+- missing/disabled health check
+- remote URL used with `ADD`
 
 ## 7. Risk and Policy
 
 The scoring engine produces:
 
-- Overall security score
-- Risk level
-- Category risk breakdown
-- Top risk drivers
-- Build gate status/reason
+- overall security score
+- risk level
+- category risk breakdown
+- top risk drivers
+- build-gate status/reason
 
-The policy engine enforces:
+The policy engine enforces controls such as:
 
-- Minimum score
-- Maximum severity counts
-- Required lockfiles
-- Pinned GitHub Actions
-- Secret handling
-- Pipe-to-shell restrictions
-- Dependency confusion controls
+- minimum score
+- maximum severity counts
+- required lockfiles
+- pinned GitHub Actions
+- secret handling
+- pipe-to-shell restrictions
+- dependency confusion controls
 - `pull_request_target` restrictions
 
-## 8. Controlled Demonstration Results
+Risk scoring and policy evaluation are deliberately separate so a pipeline can reason about both posture and explicit policy.
 
-### Vulnerable sample
+## 8. Demonstration Results
+
+### Vulnerable controlled sample
 
 | Metric | Result |
 |---|---:|
-| Files discovered/scanned | 5 / 5 |
 | Findings | 22 |
 | Critical | 4 |
 | High | 10 |
@@ -150,11 +156,10 @@ The policy engine enforces:
 | Build Gate | FAILED |
 | Policy | FAILED |
 
-### Hardened sample
+### Hardened controlled sample
 
 | Metric | Result |
 |---|---:|
-| Files discovered/scanned | 7 / 7 |
 | Findings | 0 |
 | Critical | 0 |
 | High | 0 |
@@ -179,20 +184,25 @@ The policy engine enforces:
 | Build Gate | WARNING |
 | Policy | PASSED |
 
-Natural comparison from the intentionally vulnerable benchmark to the realistic application improves the score from 5 to 81, reduces findings from 22 to 3, and reports an 80% controlled risk reduction with `PARTIALLY_IMPROVED`.
+The realistic profile is the normal routine demo. It avoids representing a perfect score as the expected state of every production repository.
 
-The realistic profile is the default routine demo. The 100/100 hardened fixture remains a controlled regression endpoint rather than an implied requirement for every real application.
+Natural comparison from the intentionally vulnerable benchmark to the realistic application:
 
-### Controlled benchmark comparison
+- score: 5 -> 81
+- findings: 22 -> 3
+- score improvement: +76
+- findings reduced: 19
+- controlled risk reduction: 80%
+- verdict: `PARTIALLY_IMPROVED`
 
-| Metric | Result |
-|---|---:|
-| Score improvement | +95 |
-| Findings reduced | 22 |
-| Risk reduction | 100% |
-| Verdict | `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED` |
+Controlled vulnerable-to-hardened comparison:
 
-These figures are from controlled repository fixtures and should not be interpreted as a universal security measurement for arbitrary production systems.
+- score improvement: +95
+- findings reduced: 22
+- controlled risk reduction: 100%
+- verdict: `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`
+
+These figures are from checked-in controlled repository fixtures and are not universal security measurements for arbitrary systems.
 
 ## 9. Reporting and GitHub Integration
 
@@ -202,151 +212,232 @@ BuildShield-CI generates:
 - Markdown
 - HTML
 - SARIF 2.1.0
-- Comparison reports
-- Inventory output
+- comparison reports
+- inventory output
 - OSV intelligence output
 
-SARIF is uploaded by GitHub Actions to GitHub Code Scanning. Alerts produced from `samples/vulnerable-repo` are intentionally generated demonstration alerts.
+SARIF is uploaded by GitHub Actions to GitHub Code Scanning. Alerts produced from `samples/vulnerable-repo` are intentionally generated demonstration findings.
 
-The workflow also uploads generated reports as artifacts.
+## 10. SBOM-lite, CycloneDX and OSV Intelligence
 
-## 10. SBOM-lite and OSV Intelligence
+The dependency inventory extracts package metadata from supported npm and Python inputs.
 
-The dependency inventory extracts package metadata from supported npm and Python inputs. The OSV integration can create an offline query plan or perform online lookups for pinned dependencies.
+The project also maintains a reproducible CycloneDX 1.6 runtime SBOM for the BuildShield-CI release environment. Hosted CI regenerates the SBOM repeatedly and verifies both deterministic equality and equality with the checked-in SBOM.
 
-OSV results are dynamic; documentation does not hard-code a CVE/vulnerability count.
+The OSV integration can create an offline query plan or perform online lookups for pinned dependencies. OSV results are dynamic; deterministic project claims do not hard-code an external vulnerability count.
 
-## 11. API, Dashboard, and History
+## 11. API, Dashboard and History
 
-The FastAPI backend and web dashboard provide:
+The FastAPI backend and React/TypeScript dashboard provide:
 
-- Scan execution
-- Comparison
-- Findings exploration
-- Policy result visibility
-- Reports
+- authentication/session workflow
+- overview
+- scan execution
+- findings exploration
+- policy result visibility
+- comparison
+- reports
 - SBOM-lite inventory
 - OSV intelligence
-- Scan history
-- Risk trend data
+- scan history
+- risk-trend data
 
-SQLite stores local scan-history/trend information.
+SQLite stores local history/trend information.
 
-## 12. CI/CD Self-Hardening
+## 12. Security Hardening
 
-BuildShield-CI's own workflow uses immutable full commit SHAs for third-party GitHub Actions.
+The H1-H10 program delivered:
 
-A regression test prevents accidental reintroduction of mutable refs such as `@main`, `@v6`, or `@v7`.
+- workspace-root containment and path/symlink escape prevention
+- single-tenant authentication and API authorization
+- browser-facing security hardening
+- request/body/resource/concurrency controls
+- safe public errors
+- structured logging and request correlation
+- audit records
+- report/history security and retention
+- deterministic SQLite connection lifecycle handling
+- non-root/read-only container runtime
+- drop-all capabilities and `no-new-privileges`
+- fail-closed production configuration
+- liveness/readiness separation
+- reproducible dependency/build controls
+- immutable GitHub Actions pins
+- deterministic adversarial evaluation
 
-The project also self-scans `.github` and currently reports:
+## 13. CI/CD Self-Hardening
 
-```text
-0 findings
-100/100
-LOW
-PASSED
-```
+BuildShield-CI's workflow uses immutable full commit SHAs for third-party GitHub Actions.
 
-## 13. Deployment
+The CI system verifies:
 
-BuildShield-CI supports local execution, Docker, and Docker Compose.
+- hash-locked Python dependencies
+- `pip check`
+- Ruff
+- mypy typed-boundary checks
+- pytest with branch coverage
+- preserved coverage baseline
+- wheel/sdist build
+- fresh non-editable wheel installation
+- CycloneDX regeneration
+- exact Node 22.23.2 / npm 12.0.2
+- frontend dependency tree
+- ESLint
+- TypeScript
+- Vitest
+- npm audit
+- Vite production build
+- controlled security gates
+- SARIF/report artifacts
 
-Container controls include:
+A regression test prevents accidental reintroduction of mutable Action refs such as `@main` or version tags.
 
-- Non-root execution
-- Health check
-- Port 8080
-- Persistent report/data volumes in Compose
+## 14. Deployment
 
-The project is deployment-ready for controlled environments and demonstrates a production-style architecture. Enterprise production deployment would require additional identity, authorization, isolation, secret-management, rate-limiting, network, logging, monitoring, backup, and governance controls.
+BuildShield-CI supports local execution, Docker and Docker Compose.
 
-## 14. Testing and Reliability
+Production-style container controls include:
 
-Current verified Windows Python regression:
+- multi-stage build
+- non-root UID/GID `10001:10001`
+- read-only root filesystem in Compose
+- dropped Linux capabilities
+- `no-new-privileges`
+- PID limit
+- restricted tmpfs
+- localhost-only port publication
+- persistent report/data volumes
+- `/health` liveness
+- `/ready` readiness
+- fail-closed administrator authentication configuration
+- graceful stop/restart validation
+
+The project is suitable for controlled single-instance deployment and production-style demonstrations. Enterprise production deployment would require additional organization-specific identity/RBAC, isolation, secret-management, TLS/network, observability, backup/recovery and governance controls.
+
+## 15. Testing and Reliability
+
+Final pre-release Windows Python regression:
 
 ```text
 295 passed, 2 skipped
 ```
 
-The final pre-release validation also verifies the realistic application at 81/100 with 3 findings, MEDIUM risk, a WARNING build gate and passing policy, while preserving the original 22 -> 0 vulnerable/hardened controlled benchmark.
+The accepted release state also passed:
 
-H9 also adds a fixed 100-case deterministic adversarial corpus across 20 static rules. The pre-hardening baseline was 41 TP / 45 TN / 4 FP / 10 FN (micro F1 0.854167). After bounded H9D hardening, the unchanged corpus evaluates at 51 TP / 49 TN / 0 FP / 0 FN. These corpus metrics are regression evidence only and are not real-world accuracy estimates.
+- realistic dashboard/API contract
+- realistic 81/100 profile contract
+- natural 5 -> 81 comparison
+- exact controlled 22 -> 0 benchmark
+- Ruff
+- mypy
+- `pip check`
+- exact frontend reproducibility/quality gates
+- production Docker/API smoke
+- authenticated live-browser review
+- final repository sanitation
+- hosted CI on the final checkpoint
+- pull-request CI
+- post-merge `main` CI
 
-Coverage includes:
+H9 adds a fixed 100-case deterministic adversarial corpus across 20 static rules.
 
-- Scanner engine
-- Analyzer routing
-- npm analyzer
-- Python analyzer
-- GitHub Actions analyzer
-- Dockerfile analyzer
-- Policy engine
-- Comparison engine
-- Report generation
-- SARIF
-- CLI behavior
-- Dashboard APIs
-- Scan history
-- SBOM-lite inventory
-- OSV intelligence
-- Deployment files
-- Workflow SHA pinning
-- Repository hygiene
+Pre-hardening baseline:
 
-## 15. Repository Hygiene
+```text
+41 TP / 45 TN / 4 FP / 10 FN
+micro F1 0.854167
+```
 
-The maintenance baseline includes:
+After bounded H9D hardening on the unchanged corpus:
 
-- Deterministic line-ending rules with `.gitattributes`
-- Clean `.gitignore`
-- Reduced Docker build context via `.dockerignore`
-- No blanket pytest warning suppression
-- Explicit dev dependencies
-- GitHub project metadata URLs
-- Generated reports and SQLite runtime data excluded from source control
+```text
+51 TP / 49 TN / 0 FP / 0 FN
+precision / recall / F1 1.000000
+```
 
-## 16. Ethical and Safety Scope
+These corpus metrics are regression evidence only and are not real-world accuracy estimates.
+
+## 16. Repository Hygiene
+
+Repository controls include:
+
+- deterministic line-ending rules with `.gitattributes`
+- `.gitignore` for caches, environments, generated runtime/build output, secret-like local files, logs and editor/OS artifacts
+- reduced Docker build context through `.dockerignore`
+- explicit dev dependencies
+- generated reports and SQLite runtime data excluded from source control
+- release-hygiene regression tests
+
+Final sanitation verified:
+
+- zero tracked generated trash
+- zero tracked secret-like filenames
+- no tracked files at or above 5 MiB
+- `git diff --check`: PASS
+- `git fsck`: PASS
+- zero merge-conflict markers
+
+## 17. Ethical and Safety Scope
 
 BuildShield-CI is defensive and passive.
 
 It does not:
 
-- Exploit systems
-- Publish malicious packages
-- Execute malware
-- Exfiltrate credentials
-- Attack package registries
-- Scan unauthorized systems
-- Perform destructive actions
+- exploit systems
+- publish malicious packages
+- execute malware
+- exfiltrate credentials
+- attack package registries
+- scan unauthorized systems
+- perform destructive actions
 
-All intentionally vulnerable content is confined to controlled sample files.
+All intentionally vulnerable content is confined to controlled fixtures.
 
-## 17. H1-H9 Hardening Closure and Final Scope Boundaries
+## 18. Final Scope Boundaries
 
-The v0.12.7 tag remains the historical frozen baseline. On the active hardening branch, H1-H9 are complete and the H9 checkpoint has passed hosted CI.
+The v1.0.0 scope intentionally remains focused.
 
-The final candidate now includes the in-scope workspace boundary, single-tenant authentication/authorization, browser security, request/resource controls, safe public errors and audit logging, report/history retention controls, hardened container/runtime behavior, reproducible build/CI controls, and deterministic adversarial regression evaluation.
+Not included:
 
-The following are intentional final scope boundaries, not missing future features:
+- Maven, Go, NuGet, Rust or additional package-ecosystem analyzers
+- Kubernetes manifest analysis
+- GitLab CI or Jenkins analyzers
+- AI/LLM remediation assistants
+- multi-tenant SaaS architecture
+- distributed worker infrastructure
+- cloud-provider-specific production deployment stacks
 
-- analysis remains focused on npm, Python, GitHub Actions and Dockerfiles;
-- dependency-confusion detection remains a static heuristic security control rather than an active registry attack;
-- no Maven, Go, NuGet, Rust or other new package-ecosystem analyzers are planned;
-- no Kubernetes manifest analyzer is planned;
-- no GitLab CI or Jenkins analyzer is planned;
-- no AI/LLM remediation assistant is planned;
-- no multi-tenant SaaS, distributed worker architecture or cloud-provider-specific deployment stack is planned.
+Dependency-confusion detection remains a static heuristic control rather than an active registry attack.
 
-Enterprise deployment would require organization-specific controls beyond the current single-instance scope, including external identity/RBAC integration, multi-tenant isolation where applicable, centralized secret management, production TLS/network controls, shared observability, backup/recovery and operational governance.
+## 19. Release Closure
 
-## 18. Final v1.0.0 Release Roadmap
+H1-H10 local engineering and release acceptance are complete.
 
-H1-H10 local engineering and release acceptance are complete. The earlier H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` passed hosted CI. After that checkpoint, the product received its final professional UI polish and representative realistic application profile; those changes passed frontend quality gates, backend/API contracts, production Docker smoke, a 295 passed / 2 skipped Windows regression, live browser review and repository sanitation.
+Final pre-release checkpoint:
 
-No broad feature roadmap follows H10. The only remaining actions are release engineering: create the replacement final checkpoint commit, require hosted CI on that exact state, review/merge the PR, verify `main`, create the annotated `v1.0.0` tag and GitHub release, and then freeze normal feature development except critical corrective patches.
+```text
+f397d257638f3e3bd50eaaa6b9966442e158a849
+```
 
-## 19. Conclusion
+Verified release/merge commit:
 
-BuildShield-CI demonstrates end-to-end cybersecurity engineering across supply-chain security, static analysis, DevSecOps policy enforcement, CI/CD hardening, vulnerability intelligence, reporting, dashboard development, persistence, testing, and containerization.
+```text
+dec7eea405cd474fdea73bacd8f9847782887816
+```
 
-**v0.12.7 remains the completed historical baseline.** The current `1.0.0` candidate has completed H1-H10 local acceptance, final UI/realistic-profile validation, live browser review and repository sanitation. It must not be described as the final tagged v1.0.0 release until the replacement final checkpoint passes hosted CI, the PR is merged, `main` is verified, and the annotated tag/GitHub release are created and verified. After that verified release, planned feature development ends except for corrective security or release-breaking patches.
+The accepted release sequence completed:
+
+1. final replacement checkpoint created;
+2. hosted CI passed on that exact state;
+3. final pull request was reviewed and merged;
+4. post-merge `main` CI passed;
+5. annotated tag `v1.0.0` was created;
+6. GitHub release **BuildShield-CI v1.0.0** was published.
+
+The v1.0.0 tag is frozen release history and must not be moved for later documentation cleanup.
+
+## 20. Conclusion
+
+BuildShield-CI demonstrates end-to-end cybersecurity engineering across supply-chain security, static analysis, DevSecOps policy enforcement, CI/CD hardening, vulnerability intelligence, reporting, React/FastAPI application development, persistence, reproducible builds, testing and container hardening.
+
+**v0.12.7 remains the historical frozen baseline. v1.0.0 is the current verified release.** Future behavior-changing corrections should be made through a new versioned release instead of rewriting v1.0.0 history.
