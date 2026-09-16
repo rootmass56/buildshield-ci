@@ -1,7 +1,5 @@
 import json
 
-from fastapi.testclient import TestClient
-
 from supplysentinel.intelligence.osv_client import (
     build_osv_queries_from_inventory,
     build_osv_vulnerability_report,
@@ -9,10 +7,6 @@ from supplysentinel.intelligence.osv_client import (
     generate_osv_report_json,
 )
 from supplysentinel.inventory.dependency_inventory import build_dependency_inventory
-from supplysentinel.web.app import app
-
-
-client = TestClient(app)
 
 
 def test_osv_query_planning_for_secure_repo(secure_repo):
@@ -66,9 +60,14 @@ def test_osv_report_json_generation(secure_repo):
     assert data["summary"]["online_lookup_status"] == "SKIPPED"
 
 
-def test_dashboard_vulnerability_intelligence_endpoint_offline():
+def test_dashboard_vulnerability_intelligence_endpoint_offline(
+    authenticated_client,
+):
+    client, csrf_token = authenticated_client
+
     response = client.post(
         "/api/vulnerability-intelligence",
+        headers={"X-CSRF-Token": csrf_token},
         json={
             "target_path": "samples/secure-repo",
             "online_lookup": False,

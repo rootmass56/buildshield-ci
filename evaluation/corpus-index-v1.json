@@ -1,0 +1,1329 @@
+{
+  "schema_version": 1,
+  "checkpoint_basis": "367ead5670b26c7e6076d063e08b9fb8fdcb206e",
+  "design_sha256": "69bd3ef0a193684b08ccc3f1775173ef17486dc6373db9625b3b6d9cafbe3aca",
+  "case_count": 100,
+  "file_count": 124,
+  "cases": [
+    {
+      "case_id": "DG-NPM-001-01",
+      "rule_id": "DG-NPM-001",
+      "fixture_path": "evaluation/corpus/DG-NPM-001/01-canonical-positive",
+      "files": [
+        {
+          "path": "package.json",
+          "sha256": "27cba6aa3cad632c172ce1fe90061bb35648adb7bc4066761503a5f93bda25c1",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-001-02",
+      "rule_id": "DG-NPM-001",
+      "fixture_path": "evaluation/corpus/DG-NPM-001/02-canonical-negative",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "27cba6aa3cad632c172ce1fe90061bb35648adb7bc4066761503a5f93bda25c1",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-001-03",
+      "rule_id": "DG-NPM-001",
+      "fixture_path": "evaluation/corpus/DG-NPM-001/03-positive-boundary",
+      "files": [
+        {
+          "path": "app/package.json",
+          "sha256": "27cba6aa3cad632c172ce1fe90061bb35648adb7bc4066761503a5f93bda25c1",
+          "size": 114
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "61a0a4438037050feeb368c68d937137705cbf4d107365dc92847a91bb85e3bc",
+          "size": 171
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-001-04",
+      "rule_id": "DG-NPM-001",
+      "fixture_path": "evaluation/corpus/DG-NPM-001/04-negative-near-miss",
+      "files": [
+        {
+          "path": "app/package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "app/package.json",
+          "sha256": "27cba6aa3cad632c172ce1fe90061bb35648adb7bc4066761503a5f93bda25c1",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-001-05",
+      "rule_id": "DG-NPM-001",
+      "fixture_path": "evaluation/corpus/DG-NPM-001/05-adversarial-negative",
+      "files": [
+        {
+          "path": "npm-shrinkwrap.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "27cba6aa3cad632c172ce1fe90061bb35648adb7bc4066761503a5f93bda25c1",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-002-01",
+      "rule_id": "DG-NPM-002",
+      "fixture_path": "evaluation/corpus/DG-NPM-002/01-canonical-positive",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "12175fd3d9065bf1b80a012dcdef661c0c60e7d3f2cb1b333a8b66ef2192df3e",
+          "size": 115
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-002-02",
+      "rule_id": "DG-NPM-002",
+      "fixture_path": "evaluation/corpus/DG-NPM-002/02-canonical-negative",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "eadb808b186024b7271e4c92751fb40235bf19b2d68fb75ba7a15659445966d7",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-002-03",
+      "rule_id": "DG-NPM-002",
+      "fixture_path": "evaluation/corpus/DG-NPM-002/03-positive-boundary",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "2c0dea8ea901d02c0e7d7a4a7f5d4ffaa56b1ffd02dcfa8199ca12f59d305e55",
+          "size": 120
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-002-04",
+      "rule_id": "DG-NPM-002",
+      "fixture_path": "evaluation/corpus/DG-NPM-002/04-negative-near-miss",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "69f1108cdf19759124c8763f31c1add0ca668ce2b46b79eca74797f7d28fb520",
+          "size": 121
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-002-05",
+      "rule_id": "DG-NPM-002",
+      "fixture_path": "evaluation/corpus/DG-NPM-002/05-adversarial-positive",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "f0d84203dacd9a1af927a817465e4aba2dd057385866a48856b61a622a92259c",
+          "size": 146
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-003-01",
+      "rule_id": "DG-NPM-003",
+      "fixture_path": "evaluation/corpus/DG-NPM-003/01-canonical-positive",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "3bea7264be6f23969d04dd71071b3225e0e4c879a5739edd376ed8b599db54ce",
+          "size": 171
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-003-02",
+      "rule_id": "DG-NPM-003",
+      "fixture_path": "evaluation/corpus/DG-NPM-003/02-canonical-negative",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "e01240e6301319ebea505f99f63094646681bc663140bb00fb9bd4e23f77e4b8",
+          "size": 163
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-003-03",
+      "rule_id": "DG-NPM-003",
+      "fixture_path": "evaluation/corpus/DG-NPM-003/03-positive-boundary",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "689ef0e628771845f4aa1127993f06509ad9c4cb2a435268812a5cfde296fafd",
+          "size": 167
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-003-04",
+      "rule_id": "DG-NPM-003",
+      "fixture_path": "evaluation/corpus/DG-NPM-003/04-negative-near-miss",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "66cf98d29c01382999c9c54a494e875f1f2f7c042b4b01f854d8a5f53e2e68fd",
+          "size": 171
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-003-05",
+      "rule_id": "DG-NPM-003",
+      "fixture_path": "evaluation/corpus/DG-NPM-003/05-adversarial-negative",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "983fdf585b3bd624a3d19a9574e39482cb77c14d5b88b3b080a678c9f31c9a61",
+          "size": 167
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-004-01",
+      "rule_id": "DG-NPM-004",
+      "fixture_path": "evaluation/corpus/DG-NPM-004/01-canonical-positive",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "6d6f122bb6cf596082ae3bacae55fd53a59083c8e2982ebca16ef81da68e66c8",
+          "size": 123
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-004-02",
+      "rule_id": "DG-NPM-004",
+      "fixture_path": "evaluation/corpus/DG-NPM-004/02-canonical-negative",
+      "files": [
+        {
+          "path": ".npmrc",
+          "sha256": "acaa656349c35987c03d5acee73bf34db9043f9a483c66f26f6ea6edcb565e77",
+          "size": 64
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "6d6f122bb6cf596082ae3bacae55fd53a59083c8e2982ebca16ef81da68e66c8",
+          "size": 123
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-004-03",
+      "rule_id": "DG-NPM-004",
+      "fixture_path": "evaluation/corpus/DG-NPM-004/03-positive-boundary",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "397455209a6019a1ab75db6a9b67f300c3285f15a607c233662fe47a1aa63414",
+          "size": 119
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-004-04",
+      "rule_id": "DG-NPM-004",
+      "fixture_path": "evaluation/corpus/DG-NPM-004/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".npmrc",
+          "sha256": "b7fa8726d3d0e13809490127bdd15a971e4b4b3805242106e263f1afbac6fd9c",
+          "size": 52
+        },
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "397455209a6019a1ab75db6a9b67f300c3285f15a607c233662fe47a1aa63414",
+          "size": 119
+        }
+      ]
+    },
+    {
+      "case_id": "DG-NPM-004-05",
+      "rule_id": "DG-NPM-004",
+      "fixture_path": "evaluation/corpus/DG-NPM-004/05-adversarial-negative",
+      "files": [
+        {
+          "path": "package-lock.json",
+          "sha256": "4d8364ed6ff09378d8abe7837ab0c239062228b4a47f62bb0193be879e6be8e8",
+          "size": 177
+        },
+        {
+          "path": "package.json",
+          "sha256": "4e4f48e412856c66f4f8219f0496543aa389e9c9a09a871c6d679cfdf0966a29",
+          "size": 118
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-001-01",
+      "rule_id": "DG-PY-001",
+      "fixture_path": "evaluation/corpus/DG-PY-001/01-canonical-positive",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "7cc4959877dbe6b6c63a8eb1bfe3bfb545fa8fe5b28b1b2c13e4a7c1c0d1c4d4",
+          "size": 9
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-001-02",
+      "rule_id": "DG-PY-001",
+      "fixture_path": "evaluation/corpus/DG-PY-001/02-canonical-negative",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "4b8183101fd19f071771805a42a31fbb234a7961921fdb8b783a279755a1b5d5",
+          "size": 17
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-001-03",
+      "rule_id": "DG-PY-001",
+      "fixture_path": "evaluation/corpus/DG-PY-001/03-positive-boundary",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "613ebdf3c041ccbcd9670fd1c274f8ff32e8622d5a9653a6680e41e95b5305a3",
+          "size": 16
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-001-04",
+      "rule_id": "DG-PY-001",
+      "fixture_path": "evaluation/corpus/DG-PY-001/04-negative-near-miss",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "040641d2104f7610c728aa738de53dfb27065fc92921ca6daeb4a11facb78e63",
+          "size": 12
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-001-05",
+      "rule_id": "DG-PY-001",
+      "fixture_path": "evaluation/corpus/DG-PY-001/05-adversarial-negative",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "bf71fc926b2bf42184e937c6be0c4d16fa103a6abb7981bf25f23cf35b988efe",
+          "size": 43
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-002-01",
+      "rule_id": "DG-PY-002",
+      "fixture_path": "evaluation/corpus/DG-PY-002/01-canonical-positive",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "41a0c02513a431469831dd0a118c248ff2456286abe50d4e85d50ba8153a573d",
+          "size": 15
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-002-02",
+      "rule_id": "DG-PY-002",
+      "fixture_path": "evaluation/corpus/DG-PY-002/02-canonical-negative",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "4b8183101fd19f071771805a42a31fbb234a7961921fdb8b783a279755a1b5d5",
+          "size": 17
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-002-03",
+      "rule_id": "DG-PY-002",
+      "fixture_path": "evaluation/corpus/DG-PY-002/03-positive-boundary",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "856e63e510b41555547b03a70d62f7053cbf324c5452044b2269e0b49144606b",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-002-04",
+      "rule_id": "DG-PY-002",
+      "fixture_path": "evaluation/corpus/DG-PY-002/04-negative-near-miss",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "22402e7d5e06eb28b90cf28a9a0aa630e5f64d8bff1be758af976803c6fa0af7",
+          "size": 18
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-002-05",
+      "rule_id": "DG-PY-002",
+      "fixture_path": "evaluation/corpus/DG-PY-002/05-adversarial-positive",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "4d0b9eea2e01469be0ab4261c78f1bcb13beafbcf69a6875761a3dcf48210926",
+          "size": 13
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-003-01",
+      "rule_id": "DG-PY-003",
+      "fixture_path": "evaluation/corpus/DG-PY-003/01-canonical-positive",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "57a621d6c93c3eb89c53715b46af16c2320864ea103734d4d5901ae2f281d45d",
+          "size": 21
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-003-02",
+      "rule_id": "DG-PY-003",
+      "fixture_path": "evaluation/corpus/DG-PY-003/02-canonical-negative",
+      "files": [
+        {
+          "path": "pip.conf",
+          "sha256": "63b2142e6b93ffa88c3351846c61ed6de793428f52482cb6ea41ac14a9fd3f3a",
+          "size": 61
+        },
+        {
+          "path": "requirements.txt",
+          "sha256": "57a621d6c93c3eb89c53715b46af16c2320864ea103734d4d5901ae2f281d45d",
+          "size": 21
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-003-03",
+      "rule_id": "DG-PY-003",
+      "fixture_path": "evaluation/corpus/DG-PY-003/03-positive-boundary",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "87c2069a99756ac21ab2299a3b5d4b7b5ab5691ae610ba90e195eb8aeb16716d",
+          "size": 19
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-003-04",
+      "rule_id": "DG-PY-003",
+      "fixture_path": "evaluation/corpus/DG-PY-003/04-negative-near-miss",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "a5e987c2a8675aac4d6793ea8b8745b6e17f42cde6d84769eddf72ec5d6eb28f",
+          "size": 73
+        }
+      ]
+    },
+    {
+      "case_id": "DG-PY-003-05",
+      "rule_id": "DG-PY-003",
+      "fixture_path": "evaluation/corpus/DG-PY-003/05-adversarial-positive",
+      "files": [
+        {
+          "path": "requirements.txt",
+          "sha256": "3d074467d96459aa35ec63ecb72a7d31e3b75b65073db0325ce7c5ac1b16587c",
+          "size": 79
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-001-01",
+      "rule_id": "DG-GHA-001",
+      "fixture_path": "evaluation/corpus/DG-GHA-001/01-canonical-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "a01930520e31187ece577676f8baaf37cd3b6177594c4b328bd387207ae3bd0f",
+          "size": 150
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-001-02",
+      "rule_id": "DG-GHA-001",
+      "fixture_path": "evaluation/corpus/DG-GHA-001/02-canonical-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "c25f7af6733c537d21b1d1d9169f907f76f95a8d996b976de63c8f5604157912",
+          "size": 188
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-001-03",
+      "rule_id": "DG-GHA-001",
+      "fixture_path": "evaluation/corpus/DG-GHA-001/03-positive-boundary",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "e2aa0519625ddcb40529d50ca9e2fccfc9975354af38677abb78a75e6e714516",
+          "size": 148
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-001-04",
+      "rule_id": "DG-GHA-001",
+      "fixture_path": "evaluation/corpus/DG-GHA-001/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "13835cfeb03ae4365df13047c452d192b0e02ae4f4faf70e9c92ed1add8ed87b",
+          "size": 161
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-001-05",
+      "rule_id": "DG-GHA-001",
+      "fixture_path": "evaluation/corpus/DG-GHA-001/05-adversarial-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "b8604d8c807660ae2f5a7baad9e997970338793d806abce1d30b32a58f23c63e",
+          "size": 151
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-002-01",
+      "rule_id": "DG-GHA-002",
+      "fixture_path": "evaluation/corpus/DG-GHA-002/01-canonical-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "d6f18f5e33efc60992272acd5820de7ff825d21a983ec3408832685d577957fc",
+          "size": 206
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-002-02",
+      "rule_id": "DG-GHA-002",
+      "fixture_path": "evaluation/corpus/DG-GHA-002/02-canonical-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "dc0937671b4dbfa37562beeb30e8956ce61e76acfc00efaba0be12edce2652f8",
+          "size": 213
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-002-03",
+      "rule_id": "DG-GHA-002",
+      "fixture_path": "evaluation/corpus/DG-GHA-002/03-positive-boundary",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "a9faf27f8783ede693c9c324b5f0890a054b04a956e728b27df842f47fad8e22",
+          "size": 240
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-002-04",
+      "rule_id": "DG-GHA-002",
+      "fixture_path": "evaluation/corpus/DG-GHA-002/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "397c35ab26dbb35afcd22b48c34811b81c94d24571ee9ac856ef3595bb6c5962",
+          "size": 205
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-002-05",
+      "rule_id": "DG-GHA-002",
+      "fixture_path": "evaluation/corpus/DG-GHA-002/05-adversarial-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "f249261ac6d7048bf20b3fcd4f5dc8bf5896d1d223dbdfd9218e0e88bd1010f2",
+          "size": 208
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-003-01",
+      "rule_id": "DG-GHA-003",
+      "fixture_path": "evaluation/corpus/DG-GHA-003/01-canonical-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "39a759b98db50af0ab35371f9883ef9d29f8bf2bbda09ae537ef45f8a54f1b93",
+          "size": 248
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-003-02",
+      "rule_id": "DG-GHA-003",
+      "fixture_path": "evaluation/corpus/DG-GHA-003/02-canonical-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "991c711fc29a45a7b3a33eb89bcd27b3a50ffc84cb064b005622aa233f3c166b",
+          "size": 350
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-003-03",
+      "rule_id": "DG-GHA-003",
+      "fixture_path": "evaluation/corpus/DG-GHA-003/03-positive-boundary",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "5ea7ae6987e4eeea0373fd80b3ac0cab0d4389dbf13a3e483f76b85b0ae172a1",
+          "size": 251
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-003-04",
+      "rule_id": "DG-GHA-003",
+      "fixture_path": "evaluation/corpus/DG-GHA-003/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "4b231ae42936d2ebdc3894fb25949ea86a4276d9e9826ff5bf219c749eb0f3ce",
+          "size": 249
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-003-05",
+      "rule_id": "DG-GHA-003",
+      "fixture_path": "evaluation/corpus/DG-GHA-003/05-adversarial-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "ad8c4b5f86efaa06a223071e15e15eea1d3c585d016366dbb6b5040fc7121292",
+          "size": 246
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-004-01",
+      "rule_id": "DG-GHA-004",
+      "fixture_path": "evaluation/corpus/DG-GHA-004/01-canonical-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "5d7c1bbbd5a7608e14327fbb431cee8d00a1f299b73ae39b1b76407f99520ccf",
+          "size": 231
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-004-02",
+      "rule_id": "DG-GHA-004",
+      "fixture_path": "evaluation/corpus/DG-GHA-004/02-canonical-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "8d3b805b52e0e8466f9a3ad0db8126409151ee2c5bcaa85188ee1811099d006e",
+          "size": 288
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-004-03",
+      "rule_id": "DG-GHA-004",
+      "fixture_path": "evaluation/corpus/DG-GHA-004/03-positive-boundary",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "937d9bdca4bb7dc0a216eb1107e3743af87271172ae8dea75d7e4fa6343b7eb5",
+          "size": 257
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-004-04",
+      "rule_id": "DG-GHA-004",
+      "fixture_path": "evaluation/corpus/DG-GHA-004/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "ecb9cbf9c5381b6afb430f064d07a63f5ceac0a685b426e62038f3888920c9e8",
+          "size": 222
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-004-05",
+      "rule_id": "DG-GHA-004",
+      "fixture_path": "evaluation/corpus/DG-GHA-004/05-adversarial-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "7d79b84c4e101065d8f251ce015426dcf8c16385566c55b53309ebc08214c92d",
+          "size": 240
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-005-01",
+      "rule_id": "DG-GHA-005",
+      "fixture_path": "evaluation/corpus/DG-GHA-005/01-canonical-positive",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "819d59d5d783afaddcd721bebab5622f66eb9a12f1f6c37443bf0c97cec96b5f",
+          "size": 220
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-005-02",
+      "rule_id": "DG-GHA-005",
+      "fixture_path": "evaluation/corpus/DG-GHA-005/02-canonical-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "dc0937671b4dbfa37562beeb30e8956ce61e76acfc00efaba0be12edce2652f8",
+          "size": 213
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-005-03",
+      "rule_id": "DG-GHA-005",
+      "fixture_path": "evaluation/corpus/DG-GHA-005/03-positive-boundary",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "05d873d9faa4ae358f0798ace2d7338a3db7559733a7a3553f422fde3542298d",
+          "size": 253
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-005-04",
+      "rule_id": "DG-GHA-005",
+      "fixture_path": "evaluation/corpus/DG-GHA-005/04-negative-near-miss",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "6572a3725107bc973ae3f334db9d985199354125c34a030f8754b64807315233",
+          "size": 259
+        }
+      ]
+    },
+    {
+      "case_id": "DG-GHA-005-05",
+      "rule_id": "DG-GHA-005",
+      "fixture_path": "evaluation/corpus/DG-GHA-005/05-adversarial-negative",
+      "files": [
+        {
+          "path": ".github/workflows/eval.yml",
+          "sha256": "d524bcc483967e322f5e1c9ce688708778e3369b2a0bd3ce15977e8613c34da4",
+          "size": 236
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-001-01",
+      "rule_id": "DG-DOCKER-001",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-001/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "41891e2abf47542d3812d19d2677b7d6b635791f95a2f3a1b8c35c588743d74f",
+          "size": 55
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-001-02",
+      "rule_id": "DG-DOCKER-001",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-001/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a3bf39c0cdfd2ea6b405d119d343788cfcf1475fe09c5fe9830a2245af5c888f",
+          "size": 54
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-001-03",
+      "rule_id": "DG-DOCKER-001",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-001/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "ae495c26f5692d6c77b192ccbfc755cee9cf0f38873b56683792890604672fd1",
+          "size": 48
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-001-04",
+      "rule_id": "DG-DOCKER-001",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-001/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "43a061aac2bee9d925c55777080f3b14efd9a4c5f6a0dc946fecbcc1e263baa0",
+          "size": 120
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-001-05",
+      "rule_id": "DG-DOCKER-001",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-001/05-adversarial-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "80d7421b0d8d20b344654bfd8c11fe007c1ca99ebb34ed5685b53d2d01da0196",
+          "size": 49
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-002-01",
+      "rule_id": "DG-DOCKER-002",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-002/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a2824635a4750edc1887972357d1cc2b25a598b81fb9a7f715b231ce522b7457",
+          "size": 49
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-002-02",
+      "rule_id": "DG-DOCKER-002",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-002/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "63a81d15136d6984e88592a2b793438739f9c38d108d48b223fbb1338dc9d969",
+          "size": 119
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-002-03",
+      "rule_id": "DG-DOCKER-002",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-002/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "38ddecec1ec2269d3196af95bed404c3589e444adca95582589b687126a5538d",
+          "size": 108
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-002-04",
+      "rule_id": "DG-DOCKER-002",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-002/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "635ef291a067d07c39c4e528622826af75ef06a0c596350824efe80a70a47fb0",
+          "size": 58
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-002-05",
+      "rule_id": "DG-DOCKER-002",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-002/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "b4676a2456f6f5ff0f725dd313ed828ebccd9859a04afd5741761750ddc7547b",
+          "size": 93
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-003-01",
+      "rule_id": "DG-DOCKER-003",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-003/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a4ad0869567f703999fab5948874eecd2f41b0060e2b03a3b263c20990e10169",
+          "size": 59
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-003-02",
+      "rule_id": "DG-DOCKER-003",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-003/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "635ef291a067d07c39c4e528622826af75ef06a0c596350824efe80a70a47fb0",
+          "size": 58
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-003-03",
+      "rule_id": "DG-DOCKER-003",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-003/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "f85c5ce2a5969bb997d67c249f20b3693387f8eabc6caf47c30ec7e6c98136c5",
+          "size": 56
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-003-04",
+      "rule_id": "DG-DOCKER-003",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-003/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "93a6c3b3a4fce08624a3a988f1f75e92994fb19023dfd4921b4e7f47c00975d3",
+          "size": 60
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-003-05",
+      "rule_id": "DG-DOCKER-003",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-003/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a3f5e3b9063cb8fdc52750f806f6d3502266368ebac35114d359b29aee20d024",
+          "size": 58
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-004-01",
+      "rule_id": "DG-DOCKER-004",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-004/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "32c6f51e9b0ec7e46520d01ac3aafcf0fa2dbcb6918c33f2b4b827f8c5e03e0c",
+          "size": 87
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-004-02",
+      "rule_id": "DG-DOCKER-004",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-004/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "f4482c247f28f7fa1cdc765087cbc57f1a730317e6437fff7999311a59470082",
+          "size": 84
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-004-03",
+      "rule_id": "DG-DOCKER-004",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-004/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "3ed062ad65cf9b0581f3f24bef20c1895cf29adcc09b85c11c8f0286f0c5abf2",
+          "size": 77
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-004-04",
+      "rule_id": "DG-DOCKER-004",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-004/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "76c7f239218d4acf70cb143ef789ca811ba7ef1b2491a4a54c37360ae834432a",
+          "size": 80
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-004-05",
+      "rule_id": "DG-DOCKER-004",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-004/05-adversarial-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "62810a191d25353186fb4581532608ebba96e5e33abe9de9dc6c999b0938ade2",
+          "size": 87
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-005-01",
+      "rule_id": "DG-DOCKER-005",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-005/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "8de9be95e41d678197f67c738ed47635ed5ab0f7a5c7f7437a9132288543d137",
+          "size": 111
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-005-02",
+      "rule_id": "DG-DOCKER-005",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-005/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "4c2b66944755cfa4500dd3e469bfb541a98509d702c08d730fb2db599fc5eabf",
+          "size": 166
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-005-03",
+      "rule_id": "DG-DOCKER-005",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-005/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "5ece217fb98b391bac299728a707c9ec5e9ba02b107559f2bef3420ca86bde5d",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-005-04",
+      "rule_id": "DG-DOCKER-005",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-005/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "1b1bd66cfce121597d5b5ec179e2ec41c4b63b4060068240c3e7da090b61fd23",
+          "size": 112
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-005-05",
+      "rule_id": "DG-DOCKER-005",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-005/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "ad61e57588588f8a95d8839405ce046e612fbc4a8c3dccb388e282c09428f8e6",
+          "size": 114
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-006-01",
+      "rule_id": "DG-DOCKER-006",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-006/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "40f97314addd962da2f6a36ce77d8ee8f4c53c98831c550ead7172d7a4680829",
+          "size": 83
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-006-02",
+      "rule_id": "DG-DOCKER-006",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-006/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "0e3d9e3cba62d937c946b4036d291f55f5bd018f04fd7e4ca3eb39e5a8a4131c",
+          "size": 88
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-006-03",
+      "rule_id": "DG-DOCKER-006",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-006/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "c5fe24abef0859e66414f74cc6b1a2e6dfe2aebad37fbdbec23def4ef6286a2c",
+          "size": 79
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-006-04",
+      "rule_id": "DG-DOCKER-006",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-006/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "dee8375ecebe7b3ef286cb591f35c27704dfe50353cea3131c8a646993619048",
+          "size": 69
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-006-05",
+      "rule_id": "DG-DOCKER-006",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-006/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "718010da727b63020f3b61c96014430d946f236022f01f4f365598222c22b287",
+          "size": 83
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-007-01",
+      "rule_id": "DG-DOCKER-007",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-007/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a627d7d98d5ea3e565999013361444b2f9420fadfe95bda94f08bc6887ada79c",
+          "size": 35
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-007-02",
+      "rule_id": "DG-DOCKER-007",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-007/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "e78e6f8ce6cb92b152b3391126ccceff9efbde478f8c2be1929b367698df95b6",
+          "size": 97
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-007-03",
+      "rule_id": "DG-DOCKER-007",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-007/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "e8976d163d08fa868421638cd86c23f4b34bc442110ddf6a79cad647c11cb166",
+          "size": 52
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-007-04",
+      "rule_id": "DG-DOCKER-007",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-007/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "2e2b1630fb72253dc9cbae87a481e0f1e56a642293f825ab0201a5583fe4c553",
+          "size": 85
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-007-05",
+      "rule_id": "DG-DOCKER-007",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-007/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "4f48fa6d8e31640eac5ba1294569d8f4c235e11299e729821e8796dd61be6566",
+          "size": 128
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-008-01",
+      "rule_id": "DG-DOCKER-008",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-008/01-canonical-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "604b19f8f35ac005e9cc9f1927efd71c244090500b10a60e0d5850806c624777",
+          "size": 106
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-008-02",
+      "rule_id": "DG-DOCKER-008",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-008/02-canonical-negative",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "e845bde1f14a60568b22ab5f42b1a0f2cbf9412dd9b6c18a5e5c65ed82e7b772",
+          "size": 83
+        },
+        {
+          "path": "archive.tgz",
+          "sha256": "97a8c3e22d1af1e5476e04293bf7ad60bb5f82f5bf5daad5bf73147fa83dd27e",
+          "size": 20
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-008-03",
+      "rule_id": "DG-DOCKER-008",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-008/03-positive-boundary",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "bc651a52ae9ef5e597b54fc749641653f3ebed220616c720608d0b06011981f4",
+          "size": 105
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-008-04",
+      "rule_id": "DG-DOCKER-008",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-008/04-negative-near-miss",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "1ac8b55b5b6a48c00309f451f044b01d0d56054b1ae896195d01e662125d6d51",
+          "size": 88
+        },
+        {
+          "path": "local-archive.tgz",
+          "sha256": "97a8c3e22d1af1e5476e04293bf7ad60bb5f82f5bf5daad5bf73147fa83dd27e",
+          "size": 20
+        }
+      ]
+    },
+    {
+      "case_id": "DG-DOCKER-008-05",
+      "rule_id": "DG-DOCKER-008",
+      "fixture_path": "evaluation/corpus/DG-DOCKER-008/05-adversarial-positive",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "sha256": "a6ea840e70d0ce20dc71ec98ca3d955895d0bf6ef5e6e8f3f4dc2664a1ba4112",
+          "size": 116
+        }
+      ]
+    }
+  ]
+}

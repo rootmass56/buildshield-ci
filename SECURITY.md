@@ -82,18 +82,19 @@ Its controlled static-analysis benchmark is expected to produce no BuildShield-C
 
 BuildShield-CI performs passive static analysis and heuristic detection. It does not claim to provide complete vulnerability coverage or prove that a repository is secure.
 
-The current platform is suitable for controlled environments and production-style demonstrations. Enterprise deployment would require additional controls such as:
+The validated v1.0.0 release candidate is suitable for controlled single-instance environments and production-style demonstrations. It already includes focused single-tenant authentication/authorization, workspace containment, request/resource controls, audit logging, retention controls, and hardened container runtime settings.
 
-- Authentication and authorization
-- Tenant/repository isolation
-- Secret management
-- TLS and network hardening
-- Rate limiting and resource controls
-- Audit logging
-- Centralized observability
-- Backup and recovery
-- Operational monitoring and incident response
-- Dependency and container-image lifecycle management
+Enterprise deployment would require additional controls beyond the current single-instance scope, especially for multi-tenant or organization-wide use, such as:
+
+- external identity-provider integration, stronger RBAC and lifecycle governance
+- tenant/repository isolation appropriate to the deployment model
+- centralized secret management and rotation
+- production TLS termination, network segmentation and edge controls
+- distributed/shared rate limiting when multiple instances are introduced
+- centralized observability, alerting and log retention
+- backup, recovery and disaster-recovery procedures
+- operational monitoring and incident-response processes
+- dependency, base-image and container-image lifecycle management
 
 ## Disclosure
 

@@ -1,0 +1,4 @@
+FROM python:3.13.4-slim
+ENV PASSWORD_POLICY=strict
+USER 10001
+HEALTHCHECK CMD ["true"]

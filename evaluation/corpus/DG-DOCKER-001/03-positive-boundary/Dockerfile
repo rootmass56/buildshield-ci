@@ -1,0 +1,3 @@
+FROM ubuntu
+USER 10001
+HEALTHCHECK CMD ["true"]

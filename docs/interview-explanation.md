@@ -2,97 +2,62 @@
 
 ## 30-Second Explanation
 
-BuildShield-CI is a DevSecOps supply-chain security platform that statically analyzes repository dependencies, registry configuration, GitHub Actions workflows, and Dockerfiles before deployment. It detects dependency confusion and CI/CD misconfigurations, calculates risk, enforces policy-as-code, generates SARIF for GitHub Code Scanning, builds SBOM-lite inventory, integrates OSV intelligence, and exposes results through a FastAPI dashboard with SQLite history.
+BuildShield-CI is a DevSecOps supply-chain security platform that statically analyzes npm/Python dependencies, registry configuration, GitHub Actions workflows and Dockerfiles before deployment. It normalizes findings, calculates risk, enforces policy-as-code, generates SARIF for GitHub Code Scanning, adds dependency inventory and OSV intelligence, exposes results through FastAPI plus a React/TypeScript dashboard, stores history in SQLite and supports a hardened Docker deployment.
 
 ## 1-Minute Explanation
 
-I built BuildShield-CI to address software supply-chain and CI/CD configuration risk. The scanner discovers relevant files such as `package.json`, Python requirements, registry config, GitHub Actions workflows, and Dockerfiles, then sends them to dedicated analyzers.
+I built BuildShield-CI to catch software supply-chain and CI/CD configuration risks before deployment. The scanner discovers relevant files and routes them explicitly to four canonical analyzer families. The analyzers produce structured findings with severity, evidence, impact and remediation. The platform then calculates a security score and build-gate decision, evaluates YAML policy, creates JSON/Markdown/HTML/SARIF reports, supports GitHub Code Scanning, produces dependency inventory, optionally queries OSV, stores scan history and trends, and exposes the workflow through a FastAPI backend and React/TypeScript dashboard.
 
-The analyzers return structured findings with severity, evidence, impact, and remediation. The project then calculates a security score and build-gate decision, evaluates a YAML security policy, generates JSON/Markdown/HTML/SARIF reports, and can upload SARIF into GitHub Code Scanning. I also added SBOM-lite dependency inventory, OSV vulnerability intelligence, a FastAPI dashboard, SQLite scan history, Docker deployment, and automated regression tests.
+The project also hardens its own delivery path with hash-locked Python dependencies, an exact Node/npm frontend baseline, immutable GitHub Actions references, fresh wheel verification, CycloneDX 1.6 SBOM checks and a non-root/read-only Docker runtime.
 
 ## Architecture Point to Explain
 
-A key maintenance improvement was removing dynamic analyzer-name guessing and hidden fallback analyzers. The scanner now calls the canonical npm, Python, GitHub Actions, and Dockerfile analyzer interfaces explicitly, and regression tests verify the routing.
-
-That makes the architecture easier to reason about and reduces the chance of a dedicated analyzer being silently bypassed.
+A key engineering improvement was removing dynamic analyzer-name guessing and hidden fallback analyzers. The scanner now calls canonical npm, Python, GitHub Actions and Dockerfile analyzer interfaces explicitly, making routing deterministic and easier to test.
 
 ## Controlled Benchmark
 
-Vulnerable fixture:
+The intentionally vulnerable fixture produces 22 findings, a 5/100 score, CRITICAL risk and a failed build/policy gate. The hardened fixture produces 0 static configuration findings, a 100/100 score, LOW risk and passing gates. The +95 score and 22-finding reduction are controlled benchmark results, not a universal security guarantee.
 
-```text
-22 findings
-4 Critical / 10 High / 7 Medium / 1 Low
-5/100
-CRITICAL
-FAILED
-```
+## Representative Realistic Demo
 
-Hardened fixture:
+For normal demonstrations, I use a mixed-posture repository rather than always comparing a deliberately broken project with a perfect fixture. The realistic application produces 3 findings (2 Medium, 1 Low), an 81/100 score, MEDIUM risk, a WARNING build gate and passing policy. Comparing the vulnerable benchmark to that realistic application improves the score from 5 to 81 and reduces findings from 22 to 3, an 80% controlled reduction. The 100/100 hardened fixture remains a regression endpoint, not a claim that every healthy repository should score perfectly.
 
-```text
-0 findings
-100/100
-LOW
-PASSED
-```
+## H9 Evaluation Answer
 
-Comparison:
+A strong interview explanation is:
 
-```text
-+95 score
-22 findings reduced
-100% risk reduction
-```
-
-Always explain that these are controlled benchmark results, not universal guarantees.
+> I first evaluated the unchanged 100-case deterministic adversarial corpus and measured 41 TP, 45 TN, 4 FP and 10 FN, which was a micro F1 of 0.854167. I then fixed the 14 identified detector mismatches without changing the oracle or fixture corpus. The final regression result was 51 TP, 49 TN, 0 FP and 0 FN, so precision, recall and F1 are 1.0 on that fixed corpus. I explicitly do not present that as 100% real-world detection accuracy; it is regression evidence on a curated deterministic test set.
 
 ## Why Dependency Confusion Matters
 
-Dependency confusion can occur when an internal package name is resolved from an unintended public registry. BuildShield-CI looks for internal-looking package names combined with missing trusted private-registry configuration.
-
-This is heuristic static analysis, not a live exploit or registry takeover attempt.
+Dependency confusion can occur when an internal-looking package name is resolved from an unintended public registry. BuildShield-CI uses static heuristics around package names and private-registry/index configuration; it does not publish packages or attempt registry takeover.
 
 ## Why Pin GitHub Actions
 
-Tags and branches are mutable. Pinning third-party actions to a full commit SHA improves reproducibility and reduces the risk that an action reference silently changes.
+Tags and branches are mutable. Pinning third-party actions to full commit SHAs improves reproducibility and reduces supply-chain risk from mutable references. BuildShield-CI also tests its own workflow for immutable action references.
 
-BuildShield-CI enforces this rule on its own workflow and regression-tests it.
+## Why SARIF and Policy-as-Code
 
-## Why SARIF
+SARIF makes findings consumable by GitHub Code Scanning. Policy-as-code converts findings into deterministic CI decisions, allowing organizations to define when a build should fail instead of relying only on a numeric score.
 
-SARIF is a standard format for static-analysis results. BuildShield-CI uses SARIF so findings can appear in GitHub Code Scanning and participate in existing developer security workflows.
+## SBOM and OSV
 
-## Why Policy-as-Code
-
-A scanner only reports issues. Policy-as-code converts security requirements into enforceable gates, such as minimum score, severity limits, lockfile requirements, pinned actions, and blocked risky patterns.
-
-## SBOM-lite and OSV
-
-The inventory layer extracts supported dependency metadata. The OSV integration uses queryable pinned dependencies to check known vulnerability information.
-
-Online OSV results are dynamic, so vulnerability counts should not be memorized or hard-coded.
-
-## Dashboard and History
-
-The FastAPI/dashboard layer provides scan execution, comparison, findings, policy results, reports, inventory, vulnerability intelligence, and historical risk trends backed by SQLite.
+The project has two related but distinct supply-chain views: repository inventory/SBOM-lite for discovered package metadata, and a CycloneDX 1.6 runtime SBOM for the BuildShield-CI release environment. OSV lookup is external intelligence and is intentionally kept separate from the deterministic static-rule metrics.
 
 ## Deployment Answer
 
-Use this phrasing:
-
-> BuildShield-CI is deployment-ready for controlled environments and demonstrates a production-style architecture. For enterprise production deployment, I would add stronger authentication, authorization, isolation, secret management, rate limiting, network controls, observability, backup/recovery, and operational governance.
-
-Do not claim that the current project is already an enterprise multi-tenant security service.
+The v1.0.0 release candidate is positioned for controlled single-instance deployment and production-style demonstrations. Production configuration fails closed if required administrator authentication/workspace settings are missing. The Compose runtime uses a numeric non-root user, read-only root filesystem, dropped capabilities, `no-new-privileges`, bounded PID/tmpfs controls, localhost-only publication and separate liveness/readiness checks. I would not describe it as enterprise multi-tenant SaaS without additional identity/RBAC, tenant isolation, centralized secrets, TLS/networking, observability, backup/recovery and operational controls.
 
 ## Current Automated Validation
 
+The final post-checkpoint pre-release candidate completed:
+
 ```text
-57 passing tests
+295 passed, 2 skipped
 ```
 
-The tests cover scanner behavior, analyzers, routing, policy, reports, comparison, APIs, history, inventory, OSV, deployment files, workflow SHA pinning, and repository hygiene.
+It also passed the exact Node 22.23.2 / npm 12.0.2 frontend gates, Ruff, production Docker/API smoke, the realistic 81/100 profile contract, natural 5 -> 81 comparison, the preserved 22 -> 0 controlled benchmark, live browser review and final repository sanitation. The project remains a release candidate until the replacement final checkpoint passes hosted CI and the PR/tag/release sequence completes.
 
 ## Strong Resume/Interview Summary
 
-BuildShield-CI demonstrates practical engineering across DevSecOps, application security, CI/CD hardening, software supply-chain security, static analysis, policy-as-code, SARIF, vulnerability intelligence, backend/dashboard development, persistence, Docker, and test automation.
+BuildShield-CI demonstrates practical engineering across DevSecOps, application security, CI/CD hardening, software supply-chain security, static analysis, policy-as-code, SARIF, vulnerability intelligence, React/FastAPI application development, persistence, reproducible builds, Docker hardening and adversarial regression testing.

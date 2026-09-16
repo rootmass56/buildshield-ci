@@ -1,144 +1,90 @@
 # BuildShield-CI Final Submission Checklist
 
-This checklist distinguishes **already implemented/verified capabilities** from **final release/submission actions that still need to be performed**.
+This checklist separates completed engineering evidence from actions that must wait for the final H10D release.
 
-## Current Maintenance Baseline
+## Verified Engineering Baseline
 
-Verified for the frozen v0.12.7 release:
-
-- [x] 57 automated tests pass
-- [x] Vulnerable sample: 22 findings
-- [x] Vulnerable sample: 4 Critical / 10 High / 7 Medium / 1 Low
-- [x] Vulnerable sample: 5/100, CRITICAL, build gate FAILED
-- [x] Hardened sample: 0 findings
-- [x] Hardened sample: 100/100, LOW, build gate PASSED
-- [x] Comparison: +95 score
-- [x] Comparison: 22 findings reduced
-- [x] Comparison: 100% risk reduction
-- [x] Canonical analyzer routing is explicit
-- [x] Legacy npm/GitHub Actions fallback routing removed
-- [x] GitHub Actions are pinned to immutable SHAs
-- [x] `.github` self-scan reports 0 findings
-- [x] Repository hygiene and line-ending policy added
-- [x] Security policy and disclosure guidance added
-- [x] Live OSV lookup completed successfully during freeze validation
-- [x] Docker and Docker Compose freeze validation passed
+- [x] H1-H9 security-hardening program complete
+- [x] H9 checkpoint `7dc643bf5ab6446e9b9e463be14431fb2d76be6e` pushed
+- [x] H9 hosted GitHub Actions successful
+- [x] H10A final audit/cleanup locally validated
+- [x] H10B v1.0.0 release-candidate freeze locally validated
+- [x] final pre-release Windows Python regression: 295 passed, 2 skipped
+- [x] vulnerable controlled sample: 22 findings, score 5/100
+- [x] hardened controlled sample: 0 findings, score 100/100
+- [x] exact controlled 22 -> 0 benchmark preserved
+- [x] realistic application profile: 3 findings, 81/100, MEDIUM, WARNING gate, policy PASS
+- [x] natural vulnerable-to-realistic comparison: +76 score, 22 -> 3 findings, 80% controlled risk reduction
+- [x] H9C baseline retained: 41 TP / 45 TN / 4 FP / 10 FN
+- [x] H9D unchanged-corpus result: 51 TP / 49 TN / 0 FP / 0 FN
+- [x] H9 metric claim boundary documented
+- [x] Python release identity frozen at 1.0.0
+- [x] frontend package/lock release identity frozen at 1.0.0
+- [x] CycloneDX root version advanced to 1.0.0 with graph preserved
+- [x] fresh v1.0.0 wheel and sdist verified
+- [x] fresh Windows hash-lock installation verified
+- [x] exact Node 22.23.2 / npm 12.0.2 frontend gates verified
+- [x] final professional dashboard polish validated in production Docker and reviewed live
+- [x] final repository sanitation passed with zero tracked generated trash, zero tracked secret-like filenames, `git diff --check`/`git fsck` PASS and zero staging
 
 ## Implemented Capabilities
 
-- [x] npm analyzer
-- [x] Python analyzer
-- [x] GitHub Actions analyzer
-- [x] Dockerfile analyzer
-- [x] Dependency confusion detection
-- [x] Risk scoring
-- [x] Policy-as-code
-- [x] JSON reports
-- [x] Markdown reports
-- [x] HTML reports
-- [x] SARIF
+- [x] npm / Python / GitHub Actions / Dockerfile analyzers
+- [x] 20 static `DG-*` rules
+- [x] dependency confusion heuristics
+- [x] risk scoring and build gate
+- [x] YAML policy-as-code
+- [x] JSON / Markdown / HTML / SARIF reporting
 - [x] GitHub Code Scanning integration
-- [x] Secure-vs-vulnerable comparison
-- [x] SBOM-lite inventory
-- [x] OSV offline mode
-- [x] OSV online mode
+- [x] SBOM-lite inventory and CycloneDX release SBOM
+- [x] OSV offline and online intelligence paths
 - [x] FastAPI backend
-- [x] Web dashboard
-- [x] SQLite scan history
-- [x] Risk trends
-- [x] Dockerfile
-- [x] Docker Compose
-- [x] Health endpoint
-- [x] Non-root container execution
+- [x] React/TypeScript dashboard
+- [x] SQLite scan history / trends
+- [x] hardened Docker / Docker Compose deployment
+- [x] reproducible Python/frontend CI quality gates
+- [x] deterministic adversarial evaluation framework
 
-## Completed Local Release Verification (v0.12.7)
+## H10C Documentation / Portfolio Closure
 
-The following release verification was completed successfully before the v0.12.7 tag was created:
+- [x] README synchronized with v1.0.0 release-candidate evidence
+- [x] security policy wording synchronized
+- [x] architecture/final report/project summary synchronized
+- [x] production-safe demo script synchronized with fail-closed auth/readiness
+- [x] interview explanation includes H9 before/after metrics and claim boundary
+- [x] resume-points document uses React/TypeScript and defensible benchmark language
+- [x] screenshot checklist synchronized
+- [x] final H10 portfolio claim boundaries documented
 
-```powershell
-git status --short
-pytest -q
-buildshield version
-buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
-buildshield scan samples/secure-repo --policy buildshield-policy.yml --hide-files
-buildshield compare samples/vulnerable-repo samples/secure-repo
-buildshield inventory samples/vulnerable-repo --hide-packages
-buildshield vulncheck samples/secure-repo --offline-plan
-```
+H10C is locally complete only after its dedicated documentation-consistency tests and the full regression suite pass.
 
-Online OSV was also validated separately because network results are dynamic.
+## Final Release Actions - Remaining
 
-## Dashboard / Portfolio Capture Checklist
+- [x] complete H10D cumulative local/container validation
+- [x] create and push H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f`
+- [x] verify hosted GitHub Actions on that checkpoint
+- [x] complete final professional UI / realistic-demo / live-browser / sanitation pass after that checkpoint
+- [ ] create the replacement final checkpoint commit containing the post-checkpoint polish
+- [ ] push the replacement final hardening state
+- [ ] require hosted GitHub Actions success on that exact replacement checkpoint
+- [ ] open/review the final PR to `main`
+- [ ] verify SARIF/report artifacts
+- [ ] merge the accepted final PR
+- [ ] verify `main` points to the accepted release commit and CI is green
+- [ ] create and push annotated tag `v1.0.0`
+- [ ] create/verify the GitHub release and release artifacts
+- [ ] capture final public portfolio screenshots
+- [ ] freeze normal feature development except critical corrective patches
 
-These items remain a presentation/screenshot checklist and are not release blockers for the already frozen v0.12.7 baseline:
+## Presentation Boundaries
 
-- [ ] Start dashboard for final capture
-- [ ] `/health` response screenshot
-- [ ] Overview screenshot
-- [ ] Scanner screenshot
-- [ ] Findings screenshot
-- [ ] Policy screenshot
-- [ ] Compare screenshot
-- [ ] Inventory screenshot
-- [ ] Vulnerability Intelligence screenshot
-- [ ] History and Trends screenshot
-- [ ] Reports download screenshot
-
-## Docker Verification
-
-- [x] `docker build` succeeds
-- [x] Container starts
-- [x] Non-root execution confirmed
-- [x] `/health` works
-- [x] Docker Compose starts
-- [x] Persistent report volume works
-- [x] Persistent data volume works
-- [x] Compose shutdown succeeds cleanly
-
-## GitHub Release Verification
-
-- [x] Maintenance branch pushed
-- [x] Pull request opened to `main`
-- [x] GitHub Actions passes on PR
-- [x] SARIF upload succeeds
-- [x] Artifacts upload succeeds
-- [ ] Code Scanning page visually reviewed for controlled sample alerts
-- [ ] Documentation visually reviewed in GitHub UI for final portfolio capture
-- [x] Merge completed
-- [x] `main` CI revalidated
-- [x] v0.12.7 annotated tag created and pushed
-
-## Documentation
-
-- [x] README
-- [x] Architecture
-- [x] Deployment guide
-- [x] Research log
-- [x] Final project summary
-- [x] Final report
-- [x] Demo script
-- [x] Interview explanation
-- [x] Resume points
-- [x] Screenshot checklist
-- [x] Final submission checklist
-
-## Important Presentation Notes
-
-- The vulnerable sample is intentionally insecure.
-- Code Scanning alerts generated from that sample are intentional demonstration alerts.
-- `100/100` is the internal static-configuration score for the controlled hardened sample; it does not guarantee zero external CVEs forever.
+- The vulnerable fixture is intentionally insecure.
+- Code Scanning alerts from that fixture are expected demonstration alerts.
+- `100/100` is an internal controlled static-configuration score, not proof of complete security.
+- H9 F1 = 1.000000 is performance on the fixed curated 100-case regression corpus, not a real-world detection-accuracy estimate.
 - OSV online results are dynamic.
-- BuildShield-CI is deployment-ready for controlled environments, not claimed as a fully hardened enterprise multi-user service.
+- BuildShield-CI is positioned for controlled single-instance deployment, not claimed as enterprise multi-tenant SaaS.
 
-## Final-Hardening Entry Gate
+## Current State
 
-The gate required before beginning the final hardening program is complete:
-
-- [x] Full freeze regression passes
-- [x] v0.12.7 is merged to `main`
-- [x] main CI passes
-- [x] v0.12.7 annotated tag is pushed
-- [x] Working tree was clean at freeze
-- [x] `upgrade/v0.13-security-hardening` was created from the exact frozen v0.12.7 commit
-
-Current state: the hardening branch is active and was created from the frozen baseline. **H1 has not started yet.** The next implementation phase is the H1-H10 finalization program targeting **BuildShield-CI v1.0.0 Final**.
+H1-H10 local engineering is complete. The original H10 checkpoint passed hosted CI, and the post-checkpoint professional UI plus realistic application profile have now passed frontend/backend/Docker regression, live browser review and final repository sanitation. The project is **not yet the final tagged v1.0.0 release** until the replacement final checkpoint passes hosted CI, the PR is merged, `main` is verified, and the annotated tag/GitHub release are created and verified.

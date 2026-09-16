@@ -1,22 +1,24 @@
-name: BuildShield-CI Security Gate
+name: BuildShield-CI Quality and Security Gate
 
 on:
   push:
     branches:
       - main
       - master
+      - upgrade/v0.13-security-hardening
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-  actions: read
-  security-events: write
+# Deny permissions by default. Each job receives only what it needs.
+permissions: {}
 
 jobs:
-  buildshield-security-gate:
-    name: BuildShield-CI Policy Gate
+  python-quality:
+    name: Python Quality / Reproducibility
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -27,87 +29,325 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install BuildShield-CI
+      - name: Install hash-locked Linux CI dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python -m pip install --require-hashes \
+            -r requirements/dev-py313-linux.lock.txt
+          python -m pip check
 
-      - name: Validate CLI installation
+      - name: Run Ruff
         run: |
+          python -m ruff check src tests
+
+      - name: Run mypy typed-boundary gate
+        run: |
+          python -m mypy \
+            src/supplysentinel/web/runtime_config.py \
+            src/supplysentinel/web/request_models.py
+
+      - name: Run pytest with branch coverage
+        run: |
+          mkdir -p reports
+          python -m pytest -q \
+            --cov=supplysentinel \
+            --cov-report=term-missing \
+            --cov-report=json:reports/coverage.json
+
+      - name: Enforce preserved coverage baseline
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("reports/coverage.json").read_text(encoding="utf-8"))
+          totals = payload["totals"]
+          raw = float(totals["percent_covered"])
+          display = int(totals["percent_covered_display"])
+          baseline = 83.56708123842286
+
+          if raw + 1e-12 < baseline:
+              raise SystemExit(
+                  f"coverage raw regression: {raw:.14f}% < {baseline:.14f}%"
+              )
+          if display < 84:
+              raise SystemExit(f"coverage display regression: {display}% < 84%")
+
+          print(f"coverage raw={raw:.14f}%")
+          print(f"coverage.py display={display}%")
+          PY
+
+      - name: Build wheel and source distribution
+        run: |
+          rm -rf dist
+          python -m build --wheel --sdist --outdir dist
+
+      - name: Verify fresh non-editable wheel installation
+        run: |
+          python -m venv "$RUNNER_TEMP/buildshield-runtime"
+          "$RUNNER_TEMP/buildshield-runtime/bin/python" -m pip install \
+            --require-hashes \
+            -r requirements/runtime-py313-linux.lock.txt
+          "$RUNNER_TEMP/buildshield-runtime/bin/python" -m pip install \
+            --no-deps \
+            dist/*.whl
+          "$RUNNER_TEMP/buildshield-runtime/bin/python" -m pip check
+          "$RUNNER_TEMP/buildshield-runtime/bin/buildshield" version
+
+          "$RUNNER_TEMP/buildshield-runtime/bin/python" - <<'PY'
+          import os
+          from pathlib import Path
+
+          import supplysentinel
+
+          module_path = Path(supplysentinel.__file__).resolve()
+          workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
+
+          if module_path == workspace or workspace in module_path.parents:
+              raise SystemExit(
+                  f"expected installed wheel outside workspace, got {module_path}"
+              )
+
+          print(f"installed package path: {module_path}")
+          PY
+
+      - name: Regenerate and verify CycloneDX 1.6 runtime SBOM
+        run: |
+          cyclonedx-py environment \
+            --pyproject "$GITHUB_WORKSPACE/pyproject.toml" \
+            --spec-version 1.6 \
+            --output-format JSON \
+            --output-reproducible \
+            --output-file "$RUNNER_TEMP/cyclonedx-python-a.json" \
+            "$RUNNER_TEMP/buildshield-runtime/bin/python"
+
+          cyclonedx-py environment \
+            --pyproject "$GITHUB_WORKSPACE/pyproject.toml" \
+            --spec-version 1.6 \
+            --output-format JSON \
+            --output-reproducible \
+            --output-file "$RUNNER_TEMP/cyclonedx-python-b.json" \
+            "$RUNNER_TEMP/buildshield-runtime/bin/python"
+
+          cmp -s \
+            "$RUNNER_TEMP/cyclonedx-python-a.json" \
+            "$RUNNER_TEMP/cyclonedx-python-b.json"
+
+          cmp -s \
+            "$RUNNER_TEMP/cyclonedx-python-a.json" \
+            sbom/cyclonedx-python.json
+
+          python - "$RUNNER_TEMP/cyclonedx-python-a.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          root = payload["metadata"]["component"]
+
+          if payload["bomFormat"] != "CycloneDX":
+              raise SystemExit("unexpected SBOM format")
+          if payload["specVersion"] != "1.6":
+              raise SystemExit("unexpected CycloneDX specification version")
+          if root["name"] != "buildshield-ci" or root["version"] != "1.0.0":
+              raise SystemExit("unexpected BuildShield-CI root component")
+          if root["bom-ref"] != "root-component":
+              raise SystemExit("unexpected root bom-ref")
+
+          components = payload.get("components", [])
+          dependency_entries = payload.get("dependencies", [])
+          by_ref = {
+              component["bom-ref"]: component
+              for component in components
+              if component.get("bom-ref")
+          }
+
+          root_entry = next(
+              entry
+              for entry in dependency_entries
+              if entry.get("ref") == root["bom-ref"]
+          )
+          direct_names = {
+              by_ref[ref]["name"].lower()
+              for ref in root_entry.get("dependsOn", [])
+          }
+          expected_direct = {
+              "fastapi",
+              "pydantic",
+              "pyyaml",
+              "rich",
+              "typer",
+              "uvicorn",
+          }
+
+          known_refs = set(by_ref) | {root["bom-ref"]}
+          unknown_refs = {
+              ref
+              for entry in dependency_entries
+              for ref in [entry.get("ref"), *entry.get("dependsOn", [])]
+              if ref and ref not in known_refs
+          }
+          edge_count = sum(
+              len(entry.get("dependsOn", []))
+              for entry in dependency_entries
+          )
+
+          if len(components) != 26:
+              raise SystemExit(f"unexpected component count: {len(components)}")
+          if len(dependency_entries) != 27:
+              raise SystemExit(
+                  f"unexpected dependency record count: {len(dependency_entries)}"
+              )
+          if direct_names != expected_direct:
+              raise SystemExit(f"unexpected root dependencies: {direct_names}")
+          if len(root_entry.get("dependsOn", [])) != 6:
+              raise SystemExit("unexpected root dependency edge count")
+          if edge_count != 42:
+              raise SystemExit(f"unexpected dependency edge count: {edge_count}")
+          if unknown_refs:
+              raise SystemExit(f"unknown dependency graph refs: {unknown_refs}")
+
+          print(
+              "CycloneDX graph verified: "
+              "26 components, 27 dependency records, "
+              "6 root edges, 42 total edges, 0 unknown refs"
+          )
+          PY
+
+  frontend-quality:
+    name: Frontend Quality / Reproducibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.23.2"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Pin npm and verify tool versions
+        run: |
+          npm install --global npm@12.0.2 --no-audit --no-fund
+          test "$(node --version)" = "v22.23.2"
+          test "$(npm --version)" = "12.0.2"
+
+      - name: Install canonical frontend lock
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all
+
+      - name: Verify npm ci does not mutate the lock
+        run: |
+          git diff --exit-code -- package-lock.json
+
+      - name: Run ESLint
+        run: |
+          npm run lint
+
+      - name: Run TypeScript typecheck
+        run: |
+          npm run typecheck
+
+      - name: Run Vitest
+        run: |
+          npm run test
+
+      - name: Run high-severity npm audit gate
+        run: |
+          npm audit --audit-level=high
+
+      - name: Build production frontend
+        run: |
+          npm run build
+
+  security-reports:
+    name: Controlled Security Gate / Reports
+    needs:
+      - python-quality
+      - frontend-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+
+      - name: Install locked dependencies and project wheel
+        run: |
+          python -m pip install --require-hashes \
+            -r requirements/dev-py313-linux.lock.txt
+          rm -rf dist
+          python -m build --wheel --outdir dist
+          python -m pip install --no-deps dist/*.whl
+          python -m pip check
           buildshield --help
           buildshield version
           supplysentinel version
 
-      - name: Run automated test suite
+      - name: Generate controlled benchmark reports
         run: |
-          pytest -q
+          mkdir -p reports
 
-      - name: Run secure repository policy gate
-        run: |
-          buildshield scan samples/secure-repo \
+          buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
-            --fail-on-policy \
             --hide-files \
-            --report-format html \
-            --output reports/secure-policy-report.html
-
-          buildshield scan samples/secure-repo \
-            --policy buildshield-policy.yml \
-            --report-format json \
-            --output reports/secure-policy-report.json
-
-          buildshield scan samples/secure-repo \
-            --policy buildshield-policy.yml \
-            --report-format md \
-            --output reports/secure-policy-report.md
-
-      - name: Demonstrate vulnerable repository policy failure
-        continue-on-error: true
-        run: |
-          buildshield scan samples/vulnerable-repo \
-            --policy buildshield-policy.yml \
-            --fail-on-policy \
-            --hide-files
-
-      - name: Generate vulnerable repository reports
-        if: always()
-        run: |
-          buildshield scan samples/vulnerable-repo \
-            --policy buildshield-policy.yml \
-            --report-format html \
-            --output reports/vulnerable-policy-report.html
-
-          buildshield scan samples/vulnerable-repo \
-            --policy buildshield-policy.yml \
             --report-format json \
             --output reports/vulnerable-policy-report.json
 
           buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
+            --hide-files \
             --report-format md \
             --output reports/vulnerable-policy-report.md
 
-      - name: Generate SARIF report for GitHub code scanning
-        if: always()
-        run: |
           buildshield scan samples/vulnerable-repo \
             --policy buildshield-policy.yml \
+            --hide-files \
+            --report-format html \
+            --output reports/vulnerable-policy-report.html
+
+          buildshield scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --hide-files \
             --report-format sarif \
             --output reports/buildshield-results.sarif
 
-      - name: Upload SARIF to GitHub code scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
-        with:
-          sarif_file: reports/buildshield-results.sarif
-          category: buildshield-ci
+          buildshield scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --hide-files \
+            --report-format json \
+            --output reports/secure-policy-report.json
 
-      - name: Generate before-after comparison reports
-        if: always()
-        run: |
-          buildshield compare samples/vulnerable-repo samples/secure-repo \
+          buildshield scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --hide-files \
+            --report-format md \
+            --output reports/secure-policy-report.md
+
+          buildshield scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --hide-files \
             --report-format html \
-            --output reports/comparison-report.html
+            --output reports/secure-policy-report.html
 
           buildshield compare samples/vulnerable-repo samples/secure-repo \
             --report-format json \
@@ -116,6 +356,117 @@ jobs:
           buildshield compare samples/vulnerable-repo samples/secure-repo \
             --report-format md \
             --output reports/comparison-report.md
+
+          buildshield compare samples/vulnerable-repo samples/secure-repo \
+            --report-format html \
+            --output reports/comparison-report.html
+
+      - name: Assert vulnerable repository policy gate fails closed
+        run: |
+          set +e
+          buildshield scan samples/vulnerable-repo \
+            --policy buildshield-policy.yml \
+            --fail-on-policy \
+            --hide-files
+          status=$?
+          set -e
+
+          if [ "$status" -ne 2 ]; then
+            echo "Expected vulnerable policy gate exit code 2; got $status"
+            exit 1
+          fi
+
+      - name: Assert secure repository policy gate passes
+        run: |
+          buildshield scan samples/secure-repo \
+            --policy buildshield-policy.yml \
+            --fail-on-policy \
+            --hide-files
+
+      - name: Assert exact controlled benchmark
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          vulnerable = json.loads(
+              Path("reports/vulnerable-policy-report.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          secure = json.loads(
+              Path("reports/secure-policy-report.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          comparison = json.loads(
+              Path("reports/comparison-report.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          vulnerable_summary = vulnerable["summary"]
+          vulnerable_profile = vulnerable["risk_profile"]
+          vulnerable_policy = vulnerable["policy_evaluation"]
+
+          if vulnerable_summary["findings_count"] != 22:
+              raise SystemExit("vulnerable finding count drift")
+          if vulnerable_summary["critical_count"] != 4:
+              raise SystemExit("vulnerable critical count drift")
+          if vulnerable_summary["high_count"] != 10:
+              raise SystemExit("vulnerable high count drift")
+          if vulnerable_summary["medium_count"] != 7:
+              raise SystemExit("vulnerable medium count drift")
+          if vulnerable_summary["low_count"] != 1:
+              raise SystemExit("vulnerable low count drift")
+          if vulnerable_summary["security_score"] != 5:
+              raise SystemExit("vulnerable score drift")
+          if vulnerable_summary["risk_level"] != "CRITICAL":
+              raise SystemExit("vulnerable risk level drift")
+          if vulnerable_profile["build_gate_status"] != "FAILED":
+              raise SystemExit("vulnerable build gate drift")
+          if vulnerable_policy["passed"] is not False:
+              raise SystemExit("vulnerable policy result drift")
+
+          secure_summary = secure["summary"]
+          secure_profile = secure["risk_profile"]
+          secure_policy = secure["policy_evaluation"]
+
+          if secure_summary["findings_count"] != 0:
+              raise SystemExit("secure finding count drift")
+          if secure_summary["security_score"] != 100:
+              raise SystemExit("secure score drift")
+          if secure_summary["risk_level"] != "LOW":
+              raise SystemExit("secure risk level drift")
+          if secure_profile["build_gate_status"] != "PASSED":
+              raise SystemExit("secure build gate drift")
+          if secure_policy["passed"] is not True:
+              raise SystemExit("secure policy result drift")
+
+          if comparison["score_delta"] != 95:
+              raise SystemExit("comparison score delta drift")
+          if comparison["findings_reduced"] != 22:
+              raise SystemExit("comparison finding reduction drift")
+          if float(comparison["risk_reduction_percentage"]) != 100.0:
+              raise SystemExit("comparison risk reduction drift")
+          if (
+              comparison["verdict"]
+              != "SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED"
+          ):
+              raise SystemExit("comparison verdict drift")
+
+          print("Exact controlled benchmark preserved.")
+          PY
+
+      - name: Upload SARIF to GitHub code scanning
+        if: >-
+          ${{ always() &&
+              (github.event_name != 'pull_request' ||
+               github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        with:
+          sarif_file: reports/buildshield-results.sarif
+          category: buildshield-ci-controlled-sample
 
       - name: Upload BuildShield-CI reports
         if: always()

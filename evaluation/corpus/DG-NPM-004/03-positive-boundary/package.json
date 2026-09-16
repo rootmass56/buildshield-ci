@@ -1,0 +1,8 @@
+{
+  "name": "h9-eval",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "corp-auth-sdk": "1.2.3"
+  }
+}

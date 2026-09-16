@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from supplysentinel.analyzers.utils import (
@@ -9,7 +10,7 @@ from supplysentinel.core.constants import FindingCategory, Severity
 from supplysentinel.core.models import Evidence, Finding, RepositoryFile
 
 
-SENSITIVE_ENV_KEYWORDS = [
+SENSITIVE_ENV_EXACT_KEYS = {
     "SECRET",
     "TOKEN",
     "PASSWORD",
@@ -19,7 +20,30 @@ SENSITIVE_ENV_KEYWORDS = [
     "ACCESS_KEY",
     "AWS_SECRET",
     "GITHUB_TOKEN",
-]
+}
+
+SENSITIVE_ENV_SUFFIXES = (
+    "_SECRET",
+    "_TOKEN",
+    "_PASSWORD",
+    "_PASSWD",
+    "_PRIVATE_KEY",
+    "_API_KEY",
+    "_ACCESS_KEY",
+)
+
+REMOTE_PIPE_SHELL_PATTERN = re.compile(
+    r"\b(?:curl|wget)\b.*\|\s*"
+    r"(?:/(?:usr/)?bin/)?(?:bash|sh)\b",
+    re.IGNORECASE,
+)
+
+APT_UPGRADE_PATTERN = re.compile(
+    r"\bapt(?:-get)?\b"
+    r"(?:\s+(?:-[A-Za-z0-9-]+(?:=[^\s]+)?))*"
+    r"\s+upgrade\b",
+    re.IGNORECASE,
+)
 
 
 def is_dockerfile(repo_file: RepositoryFile) -> bool:
@@ -103,10 +127,9 @@ def detect_latest_base_image(content: str, relative_path: str) -> list[Finding]:
     return findings
 
 
-def detect_missing_user_instruction(content: str, relative_path: str) -> list[Finding]:
-    findings: list[Finding] = []
-    has_user_instruction = False
-    root_user_line: tuple[int, str] | None = None
+def final_stage_lines(content: str) -> list[tuple[int, str]]:
+    """Return non-empty lines belonging to the final Docker build stage."""
+    current_stage: list[tuple[int, str]] = []
 
     for line_number, line in enumerate(content.splitlines(), start=1):
         stripped = line.strip()
@@ -114,43 +137,71 @@ def detect_missing_user_instruction(content: str, relative_path: str) -> list[Fi
         if not stripped or stripped.startswith("#"):
             continue
 
-        if stripped.upper().startswith("USER "):
-            has_user_instruction = True
+        if stripped.upper().startswith("FROM "):
+            current_stage = [(line_number, stripped)]
+            continue
 
-            user_value = stripped.split(maxsplit=1)[1].strip().lower()
+        current_stage.append((line_number, stripped))
 
-            if user_value in {"root", "0"}:
-                root_user_line = (line_number, stripped)
+    return current_stage
 
-    if not has_user_instruction:
+
+def docker_user_identity(user_value: str) -> str:
+    """Return the user/UID portion before an optional :group/GID suffix."""
+    return user_value.strip().split(":", maxsplit=1)[0].strip().lower()
+
+
+def detect_missing_user_instruction(content: str, relative_path: str) -> list[Finding]:
+    findings: list[Finding] = []
+    final_user_line: tuple[int, str] | None = None
+    final_user_value: str | None = None
+
+    for line_number, stripped in final_stage_lines(content):
+        if not stripped.upper().startswith("USER "):
+            continue
+
+        final_user_line = (line_number, stripped)
+        final_user_value = stripped.split(maxsplit=1)[1].strip()
+
+    if final_user_line is None:
         findings.append(
             create_finding(
                 rule_id="DG-DOCKER-002",
                 title="Dockerfile does not define a non-root USER",
                 severity=Severity.HIGH,
-                description="The Dockerfile does not specify a non-root USER instruction.",
+                description=(
+                    "The final Docker runtime stage does not specify a "
+                    "non-root USER instruction."
+                ),
                 impact=(
                     "Containers running as root increase the impact of container escape, "
                     "filesystem abuse, and privilege-related misconfigurations."
                 ),
                 remediation=(
                     "Create a dedicated low-privilege user and add a USER instruction "
-                    "before the final runtime command."
+                    "in the final runtime stage before the final runtime command."
                 ),
                 file_path=relative_path,
                 line_number=None,
-                snippet="No USER instruction found",
+                snippet="No USER instruction found in final runtime stage",
             )
         )
+        return findings
 
-    if root_user_line:
-        line_number, snippet = root_user_line
+    assert final_user_value is not None
+    identity = docker_user_identity(final_user_value)
+
+    if identity in {"root", "0"}:
+        line_number, snippet = final_user_line
         findings.append(
             create_finding(
                 rule_id="DG-DOCKER-003",
                 title="Dockerfile explicitly runs container as root",
                 severity=Severity.HIGH,
-                description="The Dockerfile explicitly sets USER to root or UID 0.",
+                description=(
+                    "The final Docker runtime stage explicitly sets USER "
+                    "to root or UID 0."
+                ),
                 impact=(
                     "Running application containers as root weakens container isolation "
                     "and increases privilege escalation impact."
@@ -163,6 +214,45 @@ def detect_missing_user_instruction(content: str, relative_path: str) -> list[Fi
         )
 
     return findings
+
+
+def is_sensitive_env_key(key: str) -> bool:
+    normalized = key.strip().upper()
+
+    if normalized in SENSITIVE_ENV_EXACT_KEYS:
+        return True
+
+    if normalized.startswith("AWS_SECRET_"):
+        return True
+
+    return normalized.endswith(SENSITIVE_ENV_SUFFIXES)
+
+
+def docker_instruction_keys(stripped: str) -> list[str]:
+    """Extract ENV/ARG variable names without inspecting benign values."""
+    parts = stripped.split(maxsplit=1)
+    if len(parts) != 2:
+        return []
+
+    instruction = parts[0].upper()
+    body = parts[1].strip()
+
+    if instruction == "ARG":
+        return [body.split("=", maxsplit=1)[0].strip()]
+
+    if instruction != "ENV":
+        return []
+
+    tokens = body.split()
+
+    if any("=" in token for token in tokens):
+        return [
+            token.split("=", maxsplit=1)[0].strip()
+            for token in tokens
+            if "=" in token
+        ]
+
+    return [tokens[0]] if tokens else []
 
 
 def detect_sensitive_env_or_arg(content: str, relative_path: str) -> list[Finding]:
@@ -179,7 +269,9 @@ def detect_sensitive_env_or_arg(content: str, relative_path: str) -> list[Findin
         if not (upper_line.startswith("ENV ") or upper_line.startswith("ARG ")):
             continue
 
-        if any(keyword in upper_line for keyword in SENSITIVE_ENV_KEYWORDS):
+        keys = docker_instruction_keys(stripped)
+
+        if any(is_sensitive_env_key(key) for key in keys):
             findings.append(
                 create_finding(
                     rule_id="DG-DOCKER-004",
@@ -209,29 +301,15 @@ def detect_sensitive_env_or_arg(content: str, relative_path: str) -> list[Findin
 def detect_remote_script_pipe_shell(content: str, relative_path: str) -> list[Finding]:
     findings: list[Finding] = []
 
-    dangerous_patterns = [
-        "curl ",
-        "wget ",
-    ]
-
-    shell_patterns = [
-        "| bash",
-        "| sh",
-        "bash -c",
-        "sh -c",
-    ]
-
     for line_number, line in enumerate(content.splitlines(), start=1):
         stripped = line.strip()
-        lower_line = stripped.lower()
 
         if not stripped.upper().startswith("RUN "):
             continue
 
-        has_download = any(pattern in lower_line for pattern in dangerous_patterns)
-        has_shell_pipe = any(pattern in lower_line for pattern in shell_patterns)
+        command = stripped.split(maxsplit=1)[1]
 
-        if has_download and has_shell_pipe:
+        if REMOTE_PIPE_SHELL_PATTERN.search(command):
             findings.append(
                 create_finding(
                     rule_id="DG-DOCKER-005",
@@ -263,12 +341,12 @@ def detect_apt_get_upgrade(content: str, relative_path: str) -> list[Finding]:
 
     for line_number, line in enumerate(content.splitlines(), start=1):
         stripped = line.strip()
-        lower_line = stripped.lower()
-
         if not stripped.upper().startswith("RUN "):
             continue
 
-        if "apt-get upgrade" in lower_line or "apt upgrade" in lower_line:
+        command = stripped.split(maxsplit=1)[1]
+
+        if APT_UPGRADE_PATTERN.search(command):
             findings.append(
                 create_finding(
                     rule_id="DG-DOCKER-006",
@@ -295,12 +373,20 @@ def detect_apt_get_upgrade(content: str, relative_path: str) -> list[Finding]:
 
 
 def detect_missing_healthcheck(content: str, relative_path: str) -> list[Finding]:
-    has_healthcheck = any(
-        line.strip().upper().startswith("HEALTHCHECK")
-        for line in content.splitlines()
-    )
+    active_healthcheck = False
 
-    if has_healthcheck:
+    for _line_number, stripped in final_stage_lines(content):
+        if not stripped.upper().startswith("HEALTHCHECK"):
+            continue
+
+        remainder = stripped[len("HEALTHCHECK"):].strip()
+
+        if remainder.upper() == "NONE":
+            active_healthcheck = False
+        else:
+            active_healthcheck = True
+
+    if active_healthcheck:
         return []
 
     return [
@@ -308,18 +394,21 @@ def detect_missing_healthcheck(content: str, relative_path: str) -> list[Finding
             rule_id="DG-DOCKER-007",
             title="Dockerfile does not define HEALTHCHECK",
             severity=Severity.LOW,
-            description="The Dockerfile does not define a HEALTHCHECK instruction.",
+            description=(
+                "The final Docker runtime stage does not define an active "
+                "HEALTHCHECK instruction."
+            ),
             impact=(
                 "Without a health check, container platforms may have reduced visibility "
                 "into application readiness or runtime failure."
             ),
             remediation=(
                 "Add an appropriate HEALTHCHECK instruction for the application or "
-                "service running in the container."
+                "service running in the final runtime stage."
             ),
             file_path=relative_path,
             line_number=None,
-            snippet="No HEALTHCHECK instruction found",
+            snippet="No active HEALTHCHECK found in final runtime stage",
         )
     ]
 

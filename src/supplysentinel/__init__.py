@@ -1,4 +1,4 @@
-__version__ = "0.12.7"
+__version__ = "1.0.0"
 
 PRODUCT_NAME = "BuildShield-CI"
 LEGACY_NAME = "SupplySentinel"

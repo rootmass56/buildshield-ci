@@ -1,64 +1,38 @@
-﻿# BuildShield-CI Resume Points
+# BuildShield-CI Resume Points
 
 ## Project Title
 
-BuildShield-CI — Advanced CI/CD Supply Chain Risk Analyzer
+**BuildShield-CI — DevSecOps CI/CD Supply Chain Security Analyzer**
 
-## Short Resume Entry
+## Recommended Technical Stack
 
-BuildShield-CI — Advanced CI/CD Supply Chain Risk Analyzer  
-Python, FastAPI, Typer, Rich, SQLite, JavaScript, Docker, GitHub Actions, SARIF, OSV
+Python, FastAPI, React, TypeScript, GitHub Actions, SARIF, OSV API, Docker, SQLite, Pytest
 
-- Developed an advanced DevSecOps security platform to detect dependency confusion, insecure package configuration, GitHub Actions risks, Dockerfile hardening issues, and known vulnerable dependencies.
-- Built a modular static analysis engine for npm, Python, GitHub Actions, and Dockerfiles with severity classification, evidence extraction, impact analysis, remediation guidance, and risk scoring.
-- Implemented policy-as-code CI/CD gating, SARIF report generation, GitHub Code Scanning integration, OSV vulnerability intelligence, SBOM-lite dependency inventory, SQLite scan history, risk trend dashboard, and Docker deployment support.
+## Recommended Two-Bullet Resume Version
 
-## Strong Resume Version
+- Engineered a DevSecOps supply-chain security platform analyzing npm/Python dependencies, package registries, GitHub Actions workflows and Dockerfiles to detect dependency confusion, insecure registry configurations, unpinned dependencies, secret exposure and CI/CD/container security misconfigurations.
+- Implemented static analysis, risk scoring, policy-as-code security gates, SBOM-lite inventory, OSV vulnerability intelligence, SARIF/GitHub Code Scanning integration and a FastAPI/React security dashboard; reduced controlled benchmark findings from 22 to 0 and improved the internal security score from 5/100 to 100/100, with a fixed 100-case adversarial regression corpus reaching 0 FP/FN after remediation.
 
-BuildShield-CI — Advanced CI/CD Supply Chain Risk Analyzer  
-Python, FastAPI, Typer, Rich, SQLite, JavaScript, Docker, GitHub Actions, SARIF, OSV
+## Evaluation-Focused Optional Bullet
 
-- Engineered a DevSecOps supply-chain security platform that scans repositories for dependency confusion risks, weak package registry configuration, unpinned dependencies, risky build scripts, insecure GitHub Actions workflows, Dockerfile misconfigurations, and known vulnerable packages.
-- Designed a modular security analysis engine with analyzers for npm, Python requirements, GitHub Actions, Dockerfiles, SBOM-lite dependency inventory, OSV vulnerability intelligence, severity classification, evidence extraction, and remediation guidance.
-- Integrated policy-as-code enforcement, advanced risk scoring, JSON/Markdown/HTML/SARIF reporting, GitHub Code Scanning, GitHub Actions CI/CD automation, SQLite scan history, risk trend visualization, and Docker Compose deployment.
+- Built a deterministic 100-case adversarial evaluation framework across 20 static security rules; identified 14 initial detector mismatches and improved micro F1 from 0.854167 to 1.000000 on the unchanged curated corpus while preserving the independent 22 -> 0 controlled benchmark.
 
-## Interview-Friendly Resume Version
+Use the evaluation bullet only when space allows. Do not shorten it to “100% accurate”; the 1.000000 result is scoped to the fixed regression corpus.
 
-BuildShield-CI — CI/CD Supply Chain Security Platform  
-Python, FastAPI, SQLite, Docker, GitHub Actions, SARIF, OSV
+## Short Project Summary
 
-- Built a complete CI/CD supply-chain risk analyzer that detects dependency confusion, insecure dependency versions, GitHub Actions security risks, Dockerfile issues, and vulnerable dependencies.
-- Implemented a FastAPI dashboard with scan execution, findings explorer, policy evaluation, SBOM-lite inventory, OSV vulnerability intelligence, downloadable reports, and historical risk trend tracking.
-- Added CI/CD policy gating, SARIF upload to GitHub Code Scanning, Docker deployment, Docker Compose volumes, and automated test coverage.
+Built BuildShield-CI, a defensive DevSecOps platform for pre-deployment supply-chain and CI/CD risk analysis with explicit npm/Python/GitHub Actions/Dockerfile analyzers, policy-as-code gating, SARIF/Code Scanning, dependency inventory, OSV intelligence, FastAPI/React dashboarding, SQLite history, reproducible CI gates and hardened Docker deployment.
 
-## One-Line Resume Summary
+## Interview-Defensible Metrics
 
-Built BuildShield-CI, an advanced DevSecOps platform for CI/CD supply-chain risk analysis with policy-as-code gating, SARIF/GitHub Code Scanning, OSV vulnerability intelligence, SBOM-lite inventory, dashboard visualization, SQLite scan history, and Docker deployment.
+- Controlled vulnerable fixture: 22 findings, score 5/100
+- Controlled hardened fixture: 0 findings, score 100/100
+- H9 pre-hardening corpus: 41 TP / 45 TN / 4 FP / 10 FN, micro F1 0.854167
+- H9 post-hardening unchanged corpus: 51 TP / 49 TN / 0 FP / 0 FN, micro F1 1.000000
+- H10B Windows release-candidate suite: 276 passed, 2 skipped
+
+The controlled benchmark and curated corpus are not population-level or real-world accuracy measurements.
 
 ## Skills Demonstrated
 
-- DevSecOps
-- CI/CD security
-- Supply-chain security
-- Dependency confusion defense
-- Application security
-- Static analysis
-- Policy-as-code
-- GitHub Actions security
-- Docker security
-- Vulnerability intelligence
-- SARIF reporting
-- GitHub Code Scanning
-- FastAPI backend development
-- Dashboard development
-- SQLite persistence
-- Docker deployment
-- Test automation
-
-## Best Placement Interview Explanation
-
-I built BuildShield-CI to solve CI/CD supply-chain security risks. It scans repositories before deployment and detects risky dependencies, dependency confusion possibilities, weak private registry configuration, insecure GitHub Actions workflows, Dockerfile hardening issues, and vulnerable package versions. It also enforces YAML policy-as-code rules, generates SARIF for GitHub Code Scanning, stores scan history in SQLite, shows risk trends in a dashboard, and supports Docker deployment.
-
-## GitHub Repository Description
-
-Advanced CI/CD supply-chain risk analyzer with dependency confusion detection, policy-as-code gating, SARIF/GitHub Code Scanning, SBOM-lite inventory, OSV vulnerability intelligence, dashboard visualization, SQLite scan history, and Docker deployment.
+DevSecOps, CI/CD security, software supply-chain security, dependency confusion defense, static analysis, policy-as-code, GitHub Actions security, Docker security, SARIF, GitHub Code Scanning, OSV vulnerability intelligence, FastAPI, React/TypeScript, SQLite, reproducible builds, test automation and adversarial evaluation.

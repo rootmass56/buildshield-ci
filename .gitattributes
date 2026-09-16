@@ -18,8 +18,18 @@ Dockerfile text eol=lf
 *.html text eol=lf
 *.css text eol=lf
 *.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
 *.txt text eol=lf
 *.ini text eol=lf
 
 # Windows-native PowerShell scripts use CRLF when added in the future.
 *.ps1 text eol=crlf
+
+# Extensionless/package-manager configuration used by scanner fixtures.
+.npmrc text eol=lf
+.pypirc text eol=lf
+*.conf text eol=lf
+
+# Archive extensions are binary, including deterministic placeholder fixtures.
+*.tgz -text
