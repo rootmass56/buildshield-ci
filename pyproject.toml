@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69.0.0", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,8 @@ name = "buildshield-ci"
 version = "1.0.0"
 description = "Advanced CI/CD supply-chain risk analyzer and dependency confusion defense platform."
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [
     { name = "Saketh", email = "rootmass56@users.noreply.github.com" }
