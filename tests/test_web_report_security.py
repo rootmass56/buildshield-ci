@@ -292,3 +292,4 @@ def test_report_endpoints_remain_authenticated(
 
     assert listing.status_code == 401
     assert download.status_code == 401
+    client.close()

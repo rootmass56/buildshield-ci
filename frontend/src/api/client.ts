@@ -2,7 +2,7 @@ import type { ComparisonResponse, HealthResponse, HistoryResponse, InventoryResp
 export interface SessionPayload { authenticated: boolean; username?: string; csrf_token?: string; expires_at?: number; }
 export interface LoginPayload { authenticated: true; username: string; csrf_token: string; expires_in_seconds: number; }
 export class ApiError extends Error { readonly status: number; constructor(message: string, status: number) { super(message); this.name='ApiError'; this.status=status; } }
-async function parseErrorMessage(response: Response): Promise<string> { try { const payload=(await response.json()) as {detail?:unknown}; if(typeof payload.detail==='string'&&payload.detail.trim()) return payload.detail; } catch {} return `Request failed with status ${response.status}.`; }
+async function parseErrorMessage(response: Response): Promise<string> { try { const payload=(await response.json()) as {detail?:unknown}; if(typeof payload.detail==='string'&&payload.detail.trim()) return payload.detail; } catch { /* Non-JSON error bodies fall back to the generic status message below. */ } return `Request failed with status ${response.status}.`; }
 async function requestJson<T>(path:string, init:RequestInit={}):Promise<T>{ const response=await fetch(path,{credentials:'same-origin',...init,headers:{Accept:'application/json',...(init.body?{'Content-Type':'application/json'}:{}),...init.headers}}); if(!response.ok) throw new ApiError(await parseErrorMessage(response),response.status); return (await response.json()) as T; }
 function csrfHeaders(token:string):HeadersInit{return {'X-CSRF-Token':token};}
 export const getSession=()=>requestJson<SessionPayload>('/api/auth/session');

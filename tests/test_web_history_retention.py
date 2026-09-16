@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
@@ -142,7 +143,7 @@ def test_history_count_retention_keeps_only_newest_rows(
         "run-2",
     ]
 
-    with sqlite3.connect(isolated_history) as connection:
+    with closing(sqlite3.connect(isolated_history)) as connection:
         count = connection.execute(
             "SELECT COUNT(*) FROM scan_history"
         ).fetchone()[0]
@@ -165,7 +166,7 @@ def test_history_age_retention_prunes_expired_rows_after_write(
 
     _save("old-run")
 
-    with sqlite3.connect(isolated_history) as connection:
+    with closing(sqlite3.connect(isolated_history)) as connection:
         connection.execute(
             """
             UPDATE scan_history
@@ -223,7 +224,7 @@ def test_history_indexes_are_created(
 ):
     history.ensure_database()
 
-    with sqlite3.connect(isolated_history) as connection:
+    with closing(sqlite3.connect(isolated_history)) as connection:
         names = {
             row[0]
             for row in connection.execute(

@@ -12,18 +12,22 @@ def test_dockerfile_uses_multistage_frontend_and_python_builds():
 
     content = dockerfile.read_text(encoding="utf-8")
 
-    assert "FROM node:22.15.0-bookworm-slim AS frontend-builder" in content
+    assert "FROM node:22.23.2-bookworm-slim AS frontend-builder" in content
+    assert "npm install --global npm@12.0.2 --no-audit --no-fund" in content
     assert "npm ci --ignore-scripts --no-audit --no-fund" in content
-    assert "@typescript/typescript-linux-x64@7.0.2" in content
-    assert "@rolldown/binding-linux-x64-gnu@1.2.8" in content
-    assert "lightningcss-linux-x64-gnu@1.33.0" in content
-    assert "npm pack" in content
-    assert "--pack-destination /tmp/native-packages" in content
-    assert "node_modules/@typescript/typescript-linux-x64/lib/tsc" in content
-    assert "import('rolldown')" in content
+    assert "npm ls --all" in content
+    assert "--legacy-peer-deps" not in content
+    assert "npm run typecheck && npm run build" in content
+
+    # H8C removes the H7 temporary native-package injection workaround.
+    assert "npm pack" not in content
+    assert "install_native_package" not in content
+    assert "@typescript/typescript-linux-x64@7.0.2" not in content
+    assert "@rolldown/binding-linux-x64-gnu@1.2.8" not in content
+    assert "lightningcss-linux-x64-gnu@1.33.0" not in content
+    assert "--pack-destination /tmp/native-packages" not in content
     assert "--package-lock=false" not in content
-    assert "npm install" not in content.split("RUN npm ci", 1)[1].split("COPY frontend/", 1)[0]
-    assert "npm run build" in content
+
     assert "FROM python:3.13-slim AS python-builder" in content
     assert "python -m pip wheel --wheel-dir /wheels ." in content
     assert "FROM python:3.13-slim AS runtime" in content

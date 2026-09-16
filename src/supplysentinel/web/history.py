@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -72,10 +73,14 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _connect_database() -> sqlite3.Connection:
+    return sqlite3.connect(DATABASE_PATH, timeout=5.0)
+
+
 def ensure_database() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS scan_history (
@@ -188,7 +193,7 @@ def apply_history_retention(
     if current_time.tzinfo is None:
         current_time = current_time.replace(tzinfo=timezone.utc)
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         result = _prune_scan_history(
             connection,
             settings=settings,
@@ -230,7 +235,7 @@ def save_scan_history(
     if retention_now.tzinfo is None:
         retention_now = retention_now.replace(tzinfo=timezone.utc)
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         cursor = connection.execute(
             """
             INSERT INTO scan_history (
@@ -328,7 +333,7 @@ def get_recent_scan_history(limit: int = 20) -> list[dict[str, Any]]:
 
     safe_limit = max(1, min(limit, 100))
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(
@@ -349,7 +354,7 @@ def get_risk_trend(limit: int = 20) -> list[dict[str, Any]]:
 
     safe_limit = max(1, min(limit, 100))
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         connection.row_factory = sqlite3.Row
 
         rows = connection.execute(
@@ -386,7 +391,7 @@ def get_risk_trend(limit: int = 20) -> list[dict[str, Any]]:
 def clear_scan_history() -> dict[str, int]:
     ensure_database()
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         cursor = connection.execute("DELETE FROM scan_history")
         connection.commit()
 
@@ -405,7 +410,7 @@ def clear_report_metadata_for_runs(
     updated_rows = 0
     chunk_size = 250
 
-    with sqlite3.connect(DATABASE_PATH, timeout=5.0) as connection:
+    with closing(_connect_database()) as connection:
         connection.row_factory = sqlite3.Row
 
         for start in range(0, len(unique_run_ids), chunk_size):

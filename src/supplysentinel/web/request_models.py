@@ -13,6 +13,14 @@ ScanReportFormat = Literal["json", "md", "html", "sarif"]
 CompareReportFormat = Literal["json", "md", "html"]
 
 
+def _default_scan_report_formats() -> list[ScanReportFormat]:
+    return ["json", "md", "html", "sarif"]
+
+
+def _default_compare_report_formats() -> list[CompareReportFormat]:
+    return ["json", "md", "html"]
+
+
 class StrictRequestModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -48,7 +56,7 @@ class ScanRequest(StrictRequestModel):
         max_length=MAX_PATH_LENGTH,
     )
     report_formats: list[ScanReportFormat] = Field(
-        default_factory=lambda: ["json", "md", "html", "sarif"],
+        default_factory=_default_scan_report_formats,
         max_length=4,
     )
 
@@ -94,7 +102,7 @@ class CompareRequest(StrictRequestModel):
         max_length=MAX_LABEL_LENGTH,
     )
     report_formats: list[CompareReportFormat] = Field(
-        default_factory=lambda: ["json", "md", "html"],
+        default_factory=_default_compare_report_formats,
         max_length=3,
     )
 

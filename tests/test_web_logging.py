@@ -37,6 +37,7 @@ def test_response_receives_server_generated_request_id():
     assert REQUEST_ID_PATTERN.fullmatch(first_id)
     assert REQUEST_ID_PATTERN.fullmatch(second_id)
     assert first_id != second_id
+    client.close()
 
 
 def test_client_supplied_request_id_is_not_trusted():
@@ -51,6 +52,7 @@ def test_client_supplied_request_id_is_not_trusted():
 
     assert response_id != "client-controlled-id"
     assert REQUEST_ID_PATTERN.fullmatch(response_id)
+    client.close()
 
 
 def test_structured_formatter_ignores_sensitive_extra_fields():
@@ -151,6 +153,7 @@ def test_request_log_uses_path_without_query_string(monkeypatch):
     assert "super-secret" not in serialized
     assert "password" not in serialized
     assert "token=" not in serialized
+    client.close()
 
 
 def test_unhandled_api_exception_has_correlation_header(
@@ -190,6 +193,7 @@ def test_unhandled_api_exception_has_correlation_header(
     )
     assert response.headers["Cache-Control"] == "no-store"
     assert SECRET_ERROR not in response.text
+    client.close()
 
 
 def test_safe_endpoint_error_has_request_id_and_no_secret(

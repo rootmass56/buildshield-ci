@@ -1,3 +1,4 @@
+import gc
 from pathlib import Path
 
 import pytest
@@ -47,6 +48,12 @@ def secure_scan(secure_repo: Path):
     return scan_repository(str(secure_repo))
 
 
+@pytest.fixture(autouse=True)
+def _collect_delayed_finalizers():
+    yield
+    gc.collect()
+
+
 @pytest.fixture
 def authenticated_client(monkeypatch):
     reset_auth_state()
@@ -83,4 +90,5 @@ def authenticated_client(monkeypatch):
         yield client, csrf_token
     finally:
         client.cookies.clear()
+        client.close()
         reset_auth_state()

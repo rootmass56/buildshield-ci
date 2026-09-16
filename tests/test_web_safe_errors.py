@@ -209,3 +209,4 @@ def test_unhandled_api_exception_uses_generic_json_boundary(
     }
     assert SECRET_ERROR not in response.text
     assert "super-secret" not in response.text
+    client.close()

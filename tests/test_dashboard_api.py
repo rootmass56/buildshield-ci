@@ -1,9 +1,16 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from supplysentinel.web.app import app
 
 
 public_client = TestClient(app)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _close_public_client():
+    yield
+    public_client.close()
 
 
 def test_dashboard_health_endpoint():

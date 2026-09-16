@@ -13,6 +13,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 client = TestClient(web_app.app)
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _close_module_client():
+    yield
+    client.close()
+
+
 def test_browser_security_headers_are_present():
     response = client.get("/health")
 

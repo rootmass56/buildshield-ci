@@ -1,40 +1,18 @@
-FROM node:22.15.0-bookworm-slim AS frontend-builder
+FROM node:22.23.2-bookworm-slim AS frontend-builder
 
 WORKDIR /frontend
 
 COPY frontend/package.json frontend/package-lock.json ./
 
-RUN npm ci --ignore-scripts --no-audit --no-fund && \
-    mkdir -p /tmp/native-packages && \
-    install_native_package() { \
-        package_spec="$1"; \
-        destination="$2"; \
-        mkdir -p "$destination"; \
-        archive="$(npm pack "$package_spec" \
-            --pack-destination /tmp/native-packages \
-            --silent)"; \
-        tar -xzf "/tmp/native-packages/$archive" \
-            --strip-components=1 \
-            -C "$destination"; \
-    }; \
-    install_native_package \
-        "@typescript/typescript-linux-x64@7.0.2" \
-        "node_modules/@typescript/typescript-linux-x64"; \
-    install_native_package \
-        "@rolldown/binding-linux-x64-gnu@1.2.8" \
-        "node_modules/@rolldown/binding-linux-x64-gnu"; \
-    install_native_package \
-        "lightningcss-linux-x64-gnu@1.33.0" \
-        "node_modules/lightningcss-linux-x64-gnu"; \
-    test -x node_modules/@typescript/typescript-linux-x64/lib/tsc && \
-    test -d node_modules/@rolldown/binding-linux-x64-gnu && \
-    test -d node_modules/lightningcss-linux-x64-gnu && \
-    node -e "import('rolldown').then(() => console.log('ROLLDOWN NATIVE: PASS'))" && \
-    rm -rf /tmp/native-packages
+RUN npm install --global npm@12.0.2 --no-audit --no-fund && \
+    test "$(node --version)" = "v22.23.2" && \
+    test "$(npm --version)" = "12.0.2" && \
+    npm ci --ignore-scripts --no-audit --no-fund && \
+    npm ls --all
 
 COPY frontend/ ./
 
-RUN npm run build
+RUN npm run typecheck && npm run build
 
 
 FROM python:3.13-slim AS python-builder

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -316,7 +317,7 @@ def test_report_cleanup_reconciles_history_metadata(
     assert not old_run.exists()
     assert result["history_rows_updated"] == 1
 
-    with sqlite3.connect(database_path) as connection:
+    with closing(sqlite3.connect(database_path)) as connection:
         row = connection.execute(
             """
             SELECT report_count, metadata_json

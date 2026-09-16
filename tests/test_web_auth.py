@@ -20,6 +20,12 @@ from supplysentinel.web.auth import (
 client = TestClient(app)
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _close_module_client():
+    yield
+    client.close()
+
+
 @pytest.fixture(autouse=True)
 def clean_auth_state():
     reset_auth_state()
