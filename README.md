@@ -352,3 +352,7 @@ Key project documentation includes:
 - `CHANGELOG.md` — release history
 
 Historical H9/H10 stage documents are intentionally retained as engineering evidence. Current release status is defined by this README, the final blueprint, the `v1.0.0` tag and the published GitHub release.
+
+## License
+
+BuildShield-CI is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE) for the full license text.
