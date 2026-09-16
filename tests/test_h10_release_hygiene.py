@@ -7,7 +7,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_h10b_freezes_release_candidate_version() -> None:
+def test_h10b_freezes_release_version() -> None:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -61,10 +61,12 @@ def test_h10a_line_ending_policy_covers_release_fixture_types() -> None:
         assert rule in attributes
 
 
-def test_h10a_canonical_docs_drop_stale_pre_hardening_test_count() -> None:
+def test_canonical_docs_drop_stale_pre_hardening_and_pending_release_language() -> None:
     canonical = [
         ROOT / "README.md",
+        ROOT / "SECURITY.md",
         ROOT / "docs" / "architecture.md",
+        ROOT / "docs" / "final-blueprint.md",
         ROOT / "docs" / "final-project-summary.md",
         ROOT / "docs" / "final-report.md",
         ROOT / "docs" / "final-submission-checklist.md",
@@ -73,15 +75,25 @@ def test_h10a_canonical_docs_drop_stale_pre_hardening_test_count() -> None:
         ROOT / "docs" / "screenshots-checklist.md",
     ]
 
+    forbidden = {
+        "57 passed",
+        "57 passing tests",
+        "not yet the final tagged release",
+        "replacement final checkpoint and hosted-CI pass remain required",
+        "Only the final replacement checkpoint/hosted-CI",
+        "project remains a release candidate until",
+    }
+
     for path in canonical:
         content = path.read_text(encoding="utf-8-sig")
-        assert "57 passed" not in content
-        assert "57 passing tests" not in content
+        for phrase in forbidden:
+            assert phrase not in content, f"{path}: {phrase}"
 
 
-def test_h10a_canonical_docs_do_not_claim_h1_or_auth_are_pending() -> None:
+def test_canonical_docs_do_not_claim_completed_security_work_is_pending() -> None:
     canonical = [
         ROOT / "README.md",
+        ROOT / "SECURITY.md",
         ROOT / "docs" / "architecture.md",
         ROOT / "docs" / "final-report.md",
         ROOT / "docs" / "final-submission-checklist.md",
@@ -100,15 +112,18 @@ def test_h10a_canonical_docs_do_not_claim_h1_or_auth_are_pending() -> None:
             assert phrase not in content
 
 
-def test_h10a_readme_reflects_current_stack_and_phase() -> None:
+def test_readme_reflects_current_stack_release_and_historical_audit() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
 
     assert "React 19, TypeScript 7, Vite 8" in readme
     assert "295 passed, 2 skipped" in readme
-    assert "H1-H10 local acceptance is complete" in readme
-    assert "replacement final checkpoint" in readme
+    assert "Current released version: `v1.0.0`" in readme
+    assert "dec7eea405cd474fdea73bacd8f9847782887816" in readme
+
     audit = (ROOT / "docs" / "h10-final-audit.md").read_text(encoding="utf-8")
     assert "268 passed, 2 skipped" in audit
+    assert "51 TP / 49 TN / 0 FP / 0 FN" in audit
+    assert "not a real-world detection-accuracy claim" in audit
 
 
 def test_h10a_preserves_h9_claim_boundary() -> None:

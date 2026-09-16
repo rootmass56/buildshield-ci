@@ -103,28 +103,28 @@ def test_h10d_historical_h9_evidence_remains_immutable() -> None:
     )
 
 
-def test_h10d_release_docs_record_local_pass_without_claiming_release() -> None:
+def test_h10d_release_docs_record_historical_acceptance_and_final_release() -> None:
     blueprint = read("docs/final-blueprint.md")
     acceptance = read("docs/h10-final-release-acceptance.md")
 
-    assert "POST-CHECKPOINT UI/REALISTIC-DEMO/SANITATION COMPLETE" in blueprint
-    assert "replacement final checkpoint" in blueprint.lower()
     assert "LOCAL RELEASE ACCEPTANCE: PASS" in acceptance
-    assert "single H10 checkpoint" in acceptance
-    assert "merge, tag and GitHub release remain deferred pending hosted CI" in acceptance
-    assert "Passing local H10D validation does not itself release v1.0.0" in acceptance
+    assert "Historical H10D Local Acceptance Gates" in acceptance
     assert "294 passed, 2 skipped" in acceptance
     assert "295 passed, 2 skipped" in acceptance
+    assert "v1.0.0 RELEASED AND VERIFIED" in acceptance
+    assert "f397d257638f3e3bd50eaaa6b9966442e158a849" in acceptance
+    assert "dec7eea405cd474fdea73bacd8f9847782887816" in acceptance
+    assert "Release engineering is therefore **COMPLETE**." in blueprint
 
 
-def test_h10d_h10c_validation_evidence_is_recorded() -> None:
-    blueprint = read("docs/final-blueprint.md")
+def test_h10d_h10c_historical_evidence_is_preserved() -> None:
     acceptance = read("docs/h10-final-release-acceptance.md")
+    historical_candidate = read("docs/h10-release-candidate.md")
 
-    assert "historical H10C stage evidence" in blueprint
     assert "H10C Windows regression: 286 passed, 2 skipped" in acceptance
-    assert "H10C — Final Portfolio / Demo / Documentation Closure" in blueprint
-    assert "Status: COMPLETE LOCALLY." in blueprint
+    assert "H10B v1.0.0 release-candidate freeze: PASS" in acceptance
+    assert "276 passed, 2 skipped" in historical_candidate
+    assert "No final tag or release has been created" in historical_candidate
 
 
 def test_h10d_removed_legacy_residue_stays_absent() -> None:

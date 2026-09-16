@@ -2,13 +2,20 @@
 
 ## Project Title
 
-**BuildShield-CI — Advanced CI/CD Supply Chain Risk Analyzer and Dependency Confusion Defense Platform**
+**BuildShield-CI — Advanced CI/CD Supply-Chain Risk Analyzer and Dependency Confusion Defense Platform**
 
 ## Executive Overview
 
-BuildShield-CI is a defensive DevSecOps and software supply-chain security platform that performs passive static analysis before deployment. It analyzes npm and Python dependency configuration, private-registry controls, GitHub Actions workflows and Dockerfiles, then combines normalized findings with risk scoring, policy-as-code, reporting, GitHub Code Scanning, dependency inventory, OSV vulnerability intelligence, API/dashboard workflows, history/trends and hardened container deployment.
+BuildShield-CI is a defensive DevSecOps and software-supply-chain security platform that performs passive static analysis before deployment. It analyzes npm and Python dependency configuration, private-registry controls, GitHub Actions workflows and Dockerfiles, then combines normalized findings with risk scoring, policy-as-code, reporting, GitHub Code Scanning, dependency inventory, OSV vulnerability intelligence, API/dashboard workflows, history/trends and hardened container deployment.
 
-The current local release candidate is **1.0.0**. The final annotated `v1.0.0` tag/release remains an H10D action.
+**BuildShield-CI v1.0.0 is released and verified.**
+
+Release references:
+
+- final pre-release checkpoint: `f397d257638f3e3bd50eaaa6b9966442e158a849`
+- released `main` commit: `dec7eea405cd474fdea73bacd8f9847782887816`
+- annotated tag: `v1.0.0`
+- GitHub release: **BuildShield-CI v1.0.0**
 
 ## Core Capabilities
 
@@ -19,10 +26,12 @@ The current local release candidate is **1.0.0**. The final annotated `v1.0.0` t
 - YAML policy-as-code
 - JSON / Markdown / HTML / SARIF reports
 - GitHub Code Scanning integration
-- SBOM-lite dependency inventory and CycloneDX 1.6 release SBOM
+- SBOM-lite dependency inventory and CycloneDX 1.6 runtime SBOM
 - OSV offline planning and online vulnerability intelligence
 - FastAPI backend and React/TypeScript dashboard
 - SQLite scan history and risk trends
+- single-tenant authentication/authorization and audit logging
+- request/resource/path containment controls
 - hardened Docker / Docker Compose deployment
 - reproducible Python/frontend dependency strategy and hosted CI quality gates
 - deterministic adversarial evaluation and regression testing
@@ -48,14 +57,14 @@ The current local release candidate is **1.0.0**. The final annotated `v1.0.0` t
 
 - +95 score
 - 22 findings reduced
-- 100% reduction in findings inside this controlled vulnerable-to-hardened benchmark
+- 100% controlled reduction inside this vulnerable-to-hardened benchmark
 - `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`
 
 These numbers describe the checked-in controlled benchmark only; they are not a universal security guarantee.
 
 ## Representative Realistic Application Profile
 
-The normal dashboard/demo path now defaults to `samples/realistic-repo`, a deliberately mixed-posture application that is neither intentionally broken nor artificially perfect:
+The normal dashboard/demo path defaults to `samples/realistic-repo`, a deliberately mixed-posture application that is neither intentionally broken nor artificially perfect:
 
 - 3 findings
 - 0 Critical / 0 High / 2 Medium / 1 Low
@@ -111,29 +120,40 @@ Legacy dynamic analyzer dispatch and hidden fallback analyzers were removed. The
 
 ## Technology Stack
 
-Python 3.13, Typer, Rich, FastAPI, Pydantic, SQLite, React 19, TypeScript 7, Vite 8, GitHub Actions, SARIF, OSV, Docker, Docker Compose and Pytest.
+Python 3.13 release environment, Typer, Rich, FastAPI, Pydantic, SQLite, React 19, TypeScript 7, Vite 8, GitHub Actions, SARIF, OSV, CycloneDX, Docker, Docker Compose, Pytest and Vitest.
 
-## Final Pre-Release Validation
+## Final Validation
 
-The current post-checkpoint candidate has been verified with:
+The accepted v1.0.0 state was verified with:
 
-- realistic dashboard/API contract: 8 passed
+- realistic dashboard/API contract: PASS
 - realistic application profile: 81/100, 3 findings, MEDIUM risk, WARNING gate, policy PASS
 - natural vulnerable-to-realistic comparison: +76 score, 19 findings reduced, 80% controlled risk reduction
 - controlled vulnerable-to-hardened benchmark preserved at 5/100 -> 100/100 and 22 -> 0 findings
 - exact Node 22.23.2 / npm 12.0.2 frontend `npm ci`, dependency-tree, lint, typecheck, Vitest, high-severity audit and production build: PASS
 - Ruff: PASS
+- mypy typed-boundary gate: PASS
+- `pip check`: PASS
 - production Docker/API smoke with authentication and all three repository profiles: PASS
 - full Windows Python regression: **295 passed, 2 skipped**
-- final repository sanitation: PASS with zero tracked generated trash, zero tracked secret-like filenames, no >=5 MiB tracked files, `git diff --check` PASS, `git fsck` PASS, zero merge-conflict markers, and zero staging
-- package/runtime/frontend release identity remains `1.0.0`
+- final repository sanitation: PASS with zero tracked generated trash, zero tracked secret-like filenames, no tracked files at or above 5 MiB, `git diff --check` PASS, `git fsck` PASS and zero merge-conflict markers
+- hosted CI on final checkpoint, pull request and post-merge `main`: PASS
+- package/runtime/frontend release identity: `1.0.0`
 
 ## Deployment Positioning
 
-The v1.0.0 release candidate is designed for controlled single-instance deployment and production-style demonstrations. It includes single-tenant authentication/authorization, workspace containment, browser/request/resource controls, safe errors and audit logging, retention controls, reproducible build gates and a hardened container runtime.
+The v1.0.0 release is designed for controlled single-instance deployment and production-style demonstrations. It includes single-tenant authentication/authorization, workspace containment, browser/request/resource controls, safe errors and audit logging, retention controls, reproducible build gates and a hardened container runtime.
 
-It is not claimed as enterprise multi-tenant SaaS. Organization-wide deployment would still require environment-specific identity/RBAC, tenant isolation, secret management, TLS/network controls, centralized observability, backup/recovery and operational governance.
+It is not claimed as enterprise multi-tenant SaaS. Organization-wide deployment would require environment-specific identity/RBAC, tenant isolation, centralized secret management, TLS/network controls, centralized observability, backup/recovery and operational governance.
 
 ## Final Release Status
 
-H1-H10 local engineering is complete. The earlier H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` passed hosted CI; subsequent professional UI polish and the realistic application profile have also passed their local frontend/backend/Docker/regression gates and final sanitation. The remaining release sequence is a replacement final checkpoint commit, hosted CI on that exact state, PR review/merge, post-merge verification, annotated `v1.0.0` tag, and GitHub release verification.
+H1-H10 engineering is complete. The final replacement checkpoint `f397d257638f3e3bd50eaaa6b9966442e158a849` passed hosted CI, the accepted pull request was merged, post-merge `main` CI passed, and the annotated `v1.0.0` tag plus GitHub release were published on the verified release state.
+
+The release/merge commit is:
+
+```text
+dec7eea405cd474fdea73bacd8f9847782887816
+```
+
+The v1.0.0 tag is frozen release history. Later documentation or repository-administration cleanup must not rewrite that tag. Future behavior-changing corrections should use a new versioned release.

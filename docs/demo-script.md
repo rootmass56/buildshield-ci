@@ -2,7 +2,7 @@
 
 ## Demo Goal
 
-Demonstrate the security problem, BuildShield-CI's static-analysis workflow, controlled hardening result, deterministic evaluation, policy enforcement, supply-chain intelligence, dashboard visibility, GitHub integration and hardened container deployment.
+Demonstrate the security problem, BuildShield-CI's static-analysis workflow, realistic application posture, controlled hardening result, deterministic evaluation, policy enforcement, supply-chain intelligence, dashboard visibility, GitHub integration and hardened container deployment.
 
 ## 1. Pre-Demo Verification
 
@@ -12,15 +12,22 @@ buildshield version
 git status --short
 ```
 
-Expected release-candidate baseline:
+Expected current baseline on a clean checkout of `main`:
 
 ```text
 295 passed, 2 skipped
 BuildShield-CI version: 1.0.0
-working tree contains only the reviewed final post-checkpoint candidate before the replacement release checkpoint
+git status --short -> no output
 ```
 
-After the final H10D release checkpoint, use a clean tree for the public demo.
+Release reference:
+
+```text
+v1.0.0
+release commit: dec7eea405cd474fdea73bacd8f9847782887816
+```
+
+The default branch may contain documentation-only maintenance after the release tag. Do not move or recreate `v1.0.0` for those changes.
 
 ## 2. Realistic Application Profile
 
@@ -50,7 +57,16 @@ Natural comparison:
 buildshield compare samples/vulnerable-repo samples/realistic-repo
 ```
 
-Show +76 score, 19 findings reduced and 80% controlled risk reduction with `PARTIALLY_IMPROVED`.
+Show:
+
+```text
+5 -> 81 score
+22 -> 3 findings
++76 score
+19 findings reduced
+80% controlled risk reduction
+PARTIALLY_IMPROVED
+```
 
 ## 3. Vulnerable Benchmark Sample
 
@@ -96,7 +112,18 @@ Policy: PASSED
 buildshield compare samples/vulnerable-repo samples/secure-repo
 ```
 
-Show the +95 score change, 22 findings reduced and `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`. Describe the 100% reduction only as the result of this controlled benchmark.
+Show:
+
+```text
+5 -> 100 score
+22 -> 0 findings
++95 score
+22 findings reduced
+100% controlled risk reduction
+SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED
+```
+
+Describe the 100% reduction only as the result of this checked-in controlled benchmark.
 
 ## 6. Explain the 20 Static Rules
 
@@ -105,7 +132,7 @@ Summarize the four analyzer families:
 - npm: lockfile, version ranges, lifecycle scripts and dependency-confusion indicators
 - Python: pinning/version ranges and package-index/dependency-confusion indicators
 - GitHub Actions: immutable action refs, permissions, remote shell execution, secret logging and `pull_request_target` risk
-- Dockerfile: base-image pinning, final-stage user semantics, explicit root, secret-like ENV/ARG use, remote shell execution, package upgrades, health checks and remote-URL `ADD`
+- Dockerfile: base-image pinning, final-stage user semantics, explicit root, secret-like `ENV`/`ARG` use, remote shell execution, package upgrades, health checks and remote-URL `ADD`
 
 ## 7. Deterministic H9 Evaluation
 
@@ -123,17 +150,17 @@ State explicitly that 1.000000 is regression performance on the curated corpus, 
 ## 8. Inventory and OSV Intelligence
 
 ```powershell
-buildshield inventory samples/vulnerable-repo --hide-packages
-buildshield vulncheck samples/secure-repo --offline-plan
+buildshield inventory samples/realistic-repo --hide-packages
+buildshield vulncheck samples/realistic-repo --offline-plan
 ```
 
 Optional network-dependent lookup:
 
 ```powershell
-buildshield vulncheck samples/secure-repo --online --timeout 15
+buildshield vulncheck samples/realistic-repo --online --timeout 15
 ```
 
-Explain that online OSV results are dynamic and are not hard-coded into the deterministic static-rule metrics.
+Explain that online OSV results are dynamic and are not hard-coded into deterministic static-rule metrics.
 
 ## 9. Dashboard
 
@@ -143,14 +170,33 @@ For a local development demonstration:
 buildshield dashboard --port 8080
 ```
 
-Open `http://127.0.0.1:8080` and show scanning, findings, policy, comparison, inventory, vulnerability intelligence, reports, history and trends. The normal scanner preset should be the Realistic Application Repository (81/100, 3 findings), while the vulnerable and hardened fixtures remain benchmark presets.
+Open `http://127.0.0.1:8080`.
+
+Show:
+
+- login
+- overview
+- scanner
+- findings
+- policy
+- comparison
+- reports
+- inventory
+- vulnerability intelligence
+- history/trends
+
+The normal scanner preset should be the **Realistic Application Repository** at 81/100 with 3 findings. The vulnerable and hardened fixtures remain controlled benchmark presets.
 
 ## 10. GitHub Actions and Code Scanning
 
 Show `.github/workflows/buildshield-ci.yml` and explain:
 
 - immutable full-SHA third-party action pins
-- Python quality/reproducibility gates
+- least-privilege job permissions
+- hash-locked Python CI dependencies
+- Ruff, mypy, pytest and coverage gates
+- fresh wheel/sdist and installed-wheel verification
+- reproducible CycloneDX 1.6 SBOM checks
 - exact Node 22.23.2 / npm 12.0.2 frontend gates
 - controlled vulnerable/secure policy assertions
 - SARIF upload to GitHub Code Scanning
@@ -175,12 +221,40 @@ Invoke-RestMethod http://127.0.0.1:18080/ready
 docker compose down
 ```
 
-Explain the non-root UID/GID, read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, bounded PID/tmpfs settings, localhost-only publication, persistent report/data volumes, liveness/readiness separation and graceful shutdown.
+Explain:
+
+- numeric non-root UID/GID
+- read-only root filesystem
+- dropped Linux capabilities
+- `no-new-privileges`
+- bounded PID/tmpfs settings
+- localhost-only publication
+- persistent report/data volumes
+- liveness/readiness separation
+- fail-closed production auth
+- graceful shutdown
 
 Never commit the generated password hash.
 
+## 12. Release Evidence
+
+Show the published GitHub release and explain the exact release lineage:
+
+```text
+final pre-release checkpoint
+f397d257638f3e3bd50eaaa6b9966442e158a849
+
+released main commit
+dec7eea405cd474fdea73bacd8f9847782887816
+
+annotated tag
+v1.0.0
+```
+
+State that hosted CI passed on the final checkpoint, pull request and post-merge `main` before the release was published.
+
 ## Closing
 
-BuildShield-CI combines supply-chain static analysis, policy-as-code, risk scoring, SARIF/Code Scanning, inventory, OSV intelligence, dashboard/history, reproducible CI/CD quality gates, deterministic adversarial evaluation and hardened container deployment.
+BuildShield-CI combines supply-chain static analysis, policy-as-code, risk scoring, SARIF/Code Scanning, dependency inventory, OSV intelligence, dashboard/history, reproducible CI/CD quality gates, deterministic adversarial evaluation and hardened container deployment.
 
 The project's claims remain bounded: controlled benchmark results and curated regression-corpus metrics are evidence for the tested scenarios, not universal guarantees of repository security or real-world detection accuracy.

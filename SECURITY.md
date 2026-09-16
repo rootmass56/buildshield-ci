@@ -4,13 +4,19 @@
 
 BuildShield-CI is a defensive DevSecOps and software supply-chain security project. Security reports should relate to the BuildShield-CI implementation itself, its CI/CD workflow, API/dashboard behavior, packaging, deployment configuration, or repository security controls.
 
-The intentionally vulnerable fixtures under `samples/vulnerable-repo` are **not** security defects in BuildShield-CI. They are controlled test data used to validate detection rules, policy behavior, SARIF output, and before/after demonstrations.
+The intentionally vulnerable fixtures under `samples/vulnerable-repo` are **not** security defects in BuildShield-CI. They are controlled test data used to validate detection rules, policy behavior, SARIF output and before/after demonstrations.
 
 ## Supported Versions
 
-Security fixes are applied to the current maintained release line and the active development branch as appropriate. Older historical tags may not receive backported fixes.
+The current supported release line is:
 
-For the authoritative current version, use the latest release/tag and the repository's `main` branch.
+| Version | Supported |
+|---|---|
+| `v1.0.0` | Yes |
+| `v0.12.7` | Historical baseline only |
+| Older versions | No |
+
+For the authoritative released state, use the `v1.0.0` tag and published GitHub release. The default `main` branch may contain documentation-only or corrective maintenance after that tag.
 
 ## Reporting a Vulnerability
 
@@ -24,36 +30,36 @@ Preferred reporting flow:
 
 Useful triage information includes:
 
-- Affected component or file
-- Affected version/commit
-- Security impact
-- Reproduction prerequisites
-- Minimal safe reproduction steps
-- Expected behavior
-- Observed behavior
-- Suggested remediation, if known
+- affected component or file
+- affected version/commit
+- security impact
+- reproduction prerequisites
+- minimal safe reproduction steps
+- expected behavior
+- observed behavior
+- suggested remediation, if known
 
 Do not include live credentials, secrets, personal data, or destructive payloads.
 
 ## Safe Research Expectations
 
-Please keep testing limited to systems, repositories, accounts, and environments you own or are explicitly authorized to test.
+Keep testing limited to systems, repositories, accounts and environments you own or are explicitly authorized to test.
 
 Do not:
 
-- Attack third-party infrastructure
-- Publish malicious packages
-- Abuse public package registries
-- Exfiltrate secrets or credentials
-- Perform destructive testing
-- Attempt denial-of-service testing
-- Use BuildShield-CI as authorization to test unrelated systems
+- attack third-party infrastructure
+- publish malicious packages
+- abuse public package registries
+- exfiltrate secrets or credentials
+- perform destructive testing
+- attempt denial-of-service testing
+- use BuildShield-CI as authorization to test unrelated systems
 
 A report should demonstrate the minimum behavior needed to establish the issue safely.
 
 ## Controlled Vulnerable Samples
 
-The following content is intentionally insecure:
+The intentionally insecure fixture is:
 
 ```text
 samples/vulnerable-repo/
@@ -61,12 +67,12 @@ samples/vulnerable-repo/
 
 It exists to exercise rules such as:
 
-- Dependency confusion indicators
-- Missing lockfiles / loose dependency versions
-- Risky lifecycle scripts
-- Insecure GitHub Actions patterns
-- Secret-echo examples
-- Risky Dockerfile configuration
+- dependency-confusion indicators
+- missing lockfiles / loose dependency versions
+- risky lifecycle scripts
+- insecure GitHub Actions patterns
+- secret-echo examples
+- risky Dockerfile configuration
 
 GitHub Code Scanning alerts generated from this fixture are expected demonstration findings.
 
@@ -76,15 +82,23 @@ The hardened fixture is:
 samples/secure-repo/
 ```
 
-Its controlled static-analysis benchmark is expected to produce no BuildShield-CI configuration findings. This does **not** guarantee that the dependencies will never have externally reported vulnerabilities; OSV intelligence is dynamic.
+Its controlled static-analysis benchmark is expected to produce no BuildShield-CI configuration findings. This does **not** guarantee that dependencies will never have externally reported vulnerabilities; OSV intelligence is dynamic.
+
+The representative mixed-posture fixture is:
+
+```text
+samples/realistic-repo/
+```
+
+It is used for routine demonstrations and intentionally retains a small number of non-critical findings so normal application posture is not represented as artificially perfect.
 
 ## Security Model and Limitations
 
-BuildShield-CI performs passive static analysis and heuristic detection. It does not claim to provide complete vulnerability coverage or prove that a repository is secure.
+BuildShield-CI performs passive static analysis and heuristic detection. It does not claim to provide complete vulnerability coverage, replace a full security program, or prove that a repository is secure.
 
-The validated v1.0.0 release candidate is suitable for controlled single-instance environments and production-style demonstrations. It already includes focused single-tenant authentication/authorization, workspace containment, request/resource controls, audit logging, retention controls, and hardened container runtime settings.
+The released `v1.0.0` architecture is suitable for controlled single-instance environments and production-style demonstrations. It includes focused single-tenant authentication/authorization, workspace containment, request/resource controls, audit logging, retention controls and hardened container runtime settings.
 
-Enterprise deployment would require additional controls beyond the current single-instance scope, especially for multi-tenant or organization-wide use, such as:
+Enterprise or organization-wide deployment would require additional controls appropriate to that environment, especially for multi-tenant or distributed use, such as:
 
 - external identity-provider integration, stronger RBAC and lifecycle governance
 - tenant/repository isolation appropriate to the deployment model
@@ -95,6 +109,22 @@ Enterprise deployment would require additional controls beyond the current singl
 - backup, recovery and disaster-recovery procedures
 - operational monitoring and incident-response processes
 - dependency, base-image and container-image lifecycle management
+
+## Release Security Evidence
+
+Before `v1.0.0` was released, the final state passed:
+
+- full Windows regression: **295 passed, 2 skipped**
+- Ruff: **PASS**
+- mypy typed-boundary gate: **PASS**
+- `pip check`: **PASS**
+- exact Node 22.23.2 / npm 12.0.2 frontend gates: **PASS**
+- production Docker/API smoke: **PASS**
+- authenticated live-browser review: **PASS**
+- repository sanitation: **PASS**
+- hosted GitHub Actions on the final checkpoint, pull request and merged `main`: **PASS**
+
+The H9 deterministic evaluation result of precision/recall/F1 = 1.000000 is scoped only to the fixed curated 100-case regression corpus. It is not a claim of 100% real-world detection accuracy.
 
 ## Disclosure
 
