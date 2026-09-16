@@ -51,22 +51,38 @@ Authoritative H10D local result:
 - exact 34-file candidate preserved with zero staging;
 - Docker validation resources cleaned up.
 
+## Post-Checkpoint Final Polish Evidence
+
+After the original H10 checkpoint passed hosted CI, the release candidate received a final professional UI pass and a representative realistic application profile. Those post-checkpoint changes were validated independently:
+
+- realistic dashboard/API contract: PASS;
+- realistic application: 81/100, 3 findings, MEDIUM risk, WARNING gate, policy PASS;
+- natural vulnerable-to-realistic comparison: +76 score, 19 findings reduced, 80% controlled risk reduction;
+- original vulnerable/hardened benchmark preserved at 5/100 -> 100/100 and 22 -> 0 findings;
+- exact Node 22.23.2 / npm 12.0.2 frontend gates: PASS;
+- production Docker/API smoke with all three profiles and authentication/session: PASS;
+- full Windows regression: **295 passed, 2 skipped**;
+- live browser review: PASS;
+- final repository sanitation: PASS with zero staging.
+
+Because these changes were made after checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f`, a replacement final checkpoint must pass hosted CI before merge/tag/release.
+
 ## Release sequence after local acceptance
 
 Passing local H10D validation does not itself release v1.0.0. The checkpoint commit containing this finalized acceptance record must still pass hosted CI before merge, tag and GitHub release.
 
 The remaining release sequence is:
 
-1. finalize H10 closure text;
-2. create the single H10 checkpoint commit;
+1. synchronize final release documentation with the post-checkpoint evidence;
+2. create the replacement final checkpoint commit;
 3. push the hardening branch;
-4. require hosted GitHub Actions success on that exact checkpoint;
+4. require hosted GitHub Actions success on that exact replacement checkpoint;
 5. open/review the final pull request;
 6. merge the accepted release state;
-7. verify hosted CI on the merged release state as applicable;
-8. create an annotated `v1.0.0` tag on the verified release commit;
+7. verify `main` and hosted CI on the merged release state;
+8. create and push an annotated `v1.0.0` tag on the verified release commit;
 9. create/verify the GitHub release and release artifacts;
-10. freeze normal feature development except critical patches.
+10. freeze normal feature development except critical corrective patches.
 
 ## Claim boundary
 

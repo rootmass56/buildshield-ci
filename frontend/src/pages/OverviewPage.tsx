@@ -1,1 +1,186 @@
-import { useEffect,useMemo,useState } from 'react';import { Activity,BadgeCheck,GitCompareArrows,History } from 'lucide-react';import { Link } from 'react-router-dom';import { ApiError,getHistory,getReports } from '../api/client';import { ErrorPanel,MetricCard } from '../components/Ui';import type { HistoryRecord } from '../types/api';export function OverviewPage(){const [history,setHistory]=useState<HistoryRecord[]>([]);const [reports,setReports]=useState(0);const [error,setError]=useState<string|null>(null);useEffect(()=>{void Promise.all([getHistory(5),getReports()]).then(([h,r])=>{setHistory(h.history);setReports(r.reports.length)}).catch(e=>setError(e instanceof ApiError?e.message:'Unable to load overview.'));},[]);const latest=history[0]??null;const avg=useMemo(()=>history.length?Math.round(history.reduce((n,x)=>n+x.security_score,0)/history.length):null,[history]);return <section><div className="page-heading"><div><span className="eyebrow">Overview</span><h2>Security posture command center</h2><p>Launch analysis and review recent security posture.</p></div></div>{error?<ErrorPanel message={error}/>:null}<div className="metric-grid"><MetricCard label="Latest score" value={latest?`${latest.security_score}/100`:'—'} detail={latest?.risk_level??'No scans yet'} icon={<Activity size={20}/>}/><MetricCard label="Latest findings" value={latest?.findings_count??'—'} detail={latest?.target_path??'No history'} icon={<BadgeCheck size={20}/>}/><MetricCard label="Recent average" value={avg===null?'—':`${avg}/100`} detail={`${history.length} recent scans`} icon={<History size={20}/>}/><MetricCard label="Reports" value={reports} detail="Available artifacts" icon={<GitCompareArrows size={20}/>}/></div><div className="quick-grid"><Link className="quick-card" to="/app/scanner"><strong>Run security scan</strong><span>Analyze a repository and evaluate policy.</span></Link><Link className="quick-card" to="/app/inventory"><strong>Dependency inventory</strong><span>Inspect npm and Python dependencies.</span></Link><Link className="quick-card" to="/app/vulnerability-intelligence"><strong>OSV intelligence</strong><span>Check pinned versions for known vulnerabilities.</span></Link><Link className="quick-card" to="/app/compare"><strong>Compare posture</strong><span>Measure vulnerable-to-hardened improvement.</span></Link></div><div className="foundation-panel"><div><span className="eyebrow">Verified benchmark</span><h3>22 findings / 5 → 0 findings / 100</h3><p>The controlled benchmark remains the regression anchor.</p></div><span className="foundation-badge">H3 migration</span></div></section>}
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  Boxes,
+  FileSearch,
+  Files,
+  GitCompareArrows,
+  History,
+  Radar,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+
+import { ApiError, getHistory, getReports } from "../api/client";
+import { ErrorPanel, MetricCard } from "../components/Ui";
+import type { HistoryRecord } from "../types/api";
+
+const quickActions = [
+  {
+    to: "/app/scanner",
+    title: "Run security scan",
+    detail: "Analyze repository controls and evaluate policy.",
+    icon: FileSearch,
+  },
+  {
+    to: "/app/inventory",
+    title: "Dependency inventory",
+    detail: "Inspect npm and Python dependency metadata.",
+    icon: Boxes,
+  },
+  {
+    to: "/app/vulnerability-intelligence",
+    title: "OSV intelligence",
+    detail: "Check pinned versions against vulnerability intelligence.",
+    icon: Radar,
+  },
+  {
+    to: "/app/compare",
+    title: "Compare posture",
+    detail: "Measure security improvement between repositories.",
+    icon: GitCompareArrows,
+  },
+] as const;
+
+export function OverviewPage() {
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
+  const [reports, setReports] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void Promise.all([getHistory(5), getReports()])
+      .then(([historyResponse, reportResponse]) => {
+        setHistory(historyResponse.history);
+        setReports(reportResponse.reports.length);
+      })
+      .catch((caughtError) =>
+        setError(
+          caughtError instanceof ApiError
+            ? caughtError.message
+            : "Unable to load overview.",
+        ),
+      );
+  }, []);
+
+  const latest = history[0] ?? null;
+  const average = useMemo(
+    () =>
+      history.length
+        ? Math.round(
+            history.reduce((total, item) => total + item.security_score, 0) /
+              history.length,
+          )
+        : null,
+    [history],
+  );
+
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Overview</span>
+          <h2>Security posture overview</h2>
+          <p>
+            Monitor repository risk, policy outcomes, and recent analysis from
+            one protected workspace.
+          </p>
+        </div>
+      </div>
+
+      {error ? <ErrorPanel message={error} /> : null}
+
+      <div className="metric-grid">
+        <MetricCard
+          label="Latest score"
+          value={latest ? `${latest.security_score}/100` : "—"}
+          detail={latest?.risk_level ?? "No completed scans"}
+          icon={<Activity size={18} />}
+        />
+        <MetricCard
+          label="Latest findings"
+          value={latest?.findings_count ?? "—"}
+          detail={latest?.target_path ?? "No scan history yet"}
+          icon={<ShieldCheck size={18} />}
+        />
+        <MetricCard
+          label="Recent average"
+          value={average === null ? "—" : `${average}/100`}
+          detail={`${history.length} recent ${history.length === 1 ? "scan" : "scans"}`}
+          icon={<History size={18} />}
+        />
+        <MetricCard
+          label="Reports"
+          value={reports}
+          detail="Available security artifacts"
+          icon={<Files size={18} />}
+        />
+      </div>
+
+      <div className="section-heading-row">
+        <div>
+          <span className="section-kicker">Actions</span>
+          <h3>Start an analysis</h3>
+        </div>
+      </div>
+
+      <div className="quick-grid">
+        {quickActions.map(({ to, title, detail, icon: Icon }) => (
+          <Link className="quick-card" to={to} key={to}>
+            <div className="quick-card-icon" aria-hidden="true">
+              <Icon size={19} strokeWidth={1.9} />
+            </div>
+            <div className="quick-card-copy">
+              <strong>{title}</strong>
+              <span>{detail}</span>
+            </div>
+            <ArrowRight className="quick-card-arrow" size={17} aria-hidden="true" />
+          </Link>
+        ))}
+      </div>
+
+      <article className="benchmark-panel">
+        <div className="benchmark-heading">
+          <div>
+            <span className="eyebrow">Controlled benchmark</span>
+            <h3>Verified hardening delta</h3>
+            <p>
+              This synthetic 5 → 100 benchmark is a regression anchor, not an
+              expected score for routine repositories. Day-to-day scans can land
+              anywhere across the risk range.
+            </p>
+          </div>
+          <span className="verified-badge">
+            <ShieldCheck size={15} aria-hidden="true" />
+            Verified
+          </span>
+        </div>
+
+        <div className="benchmark-grid">
+          <div className="benchmark-state benchmark-vulnerable">
+            <ShieldAlert size={20} aria-hidden="true" />
+            <div>
+              <span>Vulnerable baseline</span>
+              <strong>5 / 100</strong>
+              <small>22 findings</small>
+            </div>
+          </div>
+
+          <div className="benchmark-arrow" aria-hidden="true">
+            <ArrowRight size={22} />
+          </div>
+
+          <div className="benchmark-state benchmark-secure">
+            <ShieldCheck size={20} aria-hidden="true" />
+            <div>
+              <span>Hardened target</span>
+              <strong>100 / 100</strong>
+              <small>0 findings</small>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  );
+}

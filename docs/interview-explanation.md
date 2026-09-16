@@ -18,6 +18,10 @@ A key engineering improvement was removing dynamic analyzer-name guessing and hi
 
 The intentionally vulnerable fixture produces 22 findings, a 5/100 score, CRITICAL risk and a failed build/policy gate. The hardened fixture produces 0 static configuration findings, a 100/100 score, LOW risk and passing gates. The +95 score and 22-finding reduction are controlled benchmark results, not a universal security guarantee.
 
+## Representative Realistic Demo
+
+For normal demonstrations, I use a mixed-posture repository rather than always comparing a deliberately broken project with a perfect fixture. The realistic application produces 3 findings (2 Medium, 1 Low), an 81/100 score, MEDIUM risk, a WARNING build gate and passing policy. Comparing the vulnerable benchmark to that realistic application improves the score from 5 to 81 and reduces findings from 22 to 3, an 80% controlled reduction. The 100/100 hardened fixture remains a regression endpoint, not a claim that every healthy repository should score perfectly.
+
 ## H9 Evaluation Answer
 
 A strong interview explanation is:
@@ -46,13 +50,13 @@ The v1.0.0 release candidate is positioned for controlled single-instance deploy
 
 ## Current Automated Validation
 
-The latest H10B Windows release-candidate validation completed with:
+The final post-checkpoint pre-release candidate completed:
 
 ```text
-276 passed, 2 skipped
+295 passed, 2 skipped
 ```
 
-H10B also verified fresh v1.0.0 wheel/sdist metadata, a fresh Windows hash-lock installation, CycloneDX graph preservation, exact frontend gates on Node 22.23.2/npm 12.0.2, Ruff, mypy, `pip check` and the controlled 22 -> 0 benchmark.
+It also passed the exact Node 22.23.2 / npm 12.0.2 frontend gates, Ruff, production Docker/API smoke, the realistic 81/100 profile contract, natural 5 -> 81 comparison, the preserved 22 -> 0 controlled benchmark, live browser review and final repository sanitation. The project remains a release candidate until the replacement final checkpoint passes hosted CI and the PR/tag/release sequence completes.
 
 ## Strong Resume/Interview Summary
 

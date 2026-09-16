@@ -1,9 +1,32 @@
 import { FormEvent, useState } from "react";
-import { LockKeyhole, ShieldCheck } from "lucide-react";
+import {
+  LockKeyhole,
+  ScanSearch,
+  ShieldCheck,
+  Workflow,
+} from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+
+const trustPoints = [
+  {
+    icon: ScanSearch,
+    title: "Workspace-contained analysis",
+    detail: "Repository operations stay inside the approved analysis boundary.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Authenticated operations",
+    detail: "Protected administrative sessions and CSRF validation are enforced.",
+  },
+  {
+    icon: Workflow,
+    title: "Reproducible security gates",
+    detail: "Policy, CI/CD, reports, and release checks share one security model.",
+  },
+] as const;
 
 export function LoginPage() {
   const auth = useAuth();
@@ -39,34 +62,46 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-hero" aria-label="BuildShield-CI">
-        <div className="brand-mark large" aria-hidden="true">
-          <ShieldCheck size={36} />
+        <div className="login-brand-row">
+          <div className="brand-mark large" aria-hidden="true">
+            <ShieldCheck size={30} strokeWidth={2} />
+          </div>
+          <div>
+            <span className="eyebrow">BuildShield-CI</span>
+            <span className="login-product-subtitle">Supply-chain security platform</span>
+          </div>
         </div>
-        <span className="eyebrow">BuildShield-CI</span>
-        <h1>Secure the software supply chain before it reaches production.</h1>
-        <p>
-          Analyze dependency-confusion exposure, CI/CD workflow risks,
-          Docker hardening, vulnerable dependencies, policy gates and
-          security reports from one protected workspace.
+
+        <h1>Security analysis for the software delivery pipeline.</h1>
+        <p className="login-lead">
+          Inspect dependencies, CI/CD workflows, container hardening, policy
+          gates, vulnerability intelligence, and security reports from one
+          controlled workspace.
         </p>
 
-        <div className="security-proof">
-          <LockKeyhole size={20} aria-hidden="true" />
-          <div>
-            <strong>Protected administrative session</strong>
-            <span>HttpOnly session cookie + CSRF validation</span>
-          </div>
+        <div className="login-trust-grid">
+          {trustPoints.map(({ icon: Icon, title, detail }) => (
+            <article className="login-trust-item" key={title}>
+              <div className="login-trust-icon" aria-hidden="true">
+                <Icon size={18} />
+              </div>
+              <div>
+                <strong>{title}</strong>
+                <span>{detail}</span>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="login-panel">
         <div className="login-card">
-          <div>
+          <div className="login-card-header">
             <span className="eyebrow">Administrator access</span>
-            <h2>Sign in</h2>
+            <h2>Sign in to BuildShield-CI</h2>
             <p>
-              Use the administrator credentials configured for this
-              BuildShield-CI instance.
+              Use the administrator credentials configured for this secured
+              instance.
             </p>
           </div>
 
@@ -101,13 +136,18 @@ export function LoginPage() {
             ) : null}
 
             <button
-              className="primary-button"
+              className="primary-button login-submit"
               type="submit"
               disabled={submitting}
             >
-              {submitting ? "Signing in…" : "Open security dashboard"}
+              {submitting ? "Signing in…" : "Open security workspace"}
             </button>
           </form>
+
+          <div className="login-card-footer">
+            <LockKeyhole size={15} aria-hidden="true" />
+            <span>Protected administrative session</span>
+          </div>
         </div>
       </section>
     </main>

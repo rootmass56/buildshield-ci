@@ -1,6 +1,6 @@
 # BuildShield-CI v1.0.0 Final Blueprint
 
-Updated through H10D final local/container release acceptance.
+Updated through post-H10 professional UI polish, realistic-demo validation, live browser review and final repository sanitation.
 
 ## Release Target
 
@@ -9,7 +9,7 @@ Updated through H10D final local/container release acceptance.
 - Development branch: `upgrade/v0.13-security-hardening`
 - Historical verified release: `v0.12.7`
 - Deployment positioning: controlled, single-instance deployment with production-style architecture
-- Current H10 release-candidate package version: `1.0.0`; H10D local/container acceptance has passed, while the final `v1.0.0` tag/release remains deferred until checkpoint hosted-CI acceptance, merge and final release verification.
+- Current release-candidate package version: `1.0.0`; H10 local acceptance is complete, checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` passed hosted CI, and the subsequent professional-UI/realistic-demo candidate has passed local frontend/backend/Docker/regression/live-review/sanitation gates. A replacement final checkpoint and hosted-CI pass remain required before merge/tag/release.
 
 ## Verified Checkpoints
 
@@ -27,6 +27,9 @@ Updated through H10D final local/container release acceptance.
 - Vulnerable: 22 findings, 4 Critical, 10 High, 7 Medium, 1 Low, 0 Info, score 5/100, CRITICAL, gate FAILED, policy FAILED.
 - Hardened: 0 findings, score 100/100, LOW, gate PASSED, policy PASSED.
 - Comparison: +95 score, 22 findings reduced, 100% risk reduction, `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`.
+- Representative realistic application: 3 findings (0 Critical, 0 High, 2 Medium, 1 Low), score 81/100, MEDIUM risk, WARNING gate, policy PASSED.
+- Natural vulnerable-to-realistic comparison: +76 score, 19 findings reduced, 80% controlled risk reduction, `PARTIALLY_IMPROVED`.
+- The realistic profile is the normal demo default; the 100/100 hardened fixture remains a controlled regression endpoint.
 
 ## Final Program Status
 
@@ -467,7 +470,7 @@ Mandatory:
 
 # H10 — Final Audit, Cleanup and v1.0.0 Release
 
-Status: IN PROGRESS — H10D FINAL RELEASE ACCEPTANCE; LOCAL ACCEPTANCE COMPLETE; CHECKPOINT/HOSTED CI RELEASE SEQUENCE.
+Status: IN PROGRESS - LOCAL H10 ACCEPTANCE + POST-CHECKPOINT UI/REALISTIC-DEMO/SANITATION COMPLETE; REPLACEMENT FINAL CHECKPOINT/HOSTED CI RELEASE SEQUENCE.
 
 Will:
 - remove dead code;
@@ -511,7 +514,7 @@ Validated H10A closure:
 - H10A hygiene: 9 passed;
 - focused existing regression: 16 passed;
 - complete H9 regression: 37 passed;
-- full Windows Python regression: 268 passed, 2 skipped;
+- full Windows Python regression: PASS (historical H10A stage evidence; superseded by the final 295 passed / 2 skipped pre-release regression);
 - exact controlled 22→0 benchmark preserved;
 - zero staging and no checkpoint commit.
 
@@ -555,7 +558,7 @@ Validated H10C closure:
 - H9 deterministic evidence remained byte-for-byte identical;
 - Ruff: PASS;
 - exact controlled 22 -> 0 benchmark preserved;
-- full Windows Python regression: 286 passed, 2 skipped;
+- full Windows Python regression: PASS (historical H10C stage evidence; superseded by the final 295 passed / 2 skipped pre-release regression);
 - exact 32-file candidate state preserved with zero staging.
 
 Scope:
@@ -595,14 +598,29 @@ Validated H10D local acceptance:
 - missing production authentication configuration fails closed;
 - hardened Compose runtime: read-only rootfs, `cap_drop: ALL`, `no-new-privileges`, PID limit 256, restricted `/tmp`, localhost-only binding;
 - liveness/readiness, authenticated login/session, writable state boundaries and restart/readiness recovery: PASS;
-- complete Windows Python regression: 294 passed, 2 skipped;
+- complete Windows Python regression: PASS (historical H10D local-acceptance evidence; superseded by the final 295 passed / 2 skipped post-checkpoint regression);
 - temporary Docker/Compose validation resources cleaned up;
 - exact 34-file candidate state preserved with zero staging.
 
-The local validation step itself did not create a commit, merge, tag or release.
-This finalized closure text is intended to be included in the single H10
-checkpoint commit. That checkpoint must be pushed and accepted by hosted
-GitHub Actions before any PR merge or `v1.0.0` tag/release.
+The H10D local validation itself did not release v1.0.0. It was followed by checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f`, which was pushed and accepted by hosted GitHub Actions. Subsequent final professional UI and realistic-demo changes therefore require one replacement final checkpoint commit and hosted-CI pass before PR merge or `v1.0.0` tag/release.
+
+## Post-Checkpoint Professional UI + Realistic Demo Closure
+
+Status: COMPLETE LOCALLY; awaiting replacement final checkpoint/hosted CI.
+
+Verified final pre-release evidence:
+- professional React dashboard polish validated with exact Node 22.23.2 / npm 12.0.2 quality gates;
+- normal scanner default is `samples/realistic-repo`, not an artificial perfect fixture;
+- realistic application: 81/100, 3 findings, MEDIUM risk, WARNING build gate, policy PASSED;
+- natural vulnerable-to-realistic comparison: 5 -> 81, 22 -> 3 findings, +76 score and 80% controlled risk reduction with `PARTIALLY_IMPROVED`;
+- vulnerable/hardened regression benchmark remains exactly 5/100 -> 100/100 and 22 -> 0 findings;
+- production Docker/API smoke exposes vulnerable, realistic and hardened profiles and preserves authentication/session controls;
+- full Windows Python regression: **295 passed, 2 skipped**;
+- live browser review completed for scanner/comparison and populated dashboard flows;
+- realistic-demo Docker resources were removed cleanly after review;
+- final repository sanitation: PASS; zero tracked generated trash, zero tracked secret-like filenames, no tracked files >= 5 MiB, `git diff --check` PASS, `git fsck` PASS, zero merge markers and zero staging.
+
+No additional feature scope follows this closure. Remaining work is release engineering only: replacement final checkpoint commit, hosted CI, PR/merge, `main` verification, annotated `v1.0.0` tag and GitHub release.
 
 # Permanent Scope Boundaries
 

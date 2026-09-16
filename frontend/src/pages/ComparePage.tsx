@@ -1,1 +1,178 @@
-import { FormEvent,useState } from 'react';import { ApiError,runComparison } from '../api/client';import { useAuth } from '../auth/AuthContext';import { ErrorPanel,MetricCard,ReportLinks,StatusBadge } from '../components/Ui';import type { ComparisonResponse } from '../types/api';export function ComparePage(){const auth=useAuth();const [baseline,setBaseline]=useState('samples/vulnerable-repo');const [target,setTarget]=useState('samples/secure-repo');const [result,setResult]=useState<ComparisonResponse|null>(null);const [error,setError]=useState<string|null>(null);async function submit(e:FormEvent){e.preventDefault();if(!auth.csrfToken)return;try{setResult(await runComparison(auth.csrfToken,baseline,target));setError(null)}catch(e){setError(e instanceof ApiError?e.message:'Comparison failed.')}}return <section><div className="page-heading"><div><span className="eyebrow">Compare</span><h2>Security posture comparison</h2><p>Measure vulnerable-to-hardened improvement.</p></div></div><form className="compare-form" onSubmit={e=>void submit(e)}><label>Baseline<input value={baseline} onChange={e=>setBaseline(e.target.value)}/></label><label>Target<input value={target} onChange={e=>setTarget(e.target.value)}/></label><button className="primary-button">Compare</button></form>{error?<ErrorPanel message={error}/>:null}{result?<><div className="metric-grid scan-metrics"><MetricCard label="Score improvement" value={`+${result.comparison.score_delta}`} detail={`${result.comparison.baseline.summary.security_score} → ${result.comparison.target.summary.security_score}`}/><MetricCard label="Findings reduced" value={result.comparison.findings_reduced} detail={`${result.comparison.baseline.summary.findings_count} → ${result.comparison.target.summary.findings_count}`}/><MetricCard label="Risk reduction" value={`${result.comparison.risk_reduction_percentage}%`} detail="Controlled comparison"/><MetricCard label="Verdict" value="Improved" detail={result.comparison.verdict}/></div><div className="comparison-grid"><article className="panel"><h3>{result.comparison.baseline_label}</h3><strong>{result.comparison.baseline.summary.security_score}/100</strong><StatusBadge value={result.comparison.baseline.summary.risk_level}/></article><article className="panel"><h3>{result.comparison.target_label}</h3><strong>{result.comparison.target.summary.security_score}/100</strong><StatusBadge value={result.comparison.target.summary.risk_level} positive={result.comparison.target.summary.findings_count===0}/></article></div><ReportLinks reports={result.reports}/></>:null}</section>}
+import { FormEvent, useEffect, useState } from "react";
+import { ArrowRight, GitCompareArrows } from "lucide-react";
+
+import { ApiError, getSampleRepositories, runComparison } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
+import {
+  ErrorPanel,
+  MetricCard,
+  ReportLinks,
+  StatusBadge,
+} from "../components/Ui";
+import type { ComparisonResponse, SampleRepository } from "../types/api";
+import { normalizeEnumLabel } from "../utils/security";
+
+function sentenceCase(value: string): string {
+  const normalized = normalizeEnumLabel(value).toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function verdictHeadline(value: string): string {
+  switch (value) {
+    case "SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED":
+      return "Significantly improved";
+    case "SECURITY_POSTURE_PARTIALLY_IMPROVED":
+      return "Partially improved";
+    case "NO_MEASURABLE_SECURITY_CHANGE":
+      return "No measurable change";
+    case "SECURITY_POSTURE_REGRESSED":
+      return "Regressed";
+    default:
+      return sentenceCase(value);
+  }
+}
+
+export function ComparePage() {
+  const auth = useAuth();
+  const [repos, setRepos] = useState<SampleRepository[]>([]);
+  const [baseline, setBaseline] = useState("samples/vulnerable-repo");
+  const [target, setTarget] = useState("samples/realistic-repo");
+  const [result, setResult] = useState<ComparisonResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void getSampleRepositories()
+      .then((response) => setRepos(response.repositories))
+      .catch((caughtError) =>
+        setError(
+          caughtError instanceof ApiError
+            ? caughtError.message
+            : "Unable to load repository presets.",
+        ),
+      );
+  }, []);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!auth.csrfToken) {
+      return;
+    }
+
+    const baselineRepo = repos.find((repo) => repo.path === baseline);
+    const targetRepo = repos.find((repo) => repo.path === target);
+
+    try {
+      setResult(
+        await runComparison(
+          auth.csrfToken,
+          baseline,
+          target,
+          baselineRepo?.label ?? "Baseline repository",
+          targetRepo?.label ?? "Target repository",
+        ),
+      );
+      setError(null);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof ApiError
+          ? caughtError.message
+          : "Comparison failed.",
+      );
+    }
+  }
+
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Compare</span>
+          <h2>Security posture comparison</h2>
+          <p>
+            Compare realistic repository states without treating a perfect score
+            as the expected outcome for every application.
+          </p>
+        </div>
+      </div>
+
+      <form className="compare-form control-strip" onSubmit={(event) => void submit(event)}>
+        <div className="control-strip-icon" aria-hidden="true">
+          <GitCompareArrows size={18} />
+        </div>
+        <label>
+          Baseline
+          <select value={baseline} onChange={(event) => setBaseline(event.target.value)}>
+            {repos.map((repo) => (
+              <option key={repo.path} value={repo.path}>
+                {repo.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="compare-direction" aria-hidden="true">
+          <ArrowRight size={17} />
+        </div>
+        <label>
+          Target
+          <select value={target} onChange={(event) => setTarget(event.target.value)}>
+            {repos.map((repo) => (
+              <option key={repo.path} value={repo.path}>
+                {repo.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="primary-button">Compare posture</button>
+      </form>
+
+      {error ? <ErrorPanel message={error} /> : null}
+
+      {result ? (
+        <>
+          <div className="metric-grid scan-metrics">
+            <MetricCard
+              label="Score improvement"
+              value={`${result.comparison.score_delta >= 0 ? "+" : ""}${result.comparison.score_delta}`}
+              detail={`${result.comparison.baseline.summary.security_score} → ${result.comparison.target.summary.security_score}`}
+            />
+            <MetricCard
+              label="Findings reduced"
+              value={result.comparison.findings_reduced}
+              detail={`${result.comparison.baseline.summary.findings_count} → ${result.comparison.target.summary.findings_count}`}
+            />
+            <MetricCard
+              label="Risk reduction"
+              value={`${result.comparison.risk_reduction_percentage}%`}
+              detail="Selected repository states"
+            />
+            <MetricCard
+              label="Verdict"
+              value={verdictHeadline(result.comparison.verdict)}
+              detail={sentenceCase(result.comparison.verdict)}
+            />
+          </div>
+
+          <div className="comparison-grid">
+            <article className="panel comparison-state">
+              <span className="section-kicker">Baseline</span>
+              <h3>{result.comparison.baseline_label}</h3>
+              <strong>{result.comparison.baseline.summary.security_score}/100</strong>
+              <StatusBadge value={result.comparison.baseline.summary.risk_level} />
+            </article>
+            <article className="panel comparison-state comparison-state-target">
+              <span className="section-kicker">Target</span>
+              <h3>{result.comparison.target_label}</h3>
+              <strong>{result.comparison.target.summary.security_score}/100</strong>
+              <StatusBadge
+                value={result.comparison.target.summary.risk_level}
+                positive={result.comparison.target.summary.findings_count === 0}
+              />
+            </article>
+          </div>
+
+          <ReportLinks reports={result.reports} />
+        </>
+      ) : null}
+    </section>
+  );
+}

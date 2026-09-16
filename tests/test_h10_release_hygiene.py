@@ -52,6 +52,8 @@ def test_h10a_line_ending_policy_covers_release_fixture_types() -> None:
         ".npmrc text eol=lf",
         ".pypirc text eol=lf",
         "*.conf text eol=lf",
+        "*.ts text eol=lf",
+        "*.tsx text eol=lf",
         "*.tgz -text",
     }
 
@@ -102,9 +104,9 @@ def test_h10a_readme_reflects_current_stack_and_phase() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8-sig")
 
     assert "React 19, TypeScript 7, Vite 8" in readme
-    assert "276 passed, 2 skipped" in readme
-    assert "H1-H9, H10A and H10B are complete" in readme
-    assert "H10C" in readme
+    assert "295 passed, 2 skipped" in readme
+    assert "H1-H10 local acceptance is complete" in readme
+    assert "replacement final checkpoint" in readme
     audit = (ROOT / "docs" / "h10-final-audit.md").read_text(encoding="utf-8")
     assert "268 passed, 2 skipped" in audit
 

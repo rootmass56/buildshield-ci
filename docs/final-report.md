@@ -165,7 +165,25 @@ The policy engine enforces:
 | Build Gate | PASSED |
 | Policy | PASSED |
 
-### Comparison
+### Representative realistic application
+
+| Metric | Result |
+|---|---:|
+| Findings | 3 |
+| Critical | 0 |
+| High | 0 |
+| Medium | 2 |
+| Low | 1 |
+| Security Score | 81/100 |
+| Risk Level | MEDIUM |
+| Build Gate | WARNING |
+| Policy | PASSED |
+
+Natural comparison from the intentionally vulnerable benchmark to the realistic application improves the score from 5 to 81, reduces findings from 22 to 3, and reports an 80% controlled risk reduction with `PARTIALLY_IMPROVED`.
+
+The realistic profile is the default routine demo. The 100/100 hardened fixture remains a controlled regression endpoint rather than an implied requirement for every real application.
+
+### Controlled benchmark comparison
 
 | Metric | Result |
 |---|---:|
@@ -247,8 +265,10 @@ The project is deployment-ready for controlled environments and demonstrates a p
 Current verified Windows Python regression:
 
 ```text
-276 passed, 2 skipped
+295 passed, 2 skipped
 ```
+
+The final pre-release validation also verifies the realistic application at 81/100 with 3 findings, MEDIUM risk, a WARNING build gate and passing policy, while preserving the original 22 -> 0 vulnerable/hardened controlled benchmark.
 
 H9 also adds a fixed 100-case deterministic adversarial corpus across 20 static rules. The pre-hardening baseline was 41 TP / 45 TN / 4 FP / 10 FN (micro F1 0.854167). After bounded H9D hardening, the unchanged corpus evaluates at 51 TP / 49 TN / 0 FP / 0 FN. These corpus metrics are regression evidence only and are not real-world accuracy estimates.
 
@@ -321,16 +341,12 @@ Enterprise deployment would require organization-specific controls beyond the cu
 
 ## 18. Final v1.0.0 Release Roadmap
 
-H1-H9, H10A and H10B are complete. H10C/H10D are the only remaining closure stages before the final tagged release.
+H1-H10 local engineering and release acceptance are complete. The earlier H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` passed hosted CI. After that checkpoint, the product received its final professional UI polish and representative realistic application profile; those changes passed frontend quality gates, backend/API contracts, production Docker smoke, a 295 passed / 2 skipped Windows regression, live browser review and repository sanitation.
 
-H10A completed dead-code/reference cleanup and repository-hygiene normalization. H10B completed the verified `0.12.7` -> `1.0.0` release-candidate freeze with fresh Python/frontend/SBOM validation. H10C finalizes portfolio/documentation material, and H10D performs final cumulative Docker/Compose/security-gate validation, checkpoint/PR/hosted-CI review, merge, annotated `v1.0.0` tag and release verification.
-
-No broad feature roadmap follows H10. After `v1.0.0` is verified and tagged, planned feature development ends except for corrective security or release-breaking patches.
+No broad feature roadmap follows H10. The only remaining actions are release engineering: create the replacement final checkpoint commit, require hosted CI on that exact state, review/merge the PR, verify `main`, create the annotated `v1.0.0` tag and GitHub release, and then freeze normal feature development except critical corrective patches.
 
 ## 19. Conclusion
 
 BuildShield-CI demonstrates end-to-end cybersecurity engineering across supply-chain security, static analysis, DevSecOps policy enforcement, CI/CD hardening, vulnerability intelligence, reporting, dashboard development, persistence, testing, and containerization.
 
-**v0.12.7 remains the completed historical baseline.** H1-H9 are complete and hosted-CI verified, H10A cleanup passed, and H10B release-candidate validation passed at package version `1.0.0`. H10C closes final portfolio/documentation material. The project must not be described as the final tagged v1.0.0 release until H10D acceptance, hosted CI, merge, tag and release verification pass.
-
-The intended endpoint is a focused, clean, fully verified **BuildShield-CI v1.0.0 Final** release for controlled single-instance environments, with no planned feature upgrades after finalization.
+**v0.12.7 remains the completed historical baseline.** The current `1.0.0` candidate has completed H1-H10 local acceptance, final UI/realistic-profile validation, live browser review and repository sanitation. It must not be described as the final tagged v1.0.0 release until the replacement final checkpoint passes hosted CI, the PR is merged, `main` is verified, and the annotated tag/GitHub release are created and verified. After that verified release, planned feature development ends except for corrective security or release-breaking patches.

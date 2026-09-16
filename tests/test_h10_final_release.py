@@ -107,20 +107,21 @@ def test_h10d_release_docs_record_local_pass_without_claiming_release() -> None:
     blueprint = read("docs/final-blueprint.md")
     acceptance = read("docs/h10-final-release-acceptance.md")
 
-    assert "H10D FINAL RELEASE ACCEPTANCE" in blueprint
-    assert "LOCAL RELEASE ACCEPTANCE COMPLETE — H10 CHECKPOINT/HOSTED CI RELEASE SEQUENCE" in blueprint
+    assert "POST-CHECKPOINT UI/REALISTIC-DEMO/SANITATION COMPLETE" in blueprint
+    assert "replacement final checkpoint" in blueprint.lower()
     assert "LOCAL RELEASE ACCEPTANCE: PASS" in acceptance
     assert "single H10 checkpoint" in acceptance
     assert "merge, tag and GitHub release remain deferred pending hosted CI" in acceptance
     assert "Passing local H10D validation does not itself release v1.0.0" in acceptance
     assert "294 passed, 2 skipped" in acceptance
+    assert "295 passed, 2 skipped" in acceptance
 
 
 def test_h10d_h10c_validation_evidence_is_recorded() -> None:
     blueprint = read("docs/final-blueprint.md")
     acceptance = read("docs/h10-final-release-acceptance.md")
 
-    assert "full Windows Python regression: 286 passed, 2 skipped" in blueprint
+    assert "historical H10C stage evidence" in blueprint
     assert "H10C Windows regression: 286 passed, 2 skipped" in acceptance
     assert "H10C — Final Portfolio / Demo / Documentation Closure" in blueprint
     assert "Status: COMPLETE LOCALLY." in blueprint

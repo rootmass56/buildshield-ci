@@ -53,6 +53,26 @@ The current local release candidate is **1.0.0**. The final annotated `v1.0.0` t
 
 These numbers describe the checked-in controlled benchmark only; they are not a universal security guarantee.
 
+## Representative Realistic Application Profile
+
+The normal dashboard/demo path now defaults to `samples/realistic-repo`, a deliberately mixed-posture application that is neither intentionally broken nor artificially perfect:
+
+- 3 findings
+- 0 Critical / 0 High / 2 Medium / 1 Low
+- 81/100 security score
+- MEDIUM risk
+- WARNING build gate
+- PASSED policy
+
+Natural vulnerable-to-realistic comparison:
+
+- +76 score (5 -> 81)
+- 19 findings reduced (22 -> 3)
+- 80% controlled risk reduction
+- `PARTIALLY_IMPROVED`
+
+The hardened 100/100 fixture remains available as a controlled regression endpoint rather than the expected outcome for every normal application.
+
 ## Deterministic Adversarial Evaluation
 
 H9 introduced a fixed 100-case deterministic corpus covering all 20 static rules with five isolated cases per rule.
@@ -93,22 +113,20 @@ Legacy dynamic analyzer dispatch and hidden fallback analyzers were removed. The
 
 Python 3.13, Typer, Rich, FastAPI, Pydantic, SQLite, React 19, TypeScript 7, Vite 8, GitHub Actions, SARIF, OSV, Docker, Docker Compose and Pytest.
 
-## Release-Candidate Validation
+## Final Pre-Release Validation
 
-H10B validation completed locally with:
+The current post-checkpoint candidate has been verified with:
 
-- H10B release-candidate contract: 8 passed
-- H10A cleanup regression: 9 passed
-- complete H9 regression: 37 passed
-- historical H9 metrics byte-identical
-- Ruff, mypy and `pip check`: PASS
-- fresh v1.0.0 wheel + sdist: PASS
-- fresh Windows hash-lock installation of the non-editable wheel: PASS
-- CycloneDX graph preserved with root version advanced to 1.0.0
-- exact Node 22.23.2 / npm 12.0.2 frontend gates: PASS via disposable Docker fallback when the host toolchain differed
-- exact controlled 22 -> 0 benchmark: PASS
-- full Windows Python regression: **276 passed, 2 skipped**
-- exact candidate state preserved with zero staging
+- realistic dashboard/API contract: 8 passed
+- realistic application profile: 81/100, 3 findings, MEDIUM risk, WARNING gate, policy PASS
+- natural vulnerable-to-realistic comparison: +76 score, 19 findings reduced, 80% controlled risk reduction
+- controlled vulnerable-to-hardened benchmark preserved at 5/100 -> 100/100 and 22 -> 0 findings
+- exact Node 22.23.2 / npm 12.0.2 frontend `npm ci`, dependency-tree, lint, typecheck, Vitest, high-severity audit and production build: PASS
+- Ruff: PASS
+- production Docker/API smoke with authentication and all three repository profiles: PASS
+- full Windows Python regression: **295 passed, 2 skipped**
+- final repository sanitation: PASS with zero tracked generated trash, zero tracked secret-like filenames, no >=5 MiB tracked files, `git diff --check` PASS, `git fsck` PASS, zero merge-conflict markers, and zero staging
+- package/runtime/frontend release identity remains `1.0.0`
 
 ## Deployment Positioning
 
@@ -118,4 +136,4 @@ It is not claimed as enterprise multi-tenant SaaS. Organization-wide deployment 
 
 ## Final Release Status
 
-H1-H9, H10A and H10B are complete. H10C finalizes portfolio/demo/documentation material. H10D performs the final cumulative validation, checkpoint, hosted-CI/PR review, merge, annotated `v1.0.0` tag and release verification.
+H1-H10 local engineering is complete. The earlier H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` passed hosted CI; subsequent professional UI polish and the realistic application profile have also passed their local frontend/backend/Docker/regression gates and final sanitation. The remaining release sequence is a replacement final checkpoint commit, hosted CI on that exact state, PR review/merge, post-merge verification, annotated `v1.0.0` tag, and GitHub release verification.

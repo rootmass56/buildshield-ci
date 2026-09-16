@@ -25,17 +25,33 @@ Current H10 release candidate package version: **1.0.0** (not yet the final tagg
 | Build Gate | FAILED | PASSED |
 | Policy | FAILED | PASSED |
 
-Comparison result:
+Representative realistic application profile:
+
+- Repository: `samples/realistic-repo`
+- Findings: **3** (0 Critical, 0 High, 2 Medium, 1 Low)
+- Security score: **81/100**
+- Risk level: **MEDIUM**
+- Build gate: **WARNING**
+- Policy: **PASSED**
+
+Natural comparison (`samples/vulnerable-repo` -> `samples/realistic-repo`):
+
+- Score improvement: **+76**
+- Findings reduced: **19**
+- Risk reduction: **80%**
+- Verdict: `PARTIALLY_IMPROVED`
+
+Controlled benchmark comparison result:
 
 - Score improvement: **+95**
 - Findings reduced: **22**
 - Risk reduction: **100%**
 - Verdict: `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`
-- Latest completed H10B Windows regression: **276 passed, 2 skipped**
+- Latest full Windows pre-release regression: **295 passed, 2 skipped**
 
 The vulnerable sample is intentionally insecure. Findings uploaded to GitHub Code Scanning from that sample are demonstration findings, not evidence that the BuildShield-CI source code itself contains those vulnerabilities.
 
-The active `upgrade/v0.13-security-hardening` branch has completed H1-H9 with hosted CI at the H9 checkpoint, completed H10A cleanup, and passed H10B release-candidate validation at version `1.0.0`. H10C finalizes portfolio/demo/documentation material; the final `v1.0.0` tag/release is created only after H10D release acceptance.
+The active `upgrade/v0.13-security-hardening` branch has completed H1-H10 local release engineering. Checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f` was pushed and accepted by hosted CI before the final professional-UI and realistic-demo pass. The current post-checkpoint candidate has since passed the realistic-profile contract, production Docker smoke, full Windows regression at **295 passed, 2 skipped**, live browser review, and final repository sanitation. A replacement final checkpoint and hosted-CI pass are still required before PR merge, tag, and GitHub release.
 
 ---
 
@@ -182,13 +198,19 @@ Current H10 release candidate:
 BuildShield-CI version: 1.0.0
 ```
 
-The `v0.12.7` annotated tag remains the historical frozen baseline. On `upgrade/v0.13-security-hardening`, H1-H9, H10A and H10B are complete; the current package is the validated `1.0.0` release candidate. H10C finalizes presentation/documentation and H10D performs final release review, hosted CI, merge, tag and release verification.
+The `v0.12.7` annotated tag remains the historical frozen baseline. The current package is the validated `1.0.0` release candidate. H1-H10 local acceptance, professional UI polish, the realistic application profile, live browser review, and repository sanitation are complete. The final replacement checkpoint/hosted-CI, PR merge, annotated `v1.0.0` tag, and release verification remain pending.
 
 ---
 
 ## Core CLI Usage
 
-Vulnerable sample:
+Realistic application sample:
+
+```powershell
+buildshield scan samples/realistic-repo --policy buildshield-policy.yml --hide-files
+```
+
+Vulnerable benchmark sample:
 
 ```powershell
 buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
@@ -317,7 +339,7 @@ pytest -q
 Current verified Windows release-candidate result:
 
 ```text
-276 passed, 2 skipped
+295 passed, 2 skipped
 ```
 
 Coverage includes scanner orchestration, npm/Python/GitHub Actions/Dockerfile analyzers, policy, reporting, comparison, authentication/authorization, path containment, browser security, request/resource controls, safe errors/logging, report/history security and retention, dashboard APIs, SBOM-lite inventory, OSV intelligence, Docker/runtime hardening, reproducible builds, immutable workflow references, deterministic H9 evaluation, and repository hygiene.
@@ -336,7 +358,7 @@ The vulnerable repository under `samples/vulnerable-repo` is intentionally insec
 
 The validated v1.0.0 release candidate is deployment-ready for controlled single-instance environments and demonstrates a production-style architecture. It includes the in-scope workspace boundary, single-tenant authentication/authorization, browser security, resource controls, safe errors/audit logging, retention controls, hardened Docker runtime, reproducible build/CI gates, and adversarial regression evaluation. It is not claimed to be an enterprise multi-tenant service.
 
-H1-H9, H10A and H10B are complete. H10C is the final portfolio/demo/documentation closure. H10D is the only remaining release-engineering stage: final cumulative validation, checkpoint/PR/hosted-CI review, merge, annotated `v1.0.0` tag and release verification.
+H1-H10 local acceptance is complete. The post-checkpoint professional UI and realistic-demo candidate has passed frontend quality gates, production Docker/API smoke, a full Windows regression of **295 passed, 2 skipped**, live browser review, and final repository sanitation. Only the final replacement checkpoint/hosted-CI, PR merge, annotated `v1.0.0` tag, and GitHub release verification remain.
 
 ---
 

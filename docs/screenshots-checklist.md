@@ -6,8 +6,10 @@ Use this checklist for the final portfolio/submission/demo capture. Capture fina
 
 - [ ] `buildshield --help`
 - [ ] `buildshield version` showing `1.0.0`
-- [ ] full Windows regression showing `276 passed, 2 skipped` as H10B release-candidate evidence
-- [ ] vulnerable sample showing 22 findings / score 5/100
+- [ ] full Windows regression showing `295 passed, 2 skipped` as final pre-release evidence
+- [ ] realistic application showing 3 findings / score 81/100 / MEDIUM / WARNING / policy PASS
+- [ ] natural vulnerable-to-realistic comparison showing +76, 22 -> 3 findings and 80% controlled risk reduction
+- [ ] vulnerable benchmark sample showing 22 findings / score 5/100
 - [ ] hardened sample showing 0 findings / score 100/100
 - [ ] comparison showing +95 and 22 findings reduced
 
@@ -59,18 +61,20 @@ Use ordered names such as:
 
 ```text
 01-version.png
-02-tests.png
-03-vulnerable-scan.png
-04-hardened-scan.png
-05-comparison.png
-06-h9-evaluation.png
-07-dashboard-overview.png
-08-findings.png
-09-policy.png
-10-inventory-osv.png
-11-history-trends.png
-12-ci-success.png
-13-code-scanning.png
-14-docker-ready.png
-15-v1.0.0-release.png
+02-tests-295-pass.png
+03-realistic-scan.png
+04-vulnerable-benchmark.png
+05-hardened-benchmark.png
+06-natural-comparison.png
+07-controlled-comparison.png
+08-h9-evaluation.png
+09-dashboard-overview.png
+10-findings.png
+11-policy.png
+12-inventory-osv.png
+13-history-trends.png
+14-ci-success.png
+15-code-scanning.png
+16-docker-ready.png
+17-v1.0.0-release.png
 ```

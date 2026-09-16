@@ -339,14 +339,28 @@ def sample_repositories(
     return {
         "repositories": [
             {
-                "label": "Vulnerable Demo Repository",
-                "path": "samples/vulnerable-repo",
-                "description": "Intentionally vulnerable sample used to demonstrate findings.",
+                "label": "Realistic Application Repository",
+                "path": "samples/realistic-repo",
+                "description": (
+                    "Representative mixed posture for routine demos: mostly hardened, "
+                    "with a small number of dependency and container findings."
+                ),
             },
             {
-                "label": "Secure Demo Repository",
+                "label": "Vulnerable Benchmark Repository",
+                "path": "samples/vulnerable-repo",
+                "description": (
+                    "Intentionally vulnerable regression fixture used for the fixed "
+                    "22-findings benchmark."
+                ),
+            },
+            {
+                "label": "Hardened Benchmark Repository",
                 "path": "samples/secure-repo",
-                "description": "Hardened sample repository expected to pass policy.",
+                "description": (
+                    "Fully hardened regression fixture used to verify the fixed "
+                    "100/100 benchmark target."
+                ),
             },
         ],
         "default_policy": "buildshield-policy.yml",

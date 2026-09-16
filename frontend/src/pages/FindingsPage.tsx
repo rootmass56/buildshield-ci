@@ -1,5 +1,121 @@
-import { useMemo,useState } from 'react';
-import { Search } from 'lucide-react';
-import { EmptyPanel,SeverityBadge } from '../components/Ui';
-import { useScanState } from '../state/ScanContext';
-export function FindingsPage(){const {latestScan}=useScanState();const [q,setQ]=useState('');const [sev,setSev]=useState('ALL');const findings=useMemo(()=>latestScan?.findings.filter(f=>(sev==='ALL'||f.severity===sev)&&(!q.trim()||`${f.rule_id} ${f.title} ${f.category} ${f.evidence.file_path}`.toLowerCase().includes(q.toLowerCase())))??[],[latestScan,q,sev]);if(!latestScan)return <EmptyPanel title="No scan loaded" detail="Run a scan first to explore findings."/>;return <section><div className="page-heading"><div><span className="eyebrow">Findings</span><h2>Security findings explorer</h2><p>Repository-controlled content is rendered as inert React text.</p></div></div><div className="filter-bar"><label className="search-field"><Search size={17}/><input aria-label="Search findings" value={q} onChange={e=>setQ(e.target.value)} placeholder="Search findings"/></label><select aria-label="Filter severity" value={sev} onChange={e=>setSev(e.target.value)}>{['ALL','CRITICAL','HIGH','MEDIUM','LOW','INFO'].map(x=><option key={x}>{x}</option>)}</select></div><div className="finding-list">{findings.map((f,i)=><details className="finding-card" key={`${f.rule_id}-${i}`}><summary><div><strong>{f.rule_id}: {f.title}</strong><span>{f.category} · {f.confidence}</span></div><SeverityBadge value={f.severity}/></summary><div className="finding-body"><p>{f.description}</p><p><strong>Impact:</strong> {f.impact}</p><code>{f.evidence.file_path}{f.evidence.line_number?`:${f.evidence.line_number}`:''}</code>{f.evidence.snippet?<pre>{f.evidence.snippet}</pre>:null}<p><strong>Remediation:</strong> {f.remediation}</p></div></details>)}</div></section>}
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
+
+import { EmptyPanel, SeverityBadge } from "../components/Ui";
+import { useScanState } from "../state/ScanContext";
+
+export function FindingsPage() {
+  const { latestScan } = useScanState();
+  const [query, setQuery] = useState("");
+  const [severity, setSeverity] = useState("ALL");
+
+  const findings = useMemo(
+    () =>
+      latestScan?.findings.filter(
+        (finding) =>
+          (severity === "ALL" || finding.severity === severity) &&
+          (!query.trim() ||
+            `${finding.rule_id} ${finding.title} ${finding.category} ${finding.evidence.file_path}`
+              .toLowerCase()
+              .includes(query.toLowerCase())),
+      ) ?? [],
+    [latestScan, query, severity],
+  );
+
+  return (
+    <section className="page-section">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Findings</span>
+          <h2>Security findings</h2>
+          <p>
+            Review rule matches, evidence, impact, and remediation from the
+            latest repository scan.
+          </p>
+        </div>
+      </div>
+
+      {!latestScan ? (
+        <EmptyPanel
+          title="No scan loaded"
+          detail="Run a repository security scan to populate findings."
+        />
+      ) : (
+        <>
+          <div className="filter-bar findings-filter-bar">
+            <label className="search-field">
+              <Search size={16} aria-hidden="true" />
+              <input
+                aria-label="Search findings"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search rule, title, category, or file"
+              />
+            </label>
+            <select
+              aria-label="Filter severity"
+              value={severity}
+              onChange={(event) => setSeverity(event.target.value)}
+            >
+              {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"].map(
+                (value) => (
+                  <option key={value}>{value}</option>
+                ),
+              )}
+            </select>
+            <span className="filter-count" aria-live="polite">
+              {findings.length} of {latestScan.findings.length}
+            </span>
+          </div>
+
+          {!findings.length ? (
+            <EmptyPanel
+              title="No findings match this filter"
+              detail="Adjust the search term or severity filter."
+            />
+          ) : (
+            <div className="finding-list">
+              {findings.map((finding, index) => (
+                <details
+                  className="finding-card"
+                  key={`${finding.rule_id}-${index}`}
+                >
+                  <summary>
+                    <div>
+                      <strong>
+                        {finding.rule_id}: {finding.title}
+                      </strong>
+                      <span>
+                        {finding.category} · {finding.confidence} confidence
+                      </span>
+                    </div>
+                    <SeverityBadge value={finding.severity} />
+                  </summary>
+
+                  <div className="finding-body">
+                    <p>{finding.description}</p>
+                    <p>
+                      <strong>Impact:</strong> {finding.impact}
+                    </p>
+                    <code>
+                      {finding.evidence.file_path}
+                      {finding.evidence.line_number
+                        ? `:${finding.evidence.line_number}`
+                        : ""}
+                    </code>
+                    {finding.evidence.snippet ? (
+                      <pre>{finding.evidence.snippet}</pre>
+                    ) : null}
+                    <p>
+                      <strong>Remediation:</strong> {finding.remediation}
+                    </p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}

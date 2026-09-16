@@ -9,10 +9,12 @@ This checklist separates completed engineering evidence from actions that must w
 - [x] H9 hosted GitHub Actions successful
 - [x] H10A final audit/cleanup locally validated
 - [x] H10B v1.0.0 release-candidate freeze locally validated
-- [x] full H10B Windows Python regression: 276 passed, 2 skipped
+- [x] final pre-release Windows Python regression: 295 passed, 2 skipped
 - [x] vulnerable controlled sample: 22 findings, score 5/100
 - [x] hardened controlled sample: 0 findings, score 100/100
 - [x] exact controlled 22 -> 0 benchmark preserved
+- [x] realistic application profile: 3 findings, 81/100, MEDIUM, WARNING gate, policy PASS
+- [x] natural vulnerable-to-realistic comparison: +76 score, 22 -> 3 findings, 80% controlled risk reduction
 - [x] H9C baseline retained: 41 TP / 45 TN / 4 FP / 10 FN
 - [x] H9D unchanged-corpus result: 51 TP / 49 TN / 0 FP / 0 FN
 - [x] H9 metric claim boundary documented
@@ -22,6 +24,8 @@ This checklist separates completed engineering evidence from actions that must w
 - [x] fresh v1.0.0 wheel and sdist verified
 - [x] fresh Windows hash-lock installation verified
 - [x] exact Node 22.23.2 / npm 12.0.2 frontend gates verified
+- [x] final professional dashboard polish validated in production Docker and reviewed live
+- [x] final repository sanitation passed with zero tracked generated trash, zero tracked secret-like filenames, `git diff --check`/`git fsck` PASS and zero staging
 
 ## Implemented Capabilities
 
@@ -54,20 +58,23 @@ This checklist separates completed engineering evidence from actions that must w
 
 H10C is locally complete only after its dedicated documentation-consistency tests and the full regression suite pass.
 
-## Final H10D Release Actions — Still Pending
+## Final Release Actions - Remaining
 
-- [ ] run final cumulative local validation from the exact H10C candidate
-- [ ] validate final production Docker/Compose behavior and readiness
-- [ ] create the single H10 final checkpoint commit
-- [ ] push the final hardening branch
+- [x] complete H10D cumulative local/container validation
+- [x] create and push H10 checkpoint `7bc58e905789fe2990223d3cf520729c14d98e1f`
+- [x] verify hosted GitHub Actions on that checkpoint
+- [x] complete final professional UI / realistic-demo / live-browser / sanitation pass after that checkpoint
+- [ ] create the replacement final checkpoint commit containing the post-checkpoint polish
+- [ ] push the replacement final hardening state
+- [ ] require hosted GitHub Actions success on that exact replacement checkpoint
 - [ ] open/review the final PR to `main`
-- [ ] require hosted GitHub Actions success on the final release state
 - [ ] verify SARIF/report artifacts
 - [ ] merge the accepted final PR
-- [ ] verify `main` points to the accepted release commit
+- [ ] verify `main` points to the accepted release commit and CI is green
 - [ ] create and push annotated tag `v1.0.0`
-- [ ] verify the tag/release contents and final CI/release state
+- [ ] create/verify the GitHub release and release artifacts
 - [ ] capture final public portfolio screenshots
+- [ ] freeze normal feature development except critical corrective patches
 
 ## Presentation Boundaries
 
@@ -80,4 +87,4 @@ H10C is locally complete only after its dedicated documentation-consistency test
 
 ## Current State
 
-H1-H9, H10A and H10B are complete. H10C is the final documentation/portfolio closure. The project is **not yet the final tagged v1.0.0 release** until H10D cumulative validation, hosted CI, merge, tag and release verification succeed.
+H1-H10 local engineering is complete. The original H10 checkpoint passed hosted CI, and the post-checkpoint professional UI plus realistic application profile have now passed frontend/backend/Docker regression, live browser review and final repository sanitation. The project is **not yet the final tagged v1.0.0 release** until the replacement final checkpoint passes hosted CI, the PR is merged, `main` is verified, and the annotated tag/GitHub release are created and verified.

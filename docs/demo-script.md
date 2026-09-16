@@ -15,14 +15,44 @@ git status --short
 Expected release-candidate baseline:
 
 ```text
-276 passed, 2 skipped
+295 passed, 2 skipped
 BuildShield-CI version: 1.0.0
-working tree contains only the reviewed H10 release candidate before H10D
+working tree contains only the reviewed final post-checkpoint candidate before the replacement release checkpoint
 ```
 
 After the final H10D release checkpoint, use a clean tree for the public demo.
 
-## 2. Vulnerable Sample
+## 2. Realistic Application Profile
+
+```powershell
+buildshield scan samples/realistic-repo --policy buildshield-policy.yml --hide-files
+```
+
+Show:
+
+```text
+3 findings
+0 Critical
+0 High
+2 Medium
+1 Low
+81/100
+MEDIUM
+Build Gate: WARNING
+Policy: PASSED
+```
+
+Explain that this is the normal representative demo: a mostly hardened application with a small number of dependency/container findings. It avoids presenting a perfect 100/100 score as the expected outcome for every application.
+
+Natural comparison:
+
+```powershell
+buildshield compare samples/vulnerable-repo samples/realistic-repo
+```
+
+Show +76 score, 19 findings reduced and 80% controlled risk reduction with `PARTIALLY_IMPROVED`.
+
+## 3. Vulnerable Benchmark Sample
 
 ```powershell
 buildshield scan samples/vulnerable-repo --policy buildshield-policy.yml --hide-files
@@ -44,7 +74,7 @@ Policy: FAILED
 
 Explain that the repository is intentionally insecure and exists only for controlled demonstration and regression testing.
 
-## 3. Hardened Sample
+## 4. Hardened Benchmark Sample
 
 ```powershell
 buildshield scan samples/secure-repo --policy buildshield-policy.yml --hide-files
@@ -60,7 +90,7 @@ Build Gate: PASSED
 Policy: PASSED
 ```
 
-## 4. Comparison
+## 5. Controlled Benchmark Comparison
 
 ```powershell
 buildshield compare samples/vulnerable-repo samples/secure-repo
@@ -68,7 +98,7 @@ buildshield compare samples/vulnerable-repo samples/secure-repo
 
 Show the +95 score change, 22 findings reduced and `SECURITY_POSTURE_SIGNIFICANTLY_IMPROVED`. Describe the 100% reduction only as the result of this controlled benchmark.
 
-## 5. Explain the 20 Static Rules
+## 6. Explain the 20 Static Rules
 
 Summarize the four analyzer families:
 
@@ -77,7 +107,7 @@ Summarize the four analyzer families:
 - GitHub Actions: immutable action refs, permissions, remote shell execution, secret logging and `pull_request_target` risk
 - Dockerfile: base-image pinning, final-stage user semantics, explicit root, secret-like ENV/ARG use, remote shell execution, package upgrades, health checks and remote-URL `ADD`
 
-## 6. Deterministic H9 Evaluation
+## 7. Deterministic H9 Evaluation
 
 Show `docs/evaluation-metrics.md` and `evaluation/h9d-final-metrics-v1.json`.
 
@@ -90,7 +120,7 @@ H9D: 51 TP / 49 TN / 0 FP / 0 FN, micro F1 1.000000
 
 State explicitly that 1.000000 is regression performance on the curated corpus, not a claim of perfect real-world detection.
 
-## 7. Inventory and OSV Intelligence
+## 8. Inventory and OSV Intelligence
 
 ```powershell
 buildshield inventory samples/vulnerable-repo --hide-packages
@@ -105,7 +135,7 @@ buildshield vulncheck samples/secure-repo --online --timeout 15
 
 Explain that online OSV results are dynamic and are not hard-coded into the deterministic static-rule metrics.
 
-## 8. Dashboard
+## 9. Dashboard
 
 For a local development demonstration:
 
@@ -113,9 +143,9 @@ For a local development demonstration:
 buildshield dashboard --port 8080
 ```
 
-Open `http://127.0.0.1:8080` and show scanning, findings, policy, comparison, inventory, vulnerability intelligence, reports, history and trends.
+Open `http://127.0.0.1:8080` and show scanning, findings, policy, comparison, inventory, vulnerability intelligence, reports, history and trends. The normal scanner preset should be the Realistic Application Repository (81/100, 3 findings), while the vulnerable and hardened fixtures remain benchmark presets.
 
-## 9. GitHub Actions and Code Scanning
+## 10. GitHub Actions and Code Scanning
 
 Show `.github/workflows/buildshield-ci.yml` and explain:
 
@@ -128,7 +158,7 @@ Show `.github/workflows/buildshield-ci.yml` and explain:
 
 Alerts from the intentionally vulnerable fixture are demonstration findings, not proof that BuildShield-CI source itself is vulnerable.
 
-## 10. Production-Style Docker Compose Demo
+## 11. Production-Style Docker Compose Demo
 
 Production mode fails closed unless administrator authentication is configured. Generate an ephemeral demo hash without committing it:
 

@@ -58,7 +58,7 @@ function metricCard(label: string): HTMLElement {
   return card;
 }
 
-describe("BuildShield-CI React feature migration", () => {
+describe("BuildShield-CI React application", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -83,7 +83,7 @@ describe("BuildShield-CI React feature migration", () => {
     renderApp("/");
 
     expect(
-      await screen.findByRole("heading", { name: "Sign in" }),
+      await screen.findByRole("heading", { name: "Sign in to BuildShield-CI" }),
     ).toBeInTheDocument();
   });
 
@@ -118,7 +118,7 @@ describe("BuildShield-CI React feature migration", () => {
               low_count: 0,
               info_count: 0,
               policy_status: "PASSED",
-              build_gate_status: "PASSED",
+              build_gate_status: "WARNING",
               report_count: 1,
             },
           ],
@@ -136,7 +136,7 @@ describe("BuildShield-CI React feature migration", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "Security posture command center",
+        name: "Security posture overview",
       }),
     ).toBeInTheDocument();
 
@@ -166,9 +166,14 @@ describe("BuildShield-CI React feature migration", () => {
         return jsonResponse({
           repositories: [
             {
-              label: "Secure Demo Repository",
+              label: "Realistic Application Repository",
+              path: "samples/realistic-repo",
+              description: "Mixed posture",
+            },
+            {
+              label: "Hardened Benchmark Repository",
               path: "samples/secure-repo",
-              description: "Secure",
+              description: "Benchmark",
             },
           ],
           default_policy: "buildshield-policy.yml",
@@ -179,29 +184,32 @@ describe("BuildShield-CI React feature migration", () => {
         const headers = new Headers(init?.headers);
 
         expect(headers.get("X-CSRF-Token")).toBe("csrf-test-token");
+        expect(JSON.parse(String(init?.body)).target_path).toBe(
+          "samples/realistic-repo",
+        );
 
         return jsonResponse({
           run_id: "scan-1",
           kind: "scan",
-          target_path: "samples/secure-repo",
+          target_path: "samples/realistic-repo",
           summary: {
-            target_path: "samples/secure-repo",
+            target_path: "samples/realistic-repo",
             files_discovered: 7,
             files_scanned: 7,
-            findings_count: 0,
+            findings_count: 3,
             critical_count: 0,
             high_count: 0,
-            medium_count: 0,
-            low_count: 0,
+            medium_count: 2,
+            low_count: 1,
             info_count: 0,
-            security_score: 100,
-            risk_level: "LOW",
+            security_score: 81,
+            risk_level: "MEDIUM",
           },
           risk_profile: {
-            overall_security_score: 100,
-            overall_risk_level: "LOW",
-            build_gate_status: "PASSED",
-            build_gate_reason: "Security gate passed.",
+            overall_security_score: 81,
+            overall_risk_level: "MEDIUM",
+            build_gate_status: "WARNING",
+            build_gate_reason: "Security score is acceptable but improvements are recommended.",
             category_risks: [],
             top_risk_drivers: [],
           },
@@ -209,7 +217,7 @@ describe("BuildShield-CI React feature migration", () => {
             policy_file: "buildshield-policy.yml",
             passed: true,
             minimum_score: 80,
-            actual_score: 100,
+            actual_score: 81,
             fail_on_severities: ["CRITICAL"],
             violations: [],
           },
@@ -220,17 +228,17 @@ describe("BuildShield-CI React feature migration", () => {
             run_id: "scan-1",
             created_at: "2026-09-15T00:00:00Z",
             kind: "scan",
-            target_path: "samples/secure-repo",
-            security_score: 100,
-            risk_level: "LOW",
-            findings_count: 0,
+            target_path: "samples/realistic-repo",
+            security_score: 81,
+            risk_level: "MEDIUM",
+            findings_count: 3,
             critical_count: 0,
             high_count: 0,
-            medium_count: 0,
-            low_count: 0,
+            medium_count: 2,
+            low_count: 1,
             info_count: 0,
             policy_status: "PASSED",
-            build_gate_status: "PASSED",
+            build_gate_status: "WARNING",
             report_count: 0,
           },
         });
@@ -245,18 +253,11 @@ describe("BuildShield-CI React feature migration", () => {
       name: "Run security scan",
     });
 
-    fireEvent.change(
-      screen.getByLabelText("Workspace path"),
-      {
-        target: { value: "samples/secure-repo" },
-      },
-    );
-
     fireEvent.click(button);
 
     await waitFor(() => {
       expect(
-        within(metricCard("Security score")).getByText("100/100"),
+        within(metricCard("Security score")).getByText("81/100"),
       ).toBeInTheDocument();
     });
 
