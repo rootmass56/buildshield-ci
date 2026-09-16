@@ -1,6 +1,6 @@
 # BuildShield-CI v1.0.0 Final Blueprint
 
-Updated through H8D3 final local validation and the single H8 checkpoint.
+Updated through H9D cumulative validation and H9 checkpoint preparation.
 
 ## Release Target
 
@@ -20,6 +20,7 @@ Updated through H8D3 final local validation and the single H8 checkpoint.
 - H5 checkpoint: `1ba53f5528c939b02cf29c6d14b5da354212d638`
 - H6 checkpoint: `b4af531f8d86115b8ccdc23f22b49e36400b6253`
 - H7 checkpoint: `f84839c8e46f3b092349381070bc290f21ab5cbe` — `Harden container and runtime deployment controls`
+- H8 checkpoint: `367ead5670b26c7e6076d063e08b9fb8fdcb206e` — `Complete H8 reproducibility and CI quality gates`
 
 ## Controlled Benchmark
 
@@ -39,8 +40,8 @@ Updated through H8D3 final local validation and the single H8 checkpoint.
 | H6 | Report/history security and retention | COMPLETE |
 | H7 | Docker/runtime hardening | COMPLETE |
 | H8 | CycloneDX, reproducible build, dependency and CI quality | COMPLETE |
-| H9 | Evaluation corpus and adversarial regression testing | NEXT |
-| H10 | Final audit, cleanup, v1.0.0 freeze and release | PENDING |
+| H9 | Evaluation corpus and adversarial regression testing | COMPLETE |
+| H10 | Final audit, cleanup, v1.0.0 freeze and release | NEXT AFTER H9 HOSTED CI |
 
 # H7 — Docker / Runtime Hardening
 
@@ -180,7 +181,7 @@ the current Windows-generated frontend lockfile omits Linux native optional pack
 
 # H8 — CycloneDX + Reproducible Build + CI Quality
 
-Status: IN PROGRESS.
+Status: COMPLETE.
 
 Mandatory:
 - CycloneDX JSON SBOM;
@@ -291,11 +292,11 @@ Compatibility note:
 
 ## H8D — CI Integration + Final H8 Checkpoint
 
-Status: IN PROGRESS.
+Status: COMPLETE.
 
 ### H8D1 — SQLite Resource Lifecycle Closure
 
-Status: COMPLETE LOCALLY.
+Status: COMPLETE.
 
 Delivered:
 - deterministic SQLite connection closing with `contextlib.closing`;
@@ -309,7 +310,7 @@ Delivered:
 
 ### H8D2 — Supported Frontend Tooling + CycloneDX Graph Closure
 
-Status: COMPLETE LOCALLY.
+Status: COMPLETE.
 
 Delivered:
 - Node `22.23.2` frontend-builder baseline with frontend engine `^22.22.2`;
@@ -334,7 +335,7 @@ integrates the final CI gates and completes the cumulative H8 validation.
 
 ### H8D3 — CI Integration + H8 Checkpoint
 
-Status: COMPLETE LOCALLY — CHECKPOINT READY.
+Status: COMPLETE.
 
 Delivered:
 - three-job GitHub Actions architecture for Python quality/reproducibility,
@@ -365,15 +366,92 @@ Final local H8D3 validation:
   and graph closure, exact benchmark, policy gates and SARIF generation;
 - exact 30-file H8 candidate state remained unchanged and unstaged.
 
-H8 is COMPLETE locally and H9 is NEXT. The single H8 checkpoint commit is the
-only H8 commit to be pushed from the accumulated H8A-H8D3 working tree.
-Acceptance of that checkpoint still requires the hosted GitHub Actions run to
-succeed and the pushed branch to match the local checkpoint with a clean
-working tree. If hosted CI fails, H8D3 is reopened and H9 does not begin.
+H8 checkpoint closure:
+- checkpoint `367ead5670b26c7e6076d063e08b9fb8fdcb206e` was pushed to
+  `upgrade/v0.13-security-hardening`;
+- its parent is exactly H7 `f84839c8e46f3b092349381070bc290f21ab5cbe`;
+- hosted GitHub Actions passed all three H8 quality/security jobs;
+- local and remote hardening refs matched after the push;
+- the H8 working tree was clean before H9 began.
 
 # H9 — Evaluation Corpus + Adversarial Regression Testing
 
-Status: NEXT.
+Status: COMPLETE. The single H9 checkpoint is created from this validated tree; hosted CI acceptance is required before H10 changes begin.
+
+## H9A — Rule/Evaluator Inventory + Corpus Design
+
+Status: COMPLETE.
+
+Delivered design:
+- exact inventory of 4 static analyzers and 20 unique `DG-*` rules;
+- existing-test and controlled-benchmark coverage-gap inventory;
+- deterministic 100-case design with five isolated cases per rule;
+- explicit case-level ground truth for TP/TN/FP/FN;
+- per-rule precision/recall/F1 plus micro/macro aggregation contract;
+- cross-rule leakage and duplicate-target-finding tracking;
+- deterministic OSV evaluation kept separate from static-rule metrics;
+- claims explicitly bounded to the curated deterministic corpus.
+
+## H9B — Deterministic Corpus Materialization
+
+Status: COMPLETE.
+
+Candidate delivered:
+- 100 isolated static-analysis fixture repositories exactly matching the H9A oracle;
+- five cases per each of the 20 `DG-*` rules;
+- SHA-256-bound `evaluation/corpus-index-v1.json`;
+- six offline deterministic OSV cases in `evaluation/osv-cases-v1.json`;
+- materialization, discovery, integrity and repeatability regression tests;
+- H9B validation preserves the existing 22 vulnerable / 0 secure controlled benchmark.
+
+H9B deliberately does not change oracle labels to match current detector behavior.
+Official confusion-matrix metrics remain H9C work.
+
+## H9C — Evaluation Engine + Metrics
+
+Status: COMPLETE.
+
+Candidate delivered:
+- deterministic offline corpus evaluator using the normal BuildShield-CI scanner;
+- case-level TP/TN/FP/FN classification against the immutable H9A oracle;
+- target-count mismatch and cross-rule leakage tracking;
+- per-rule precision/recall/F1;
+- micro precision/recall/F1 and corpus classification accuracy;
+- macro precision/recall/F1;
+- deterministic JSON and Markdown report generation;
+- checked-in pre-hardening baseline with 41 TP, 45 TN, 4 FP and 10 FN;
+- micro precision 0.911111, recall 0.803922 and F1 0.854167;
+- 14 current classification mismatches retained for H9D review;
+- six deterministic, network-free OSV semantic tests kept separate from static metrics;
+- claims explicitly bounded to curated deterministic corpus performance.
+
+## H9D — Adversarial Regression Closure + H9 Checkpoint
+
+Status: COMPLETE.
+
+Validated closure:
+- reviewed all 14 H9C classification mismatches without changing oracle labels;
+- applied bounded hardening to Dockerfile, GitHub Actions, npm and Python analyzers;
+- removed the one H9C cross-rule leakage case caused by Python environment markers;
+- preserved the historical H9C baseline at 41 TP, 45 TN, 4 FP and 10 FN;
+- post-hardening result on the unchanged 100-case corpus is 51 TP, 49 TN, 0 FP and 0 FN;
+- micro and macro precision/recall/F1 are 1.000000 on that fixed corpus;
+- all 20 rules classify all five assigned cases correctly;
+- classification mismatches, target-count mismatches, cross-rule leakage and duplicate target findings are all zero;
+- H9D direct adversarial tests: 10 passed;
+- combined H9A-H9D regression: 37 passed;
+- Ruff: PASS;
+- Windows full regression: 259 passed, 2 skipped;
+- exact controlled benchmark remains 22 vulnerable findings / score 5 and 0 secure findings / score 100;
+- exact H9D working state remained unchanged and unstaged after validation.
+
+The 100% metrics are limited to the checked-in curated deterministic H9 corpus.
+They are not a claim of 100% real-world detection accuracy or a population-level
+false-positive/false-negative rate.
+
+The single H9 checkpoint must preserve this validated tree. H10 begins only
+after the checkpoint is pushed, local/remote refs match, the tree is clean and
+the hosted GitHub Actions run succeeds.
 
 Mandatory:
 - positive fixtures per rule;
@@ -389,7 +467,7 @@ Mandatory:
 
 # H10 — Final Audit, Cleanup and v1.0.0 Release
 
-Status: PENDING.
+Status: NEXT after H9 checkpoint push and hosted CI acceptance.
 
 Will:
 - remove dead code;

@@ -1,0 +1,14 @@
+name: h9-eval
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: |
+          curl -fsSLo install.sh https://example.invalid/install.sh
+          echo '012345  install.sh' | sha256sum -c -
+          bash install.sh

@@ -1,0 +1,8 @@
+{
+  "name": "h9-eval",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "left-pad": "1.2.3-beta.1"
+  }
+}

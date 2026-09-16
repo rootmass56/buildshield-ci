@@ -114,6 +114,12 @@ def extract_python_requirement(line: str) -> tuple[str, str | None] | None:
     package_name = match.group(1).strip()
     version_specifier = match.group(2).strip() or None
 
+    if version_specifier and ";" in version_specifier:
+        version_specifier = (
+            version_specifier.split(";", maxsplit=1)[0].strip()
+            or None
+        )
+
     if not package_name:
         return None
 
@@ -158,27 +164,60 @@ def is_internal_python_candidate(package_name: str) -> bool:
     return any(keyword in normalized_name for keyword in INTERNAL_PACKAGE_KEYWORDS)
 
 
-def requirement_has_private_registry(content: str) -> bool:
-    lower_content = content.lower()
+def is_public_python_index(value: str) -> bool:
+    normalized = value.strip().lower()
 
-    if "--index-url" in lower_content or "--extra-index-url" in lower_content:
-        if "pypi.org/simple" not in lower_content and "files.pythonhosted.org" not in lower_content:
+    return (
+        "pypi.org/simple" in normalized
+        or "files.pythonhosted.org" in normalized
+    )
+
+
+def requirement_has_private_registry(content: str) -> bool:
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+
+        if not line or line.startswith("#"):
+            continue
+
+        if line.startswith("--index-url"):
+            value = line[len("--index-url"):].lstrip(" =")
+        elif line.startswith("-i "):
+            value = line[3:].strip()
+        else:
+            continue
+
+        if value and not is_public_python_index(value):
             return True
 
     return False
 
 
 def config_file_has_private_registry(config_file: RepositoryFile) -> bool:
-    content = read_text_file(Path(config_file.absolute_path)).lower()
+    content = read_text_file(
+        Path(config_file.absolute_path)
+    )
 
-    if "index-url" in content and "pypi.org/simple" not in content:
-        return True
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
 
-    if "repository" in content and "pypi.org" not in content:
-        return True
+        if not line or line.startswith(("#", ";", "[")):
+            continue
 
-    if "extra-index-url" in content and "pypi.org/simple" not in content:
-        return True
+        if "=" not in line:
+            continue
+
+        key, value = [
+            part.strip()
+            for part in line.split("=", maxsplit=1)
+        ]
+        normalized_key = key.lower()
+
+        if normalized_key in {
+            "index-url",
+            "repository",
+        } and value and not is_public_python_index(value):
+            return True
 
     return False
 

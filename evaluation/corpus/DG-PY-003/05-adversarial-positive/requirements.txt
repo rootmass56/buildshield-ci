@@ -1,0 +1,2 @@
+--extra-index-url https://packages.company.invalid/simple
+internal-auth==1.2.3

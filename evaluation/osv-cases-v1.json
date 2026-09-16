@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "network_required": false,
+  "included_in_static_rule_metrics": false,
+  "cases": [
+    {
+      "case_id": "OSV-01",
+      "input": {
+        "ecosystem": "npm",
+        "name": "lodash",
+        "declared_version": "4.17.21"
+      },
+      "expected": {
+        "queryable": true,
+        "osv_ecosystem": "npm",
+        "version": "4.17.21"
+      }
+    },
+    {
+      "case_id": "OSV-02",
+      "input": {
+        "ecosystem": "npm",
+        "name": "lodash",
+        "declared_version": "^4.17.0"
+      },
+      "expected": {
+        "queryable": false,
+        "skipped_reason": "VERSION_NOT_EXACTLY_PINNED"
+      }
+    },
+    {
+      "case_id": "OSV-03",
+      "input": {
+        "ecosystem": "python",
+        "name": "requests",
+        "declared_version": "==2.32.3"
+      },
+      "expected": {
+        "queryable": true,
+        "osv_ecosystem": "PyPI",
+        "version": "2.32.3"
+      }
+    },
+    {
+      "case_id": "OSV-04",
+      "input": {
+        "ecosystem": "python",
+        "name": "requests",
+        "declared_version": ">=2.31"
+      },
+      "expected": {
+        "queryable": false,
+        "skipped_reason": "VERSION_NOT_EXACTLY_PINNED"
+      }
+    },
+    {
+      "case_id": "OSV-05",
+      "mock_response": {
+        "results": [
+          {
+            "vulns": [
+              {
+                "id": "OSV-H9-0001",
+                "modified": "2026-01-01T00:00:00Z"
+              },
+              {
+                "id": "OSV-H9-0002",
+                "modified": "2026-01-02T00:00:00Z"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "vulnerable_dependencies": 1,
+        "total_vulnerabilities": 2,
+        "status": "COMPLETED"
+      }
+    },
+    {
+      "case_id": "OSV-06",
+      "mock_failure": "OSV API connection failed: deterministic H9 fixture",
+      "expected": {
+        "status": "FAILED",
+        "error_contains": "deterministic H9 fixture"
+      }
+    }
+  ]
+}

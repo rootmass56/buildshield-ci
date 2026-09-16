@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from supplysentinel.analyzers.utils import (
@@ -187,9 +188,21 @@ def is_internal_npm_candidate(package_name: str) -> bool:
     ):
         return True
 
-    return any(
-        keyword in normalized
-        for keyword in NPM_INTERNAL_KEYWORDS
+    tokens = {
+        token
+        for token in re.split(r"[@/._-]+", normalized)
+        if token
+    }
+
+    return bool(
+        tokens
+        & {
+            "internal",
+            "private",
+            "company",
+            "corp",
+            "enterprise",
+        }
     )
 
 
