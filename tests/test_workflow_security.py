@@ -59,3 +59,18 @@ def test_external_github_actions_are_pinned_to_full_commit_shas() -> None:
             )
 
     assert not violations, "\n".join(violations)
+
+def test_workflow_push_scope_is_main_only() -> None:
+    text = workflow_path().read_text(encoding="utf-8-sig")
+    header = text.split("# Deny permissions by default.", maxsplit=1)[0]
+
+    assert (
+        "  push:\n"
+        "    branches:\n"
+        "      - main\n"
+        in header
+    )
+    assert "      - master\n" not in header
+    assert "      - upgrade/v0.13-security-hardening\n" not in header
+    assert "  pull_request:\n" in header
+    assert "  workflow_dispatch:\n" in header

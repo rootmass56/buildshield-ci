@@ -190,8 +190,11 @@ def test_h8d3_workflow_asserts_exact_controlled_benchmark():
         assert required in content
 
 
-def test_h8d3_workflow_runs_on_hardening_branch_before_final_release():
+def test_post_release_workflow_runs_on_main_and_supports_manual_dispatch():
     content = _workflow_text()
 
-    assert "- upgrade/v0.13-security-hardening" in content
+    assert "- main" in content
+    assert "- master" not in content
+    assert "- upgrade/v0.13-security-hardening" not in content
+    assert "pull_request:" in content
     assert "workflow_dispatch:" in content
