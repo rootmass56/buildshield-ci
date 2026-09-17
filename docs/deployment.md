@@ -131,15 +131,23 @@ caches, and local secret files such as `.env`.
 
 ## Docker Compose
 
-The H7B Compose configuration hardens the controlled single-instance runtime.
+The H7B Compose configuration hardens the controlled single-instance runtime. Compose requires administrator configuration at startup, so set the fail-closed authentication values in the current shell before launching it:
 
 ```powershell
+$env:BUILDSHIELD_ADMIN_USERNAME = "admin"
+$env:BUILDSHIELD_ADMIN_PASSWORD_HASH = python -c "from supplysentinel.web.auth import hash_password; import getpass; print(hash_password(getpass.getpass('Admin password: ')))"
+$env:BUILDSHIELD_COOKIE_SECURE = "false"
+$env:BUILDSHIELD_HOST_PORT = "8080"
+
 docker compose build --pull
 docker compose up -d
 docker compose ps
 Invoke-RestMethod http://127.0.0.1:8080/health
+Invoke-RestMethod http://127.0.0.1:8080/ready
 docker compose down
 ```
+
+Never commit the generated password hash. If port `8080` is occupied, set `BUILDSHIELD_HOST_PORT` to another free localhost port and use that same port for the health/readiness requests.
 
 Remove persistent volumes only when intentionally discarding local state:
 
