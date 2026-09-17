@@ -8,6 +8,9 @@ All notable BuildShield-CI release milestones are documented here.
 
 - Synchronize current documentation with the already-published v1.0.0 release state.
 - Preserve historical H9/H10 stage documents as engineering evidence while removing stale pending-release language from canonical documentation.
+- Document external repository analysis through `BUILDSHIELD_WORKSPACE_ROOT` without requiring repositories to be copied into `samples/`.
+- Record dashboard comparison support for arbitrary workspace-relative baseline and target repository paths while retaining preset suggestions.
+- Neutralize external-repository examples in the comparison UI/tests and normalize the newly added TSX files as UTF-8 without a BOM.
 - Keep the v1.0.0 tag immutable; behavior-changing fixes will use a new versioned release.
 
 ## v1.0.0 — 2026-09-16
