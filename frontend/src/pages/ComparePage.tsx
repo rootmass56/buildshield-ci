@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+﻿import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, GitCompareArrows } from "lucide-react";
 
 import { ApiError, getSampleRepositories, runComparison } from "../api/client";
@@ -59,17 +59,25 @@ export function ComparePage() {
       return;
     }
 
-    const baselineRepo = repos.find((repo) => repo.path === baseline);
-    const targetRepo = repos.find((repo) => repo.path === target);
+    const baselinePath = baseline.trim();
+    const targetPath = target.trim();
+
+    if (!baselinePath || !targetPath) {
+      setError("Baseline and target repository paths are required.");
+      return;
+    }
+
+    const baselineRepo = repos.find((repo) => repo.path === baselinePath);
+    const targetRepo = repos.find((repo) => repo.path === targetPath);
 
     try {
       setResult(
         await runComparison(
           auth.csrfToken,
-          baseline,
-          target,
-          baselineRepo?.label ?? "Baseline repository",
-          targetRepo?.label ?? "Target repository",
+          baselinePath,
+          targetPath,
+          baselineRepo?.label ?? baselinePath,
+          targetRepo?.label ?? targetPath,
         ),
       );
       setError(null);
@@ -89,39 +97,71 @@ export function ComparePage() {
           <span className="eyebrow">Compare</span>
           <h2>Security posture comparison</h2>
           <p>
-            Compare realistic repository states without treating a perfect score
-            as the expected outcome for every application.
+            Compare repository states inside the approved workspace without
+            treating a perfect score as the expected outcome for every
+            application.
           </p>
         </div>
       </div>
 
-      <form className="compare-form control-strip" onSubmit={(event) => void submit(event)}>
+      <form
+        className="compare-form control-strip"
+        onSubmit={(event) => void submit(event)}
+      >
         <div className="control-strip-icon" aria-hidden="true">
           <GitCompareArrows size={18} />
         </div>
+
         <label>
           Baseline
-          <select value={baseline} onChange={(event) => setBaseline(event.target.value)}>
+          <input
+            aria-label="Baseline repository path"
+            list="baseline-repository-presets"
+            value={baseline}
+            onChange={(event) => setBaseline(event.target.value)}
+            placeholder="repo-a-fastapi-template"
+            autoComplete="off"
+            required
+          />
+          <datalist id="baseline-repository-presets">
             {repos.map((repo) => (
               <option key={repo.path} value={repo.path}>
                 {repo.label}
               </option>
             ))}
-          </select>
+          </datalist>
+          <span className="field-hint">
+            Select a preset or enter a workspace-relative repository path.
+          </span>
         </label>
+
         <div className="compare-direction" aria-hidden="true">
           <ArrowRight size={17} />
         </div>
+
         <label>
           Target
-          <select value={target} onChange={(event) => setTarget(event.target.value)}>
+          <input
+            aria-label="Target repository path"
+            list="target-repository-presets"
+            value={target}
+            onChange={(event) => setTarget(event.target.value)}
+            placeholder="repo-b-vulnreach"
+            autoComplete="off"
+            required
+          />
+          <datalist id="target-repository-presets">
             {repos.map((repo) => (
               <option key={repo.path} value={repo.path}>
                 {repo.label}
               </option>
             ))}
-          </select>
+          </datalist>
+          <span className="field-hint">
+            Select a preset or enter a workspace-relative repository path.
+          </span>
         </label>
+
         <button className="primary-button">Compare posture</button>
       </form>
 
@@ -156,13 +196,20 @@ export function ComparePage() {
             <article className="panel comparison-state">
               <span className="section-kicker">Baseline</span>
               <h3>{result.comparison.baseline_label}</h3>
-              <strong>{result.comparison.baseline.summary.security_score}/100</strong>
-              <StatusBadge value={result.comparison.baseline.summary.risk_level} />
+              <strong>
+                {result.comparison.baseline.summary.security_score}/100
+              </strong>
+              <StatusBadge
+                value={result.comparison.baseline.summary.risk_level}
+              />
             </article>
+
             <article className="panel comparison-state comparison-state-target">
               <span className="section-kicker">Target</span>
               <h3>{result.comparison.target_label}</h3>
-              <strong>{result.comparison.target.summary.security_score}/100</strong>
+              <strong>
+                {result.comparison.target.summary.security_score}/100
+              </strong>
               <StatusBadge
                 value={result.comparison.target.summary.risk_level}
                 positive={result.comparison.target.summary.findings_count === 0}
