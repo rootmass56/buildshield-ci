@@ -268,6 +268,30 @@ Then open `http://127.0.0.1:18081`.
 
 The canonical validated frontend toolchain is Node `22.23.2` with npm `12.0.2`; CI and the production Docker build enforce those versions. The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
 
+### External repository workspace
+
+The dashboard can analyze repositories that are not copied into `samples/`. Configure an approved workspace root that contains the repositories you want to analyze, then start the dashboard from the BuildShield checkout:
+
+```powershell
+$env:BUILDSHIELD_WORKSPACE_ROOT = "D:\Security-Lab"
+buildshield dashboard --port 18081
+```
+
+For example, if the workspace contains:
+
+```text
+D:\Security-Lab\external-repo-baseline
+D:\Security-Lab\external-repo-target
+```
+
+use `external-repo-baseline` and `external-repo-target` in Scanner, Inventory, OSV Intelligence, or Compare. Dashboard repository paths are resolved inside `BUILDSHIELD_WORKSPACE_ROOT`; paths outside that approved boundary are rejected. Preset suggestions remain available when their paths also exist inside the configured workspace.
+
+The CLI does not require copying an external repository into BuildShield either. It can scan an arbitrary repository path directly, for example:
+
+```powershell
+buildshield scan "D:\Security-Lab\external-repo-target" --policy "D:\Security-Lab\buildshield-policy.yml"
+```
+
 ## Production-Style Docker Compose
 
 Production mode fails closed unless administrator authentication is configured. Generate an ephemeral password hash locally; never commit it.
