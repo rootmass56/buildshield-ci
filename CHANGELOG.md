@@ -4,6 +4,11 @@ All notable BuildShield-CI release milestones are documented here.
 
 ## Unreleased
 
+### Changed
+
+- Allow dashboard posture comparison to accept arbitrary repository paths relative to the configured workspace root while retaining preset suggestions.
+- Keep comparison inputs neutral and workspace-oriented so external-repository demonstrations are not coupled to one lab repository.
+
 ### Documentation and repository maintenance
 
 - Synchronize current documentation with the already-published v1.0.0 release state.
