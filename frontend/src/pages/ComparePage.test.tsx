@@ -1,4 +1,4 @@
-﻿import {
+import {
   cleanup,
   fireEvent,
   render,
@@ -56,25 +56,25 @@ describe("ComparePage workspace paths", () => {
       run_id: "compare-test",
       kind: "comparison",
       comparison: {
-        baseline_label: "repo-a-fastapi-template",
-        target_label: "repo-b-vulnreach",
+        baseline_label: "repository-before",
+        target_label: "repository-after",
         baseline: {
-          summary: {
-            security_score: 15,
-            findings_count: 56,
-            risk_level: "CRITICAL",
-          },
-        },
-        target: {
           summary: {
             security_score: 26,
             findings_count: 49,
             risk_level: "CRITICAL",
           },
         },
-        score_delta: 11,
-        findings_reduced: 7,
-        risk_reduction_percentage: 12.94,
+        target: {
+          summary: {
+            security_score: 80,
+            findings_count: 2,
+            risk_level: "MEDIUM",
+          },
+        },
+        score_delta: 54,
+        findings_reduced: 47,
+        risk_reduction_percentage: 72.97,
         verdict: "SECURITY_POSTURE_PARTIALLY_IMPROVED",
       },
       reports: [],
@@ -97,16 +97,16 @@ describe("ComparePage workspace paths", () => {
       name: "Target repository path",
     });
 
+    expect(baselineInput).toHaveValue("");
+    expect(targetInput).toHaveValue("");
+
     fireEvent.change(baselineInput, {
-      target: { value: "repo-a-fastapi-template" },
+      target: { value: "repository-before" },
     });
 
     fireEvent.change(targetInput, {
-      target: { value: "repo-b-vulnreach" },
+      target: { value: "repository-after" },
     });
-
-    expect(baselineInput).toHaveValue("repo-a-fastapi-template");
-    expect(targetInput).toHaveValue("repo-b-vulnreach");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -120,14 +120,14 @@ describe("ComparePage workspace paths", () => {
 
     expect(apiMocks.runComparison).toHaveBeenCalledWith(
       "csrf-test-token",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
+      "repository-before",
+      "repository-after",
+      "repository-before",
+      "repository-after",
     );
 
-    expect(await screen.findByText("+11")).toBeInTheDocument();
-    expect(screen.getByText("12.94%")).toBeInTheDocument();
+    expect(await screen.findByText("+54")).toBeInTheDocument();
+    expect(screen.getByText("72.97%")).toBeInTheDocument();
     expect(screen.getByText("Partially improved")).toBeInTheDocument();
   });
 });
