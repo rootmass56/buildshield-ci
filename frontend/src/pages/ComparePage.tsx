@@ -1,4 +1,4 @@
-﻿import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, GitCompareArrows } from "lucide-react";
 
 import { ApiError, getSampleRepositories, runComparison } from "../api/client";
@@ -35,8 +35,8 @@ function verdictHeadline(value: string): string {
 export function ComparePage() {
   const auth = useAuth();
   const [repos, setRepos] = useState<SampleRepository[]>([]);
-  const [baseline, setBaseline] = useState("samples/vulnerable-repo");
-  const [target, setTarget] = useState("samples/realistic-repo");
+  const [baseline, setBaseline] = useState("");
+  const [target, setTarget] = useState("");
   const [result, setResult] = useState<ComparisonResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,7 +119,7 @@ export function ComparePage() {
             list="baseline-repository-presets"
             value={baseline}
             onChange={(event) => setBaseline(event.target.value)}
-            placeholder="repo-a-fastapi-template"
+            placeholder="repository-before"
             autoComplete="off"
             required
           />
@@ -131,7 +131,7 @@ export function ComparePage() {
             ))}
           </datalist>
           <span className="field-hint">
-            Select a preset or enter a workspace-relative repository path.
+            Select a preset or enter a path relative to the configured workspace root.
           </span>
         </label>
 
@@ -146,7 +146,7 @@ export function ComparePage() {
             list="target-repository-presets"
             value={target}
             onChange={(event) => setTarget(event.target.value)}
-            placeholder="repo-b-vulnreach"
+            placeholder="repository-after"
             autoComplete="off"
             required
           />
@@ -158,7 +158,7 @@ export function ComparePage() {
             ))}
           </datalist>
           <span className="field-hint">
-            Select a preset or enter a workspace-relative repository path.
+            Select a preset or enter a path relative to the configured workspace root.
           </span>
         </label>
 
