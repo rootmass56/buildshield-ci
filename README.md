@@ -15,7 +15,7 @@ BuildShield-CI is a defensive DevSecOps security platform that performs passive 
 - Push, pull-request and post-merge `main` GitHub Actions: **PASS**
 - Production Docker/API smoke, authenticated live-browser review and final repository sanitation: **PASS**
 
-The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference; later documentation-only maintenance on `main` does not rewrite that release.
+The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference; later post-release maintenance on `main` does not rewrite or move that release.
 
 ## Project Highlights
 
@@ -245,13 +245,26 @@ buildshield scan samples/realistic-repo --report-format sarif --output reports/b
 
 ## Dashboard
 
-For local development/demo use:
+For a local development/demo checkout, build the React production assets first because `frontend/dist` is intentionally generated locally and is not tracked in Git:
 
 ```powershell
-buildshield dashboard --port 8080
+cd frontend
+npm ci
+npm run build
+cd ..
+
+buildshield dashboard --host 127.0.0.1 --port 8080
 ```
 
-Open `http://127.0.0.1:8080`.
+The validated frontend toolchain is Node `22.23.2` with npm `12.0.2`. Open `http://127.0.0.1:8080` after the server starts.
+
+If localhost port `8080` is already occupied, leave the other service untouched and choose another free port, for example:
+
+```powershell
+buildshield dashboard --host 127.0.0.1 --port 18081
+```
+
+Then open `http://127.0.0.1:18081`.
 
 The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
 
