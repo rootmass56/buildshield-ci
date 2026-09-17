@@ -268,6 +268,26 @@ Then open `http://127.0.0.1:18081`.
 
 The canonical validated frontend toolchain is Node `22.23.2` with npm `12.0.2`; CI and the production Docker build enforce those versions. The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
 
+### External repository workspace
+
+Dashboard repository operations are contained within the configured workspace root. By default, the workspace root is the directory from which the dashboard process starts. To analyze repositories stored in a separate controlled directory, set `BUILDSHIELD_WORKSPACE_ROOT` before starting the dashboard:
+
+```powershell
+$env:BUILDSHIELD_WORKSPACE_ROOT = "D:\Security-Lab"
+buildshield dashboard --port 18081
+```
+
+If that workspace contains two repository states such as:
+
+```text
+D:\Security-Lab\repository-before
+D:\Security-Lab\repository-after
+```
+
+enter the workspace-relative paths `repository-before` and `repository-after` in Scanner, Inventory, OSV Intelligence, or Compare as appropriate. Sample repositories remain available as suggestions when they exist inside the configured workspace. Resolved dashboard paths must remain inside `BUILDSHIELD_WORKSPACE_ROOT`; paths outside that boundary are rejected.
+
+The dashboard does not clone or upload arbitrary repositories. Place repositories under the approved workspace root first. CLI commands are separate from this dashboard containment workflow and may be given direct filesystem repository paths.
+
 ## Production-Style Docker Compose
 
 Production mode fails closed unless administrator authentication is configured. Generate an ephemeral password hash locally; never commit it.
