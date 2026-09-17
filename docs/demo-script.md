@@ -27,7 +27,7 @@ v1.0.0
 release commit: dec7eea405cd474fdea73bacd8f9847782887816
 ```
 
-The default branch may contain documentation-only maintenance after the release tag. Do not move or recreate `v1.0.0` for those changes.
+The default branch may contain post-release maintenance after the release tag. Do not move or recreate `v1.0.0` for later maintenance changes.
 
 ## 2. Realistic Application Profile
 
@@ -164,13 +164,26 @@ Explain that online OSV results are dynamic and are not hard-coded into determin
 
 ## 9. Dashboard
 
-For a local development demonstration:
+For a local development demonstration, first build the React production assets because `frontend/dist` is intentionally not tracked:
 
 ```powershell
-buildshield dashboard --port 8080
+cd frontend
+npm ci
+npm run build
+cd ..
+
+buildshield dashboard --host 127.0.0.1 --port 8080
 ```
 
-Open `http://127.0.0.1:8080`.
+Use the validated frontend toolchain, Node `22.23.2` with npm `12.0.2`. Open `http://127.0.0.1:8080` after the server starts.
+
+If port `8080` is already occupied, do not stop an unrelated service just for the demo. Use another free localhost port, for example:
+
+```powershell
+buildshield dashboard --host 127.0.0.1 --port 18081
+```
+
+Then open `http://127.0.0.1:18081`.
 
 Show:
 
@@ -251,7 +264,7 @@ annotated tag
 v1.0.0
 ```
 
-State that hosted CI passed on the final checkpoint, pull request and post-merge `main` before the release was published.
+State that hosted CI passed on the final checkpoint, pull request and post-merge `main` before the release was published. Later maintenance commits on `main` do not rewrite the immutable `v1.0.0` release reference.
 
 ## Closing
 
