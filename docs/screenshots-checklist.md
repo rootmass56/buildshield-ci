@@ -9,7 +9,7 @@ v1.0.0
 release commit: dec7eea405cd474fdea73bacd8f9847782887816
 ```
 
-The default `main` branch may contain later documentation-only maintenance. The `v1.0.0` tag remains the immutable release reference.
+The default `main` branch may contain later post-release maintenance. The `v1.0.0` tag remains the immutable release reference and is not moved by maintenance commits.
 
 ## CLI and Validation
 
