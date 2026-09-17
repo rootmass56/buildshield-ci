@@ -9,6 +9,8 @@ All notable BuildShield-CI release milestones are documented here.
 - Synchronize current documentation with the already-published v1.0.0 release state.
 - Preserve historical H9/H10 stage documents as engineering evidence while removing stale pending-release language from canonical documentation.
 - Keep the v1.0.0 tag immutable; behavior-changing fixes will use a new versioned release.
+- Allow dashboard comparisons to use arbitrary repository paths contained by the configured BuildShield workspace while retaining sample repositories as suggestions.
+- Use neutral comparison examples and document the `BUILDSHIELD_WORKSPACE_ROOT` workflow for external-repository dashboard analysis.
 
 ## v1.0.0 — 2026-09-16
 
