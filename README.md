@@ -15,7 +15,7 @@ BuildShield-CI is a defensive DevSecOps security platform that performs passive 
 - Push, pull-request and post-merge `main` GitHub Actions: **PASS**
 - Production Docker/API smoke, authenticated live-browser review and final repository sanitation: **PASS**
 
-The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference. Later post-release maintenance on `main` may improve documentation, packaging, reproducibility, or other non-release-maintenance concerns without rewriting the published `v1.0.0` tag.
+The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference. Later post-release maintenance on `main` may improve documentation, packaging, reproducibility, dashboard usability or other non-release-maintenance concerns without rewriting the published `v1.0.0` tag.
 
 ## Project Highlights
 
@@ -267,6 +267,19 @@ buildshield dashboard --port 18081
 Then open `http://127.0.0.1:18081`.
 
 The canonical validated frontend toolchain is Node `22.23.2` with npm `12.0.2`; CI and the production Docker build enforce those versions. The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
+
+### External repository workspaces
+
+BuildShield does not require an external repository to be copied into `samples/`. Keep the BuildShield source checkout separate and point the dashboard at an approved workspace containing the repositories you want to analyze:
+
+```powershell
+$env:BUILDSHIELD_WORKSPACE_ROOT = "D:\Repositories"
+buildshield dashboard --port 18081
+```
+
+Repository fields in Scanner, Inventory, OSV Intelligence and Compare accept paths relative to that configured workspace root, for example `external-repo-baseline` and `external-repo-target`. The dashboard resolves targets inside the approved workspace boundary and rejects repository paths that escape it.
+
+For before/after hardening analysis, preserve the original repository state and create a separate working copy under the same workspace. Compare the original path as the baseline with the hardened copy as the target. BuildShield identifies findings and verifies posture changes; remediation changes are applied by the developer or security engineer rather than automatically rewriting the repository.
 
 ## Production-Style Docker Compose
 
