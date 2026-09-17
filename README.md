@@ -15,7 +15,7 @@ BuildShield-CI is a defensive DevSecOps security platform that performs passive 
 - Push, pull-request and post-merge `main` GitHub Actions: **PASS**
 - Production Docker/API smoke, authenticated live-browser review and final repository sanitation: **PASS**
 
-The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference; later documentation-only maintenance on `main` does not rewrite that release.
+The `v1.0.0` tag and GitHub release are published. The tag remains the immutable release reference. Later post-release maintenance on `main` may improve documentation, packaging, reproducibility, or other non-release-maintenance concerns without rewriting the published `v1.0.0` tag.
 
 ## Project Highlights
 
@@ -245,15 +245,28 @@ buildshield scan samples/realistic-repo --report-format sarif --output reports/b
 
 ## Dashboard
 
-For local development/demo use:
+For a source-checkout local development/demo, build the production frontend assets before starting the FastAPI dashboard server:
 
 ```powershell
+cd frontend
+npm ci
+npm run build
+cd ..
+
 buildshield dashboard --port 8080
 ```
 
 Open `http://127.0.0.1:8080`.
 
-The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
+If port `8080` is already in use, choose another local port, for example:
+
+```powershell
+buildshield dashboard --port 18081
+```
+
+Then open `http://127.0.0.1:18081`.
+
+The canonical validated frontend toolchain is Node `22.23.2` with npm `12.0.2`; CI and the production Docker build enforce those versions. The dashboard provides authentication, overview, repository scanning, findings, policy evaluation, comparison, SBOM-lite inventory, vulnerability intelligence, reports, history and trends.
 
 ## Production-Style Docker Compose
 

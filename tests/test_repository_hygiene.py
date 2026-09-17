@@ -82,6 +82,18 @@ def test_pytest_does_not_globally_suppress_all_warnings() -> None:
     assert "ignore::Warning" not in content
 
 
+def test_python_build_backend_versions_are_exactly_pinned() -> None:
+    pyproject_path = project_root() / "pyproject.toml"
+
+    with pyproject_path.open("rb") as file_handle:
+        pyproject = tomllib.load(file_handle)
+
+    assert pyproject["build-system"]["requires"] == [
+        "setuptools==84.0.0",
+        "wheel==0.48.0",
+    ]
+
+
 def test_project_metadata_contains_repository_links() -> None:
     pyproject_path = project_root() / "pyproject.toml"
 
