@@ -1,4 +1,4 @@
-﻿import {
+import {
   cleanup,
   fireEvent,
   render,
@@ -56,8 +56,8 @@ describe("ComparePage workspace paths", () => {
       run_id: "compare-test",
       kind: "comparison",
       comparison: {
-        baseline_label: "repo-a-fastapi-template",
-        target_label: "repo-b-vulnreach",
+        baseline_label: "external-repo-baseline",
+        target_label: "external-repo-target",
         baseline: {
           summary: {
             security_score: 15,
@@ -97,16 +97,19 @@ describe("ComparePage workspace paths", () => {
       name: "Target repository path",
     });
 
+    expect(baselineInput).toHaveValue("");
+    expect(targetInput).toHaveValue("");
+
     fireEvent.change(baselineInput, {
-      target: { value: "repo-a-fastapi-template" },
+      target: { value: "external-repo-baseline" },
     });
 
     fireEvent.change(targetInput, {
-      target: { value: "repo-b-vulnreach" },
+      target: { value: "external-repo-target" },
     });
 
-    expect(baselineInput).toHaveValue("repo-a-fastapi-template");
-    expect(targetInput).toHaveValue("repo-b-vulnreach");
+    expect(baselineInput).toHaveValue("external-repo-baseline");
+    expect(targetInput).toHaveValue("external-repo-target");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -120,10 +123,10 @@ describe("ComparePage workspace paths", () => {
 
     expect(apiMocks.runComparison).toHaveBeenCalledWith(
       "csrf-test-token",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
+      "external-repo-baseline",
+      "external-repo-target",
+      "external-repo-baseline",
+      "external-repo-target",
     );
 
     expect(await screen.findByText("+11")).toBeInTheDocument();
