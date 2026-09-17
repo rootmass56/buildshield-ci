@@ -11,16 +11,34 @@ BuildShield-CI supports local execution and controlled single-instance container
 
 ## Local Dashboard
 
+A source checkout does not track `frontend/dist`, so build the React production assets before starting the Python-served dashboard:
+
 ```powershell
 pip install -e ".[dev]"
+
+cd frontend
+npm ci
+npm run build
+cd ..
+
 buildshield dashboard --host 127.0.0.1 --port 8080
 ```
+
+The validated frontend toolchain is Node `22.23.2` with npm `12.0.2`.
 
 Open:
 
 ```text
 http://127.0.0.1:8080
 ```
+
+If port `8080` is already occupied, keep the unrelated service untouched and select another free localhost port, for example:
+
+```powershell
+buildshield dashboard --host 127.0.0.1 --port 18081
+```
+
+Then open `http://127.0.0.1:18081`.
 
 ## Docker
 
@@ -30,17 +48,31 @@ Build:
 docker build -t buildshield-ci:latest .
 ```
 
-Run:
+The image defaults to `BUILDSHIELD_ENV=production`, so a raw `docker run` must provide the required authentication configuration. Generate an ephemeral administrator password hash locally and do not commit it:
 
 ```powershell
-docker run --rm -p 8080:8080 buildshield-ci:latest
+$env:BUILDSHIELD_ADMIN_USERNAME = "admin"
+$env:BUILDSHIELD_ADMIN_PASSWORD_HASH = python -c "from supplysentinel.web.auth import hash_password; import getpass; print(hash_password(getpass.getpass('Admin password: ')))"
+$env:BUILDSHIELD_COOKIE_SECURE = "false"
+
+docker run --rm -d `
+  --name buildshield-ci-smoke `
+  -p 127.0.0.1:18080:8080 `
+  -e BUILDSHIELD_ADMIN_USERNAME `
+  -e BUILDSHIELD_ADMIN_PASSWORD_HASH `
+  -e BUILDSHIELD_COOKIE_SECURE `
+  buildshield-ci:latest
 ```
 
-Health:
+Health/readiness:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8080/health
+Invoke-RestMethod http://127.0.0.1:18080/health
+Invoke-RestMethod http://127.0.0.1:18080/ready
+docker stop buildshield-ci-smoke
 ```
+
+Docker Compose remains the preferred documented production-style local deployment because it also applies the repository's read-only filesystem, capability, PID, tmpfs and persistent-volume controls.
 
 Protected dashboard/API operations require the H2 authentication environment configuration at runtime. Real credentials or password hashes must not be baked into the image.
 
