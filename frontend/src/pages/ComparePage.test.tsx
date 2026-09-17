@@ -1,4 +1,4 @@
-﻿import {
+import {
   cleanup,
   fireEvent,
   render,
@@ -56,25 +56,25 @@ describe("ComparePage workspace paths", () => {
       run_id: "compare-test",
       kind: "comparison",
       comparison: {
-        baseline_label: "repo-a-fastapi-template",
-        target_label: "repo-b-vulnreach",
+        baseline_label: "external-repo-baseline",
+        target_label: "external-repo-target",
         baseline: {
           summary: {
-            security_score: 15,
-            findings_count: 56,
-            risk_level: "CRITICAL",
+            security_score: 40,
+            findings_count: 12,
+            risk_level: "HIGH",
           },
         },
         target: {
           summary: {
-            security_score: 26,
-            findings_count: 49,
-            risk_level: "CRITICAL",
+            security_score: 70,
+            findings_count: 4,
+            risk_level: "MEDIUM",
           },
         },
-        score_delta: 11,
-        findings_reduced: 7,
-        risk_reduction_percentage: 12.94,
+        score_delta: 30,
+        findings_reduced: 8,
+        risk_reduction_percentage: 50,
         verdict: "SECURITY_POSTURE_PARTIALLY_IMPROVED",
       },
       reports: [],
@@ -97,16 +97,19 @@ describe("ComparePage workspace paths", () => {
       name: "Target repository path",
     });
 
+    expect(baselineInput).toHaveValue("");
+    expect(targetInput).toHaveValue("");
+
     fireEvent.change(baselineInput, {
-      target: { value: "repo-a-fastapi-template" },
+      target: { value: "external-repo-baseline" },
     });
 
     fireEvent.change(targetInput, {
-      target: { value: "repo-b-vulnreach" },
+      target: { value: "external-repo-target" },
     });
 
-    expect(baselineInput).toHaveValue("repo-a-fastapi-template");
-    expect(targetInput).toHaveValue("repo-b-vulnreach");
+    expect(baselineInput).toHaveValue("external-repo-baseline");
+    expect(targetInput).toHaveValue("external-repo-target");
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -120,14 +123,14 @@ describe("ComparePage workspace paths", () => {
 
     expect(apiMocks.runComparison).toHaveBeenCalledWith(
       "csrf-test-token",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
-      "repo-a-fastapi-template",
-      "repo-b-vulnreach",
+      "external-repo-baseline",
+      "external-repo-target",
+      "external-repo-baseline",
+      "external-repo-target",
     );
 
-    expect(await screen.findByText("+11")).toBeInTheDocument();
-    expect(screen.getByText("12.94%")).toBeInTheDocument();
+    expect(await screen.findByText("+30")).toBeInTheDocument();
+    expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getByText("Partially improved")).toBeInTheDocument();
   });
 });
